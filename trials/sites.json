@@ -1,18 +1,1 @@
-[
-  {
-    "slug": "trial-student-2048-edition",
-    "studentName": "Trial Student",
-    "title": "2048: +- Edition",
-    "description": "A twist on classic 2048! Now, instead of just normal tiles, there are negative tiles that when hitting a positive tile of the same value, will cancel each other out.",
-    "submittedAt": "2026-08-13T18:32:31.976Z",
-    "thumbnail": "trials/trial-student-2048-edition/thumb.png"
-  },
-  {
-    "slug": "trial-student-2048",
-    "studentName": "Trial Student",
-    "title": "+- 2048",
-    "description": "A twist on the classic 2048 game. Now, negative tiles can spawn, which can only be removed if you merge them with a positive tile of the same number.",
-    "submittedAt": "2026-08-13T18:17:09.315Z",
-    "thumbnail": "trials/trial-student-2048/thumb.png"
-  }
-]
+[]
