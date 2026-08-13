@@ -17,7 +17,11 @@ function escapeHtml(value) {
 
 function thumbnailFor(site) {
   if (typeof site.thumbnail === "string" && site.thumbnail.trim()) {
-    return site.thumbnail.trim();
+    const raw = site.thumbnail.trim();
+    if (raw.startsWith("trials/")) {
+      return raw.slice("trials/".length);
+    }
+    return raw;
   }
   return `${site.slug}/thumb.png`;
 }
