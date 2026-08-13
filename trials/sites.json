@@ -1,1 +1,10 @@
-[]
+[
+  {
+    "slug": "trial-student-2048",
+    "studentName": "Trial Student",
+    "title": "+- 2048",
+    "description": "A twist on the classic 2048 game. Now, negative tiles can spawn, which can only be removed if you merge them with a positive tile of the same number.",
+    "submittedAt": "2026-08-13T18:17:09.315Z",
+    "thumbnail": "trials/trial-student-2048/thumb.png"
+  }
+]
