@@ -1,5 +1,14 @@
 [
   {
+    "slug": "leiya-liu-sprial-ascent",
+    "trialId": "3eb86b29-ec66-485f-88a8-16ff21a6a53f",
+    "studentName": "Leiya Liu",
+    "title": "Sprial Ascent",
+    "description": "The arrow keys help you move around, the space bar helps you jump. Avoid falling down or touching the red blocks. Collect all 16 coins to win",
+    "submittedAt": "2026-08-13T23:35:50.002Z",
+    "thumbnail": "leiya-liu-sprial-ascent/thumb.png"
+  },
+  {
     "slug": "william-wang-pomodoro-marble-tracks",
     "trialId": "4b3c2a2b-273e-434b-8fe9-17e8af911f51",
     "studentName": "William Wang",
@@ -7,15 +16,6 @@
     "description": "A Pomodoro timer with a marble-run themed screensaver built-in. Watch as marbles run through chutes, springs, and curves while you study!",
     "submittedAt": "2026-08-13T21:41:13.650Z",
     "thumbnail": "william-wang-pomodoro-marble-tracks/thumb.png"
-  },
-  {
-    "slug": "kevin-gee-2p-snake-game",
-    "trialId": "3eb86b29-ec66-485f-88a8-16ff21a6a53f",
-    "studentName": "Kevin Gee",
-    "title": "2p snake game",
-    "description": "2 player snake game with a timer system for a time attack game mode",
-    "submittedAt": "2026-08-13T20:16:31.784Z",
-    "thumbnail": "kevin-gee-2p-snake-game/thumb.png"
   },
   {
     "slug": "trial-student-2048",

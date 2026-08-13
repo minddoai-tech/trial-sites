@@ -1,0 +1,170 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Spiral Ascent</title>
+  <style>
+    :root { color-scheme: dark; }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      overflow: hidden;
+      font-family: Inter, ui-sans-serif, system-ui, sans-serif;
+      background: radial-gradient(circle at 50% 0%, #263b71 0%, #121b39 48%, #090d1d 100%);
+    }
+    .game-shell {
+      position: relative;
+      width: min(92vw, 510px);
+      aspect-ratio: 3 / 4;
+      max-height: 88vh;
+      border: 3px solid #9ac8ff;
+      border-radius: 18px;
+      overflow: hidden;
+      box-shadow: 0 24px 70px #020511aa, inset 0 0 34px #8ec5ff22;
+      background: #15244b;
+    }
+    canvas { width: 100%; height: 100%; display: block; }
+    .hud {
+      position: absolute; inset: 0 auto auto 0; width: 100%;
+      display: flex; justify-content: space-between; align-items: flex-start;
+      padding: 16px 18px; pointer-events: none; text-shadow: 0 2px 3px #061020;
+      font-weight: 800; letter-spacing: .03em;
+    }
+    .hud span { display: block; font-size: .72rem; color: #b7d3ff; }
+    .hud strong { font-size: 1.3rem; color: #fff4a8; }
+    .instructions {
+      position: absolute; bottom: 15px; left: 50%; transform: translateX(-50%);
+      color: #dceaff; text-align: center; font-size: .78rem; line-height: 1.5;
+      width: max-content; max-width: 94%; padding: 8px 12px;
+      background: #09132caa; border: 1px solid #a9d5ff44; border-radius: 10px;
+      pointer-events: none;
+    }
+    .overlay {
+      position: absolute; inset: 0; display: grid; place-items: center;
+      background: #071027b8; text-align: center; padding: 28px;
+    }
+    .overlay[hidden] { display: none; }
+    .panel { max-width: 330px; }
+    h1 { margin: 0 0 8px; font-size: 2rem; color: #fff2a6; }
+    p { margin: 0 0 18px; color: #d4e6ff; line-height: 1.55; }
+    button {
+      appearance: none; border: 0; border-radius: 999px; padding: 12px 22px;
+      cursor: pointer; color: #18244c; background: #ffe36d; font: inherit; font-weight: 900;
+      box-shadow: 0 4px 0 #b98c25; transition: transform .12s;
+    }
+    button:hover { transform: translateY(-2px); }
+    kbd { font: inherit; font-weight: 900; color: #fff2a6; }
+  </style>
+</head>
+<body>
+  <main class="game-shell" aria-label="Spiral Ascent game">
+    <canvas id="game" width="510" height="680"></canvas>
+    <div class="hud"><div><span>COINS</span><strong id="coins">0 / 0</strong></div><div style="text-align:right"><span>HEIGHT</span><strong id="height">0 m</strong></div></div>
+    <div class="instructions">Move: <kbd>← →</kbd> &nbsp; Jump: <kbd>Space</kbd> or <kbd>↑</kbd><br>Collect gold coins · Avoid red blocks</div>
+    <section class="overlay" id="overlay">
+      <div class="panel"><h1 id="title">Spiral Ascent</h1><p id="message">Climb the tower one platform at a time. Don’t fall into the clouds.</p><button id="restart">Start climbing</button></div>
+    </section>
+  </main>
+  <script>
+    (() => {
+      const canvas = document.querySelector('#game'), ctx = canvas.getContext('2d');
+      const W = canvas.width, H = canvas.height;
+      const coinsEl = document.querySelector('#coins'), heightEl = document.querySelector('#height');
+      const overlay = document.querySelector('#overlay'), title = document.querySelector('#title'), message = document.querySelector('#message'), restart = document.querySelector('#restart');
+      const keys = new Set();
+      const gravity = 0.48, player = { x: 244, y: 590, w: 25, h: 31, vx: 0, vy: 0, grounded: false, facing: 1 };
+      let platforms, coins, hazards, score, highest, cameraY, state;
+
+      // World coordinates increase downward. The platform pattern moves around the tower as it rises.
+      function buildLevel() {
+        // A generous, clearly distinct launch platform gives every run a safe start.
+        // Kept well above the screen's fall zone so a new run never triggers a loss.
+        platforms = [{ x: 50, y: 600, w: 410, h: 22, start: true }]; coins = []; hazards = [];
+        const xPositions = [70, 225, 360, 255, 88, 185, 350, 105, 275, 395, 170, 60, 225, 355, 115, 275];
+        for (let i = 0; i < xPositions.length; i++) {
+          const y = 550 - i * 82, w = i % 4 === 0 ? 104 : 88;
+          const x = xPositions[i]; platforms.push({ x, y, w, h: 15 });
+          coins.push({ x: x + w / 2, y: y - 25, r: 9, collected: false });
+          if ([3, 6, 9, 12, 14].includes(i)) hazards.push({ x: x + (i % 2 ? 9 : w - 35), y: y - 18, w: 27, h: 18 });
+        }
+      }
+      function reset() {
+        buildLevel();
+        const start = platforms[0];
+        Object.assign(player, {
+          x: start.x + start.w / 2 - player.w / 2,
+          y: start.y - player.h,
+          vx: 0, vy: 0, grounded: true, facing: 1
+        });
+        score = 0; highest = 0; cameraY = 0; state = 'playing'; overlay.hidden = true; updateHud();
+      }
+      function updateHud() { coinsEl.textContent = `${score} / ${coins.length}`; heightEl.textContent = `${Math.max(0, Math.floor(highest / 10))} m`; }
+      function end(win) {
+        state = 'ended'; overlay.hidden = false; title.textContent = win ? 'Tower conquered!' : 'You fell!';
+        message.textContent = win ? `You collected ${score} glittering coins and reached the summit.` : `You collected ${score} coin${score === 1 ? '' : 's'}. Try a different route upward.`;
+        restart.textContent = win ? 'Climb again' : 'Restart';
+      }
+      function overlaps(a, b) { return a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y; }
+      function update() {
+        if (state !== 'playing') return;
+        const left = keys.has('ArrowLeft'), right = keys.has('ArrowRight');
+        if (left !== right) { player.vx += left ? -0.65 : 0.65; player.facing = left ? -1 : 1; }
+        else player.vx *= 0.78;
+        player.vx = Math.max(-5.6, Math.min(5.6, player.vx));
+        if ((keys.has('Space') || keys.has('ArrowUp')) && player.grounded) { player.vy = -11.6; player.grounded = false; }
+        const lastY = player.y; player.vy += gravity; player.vy = Math.min(player.vy, 13); player.x += player.vx; player.y += player.vy;
+        if (player.x < 8) { player.x = 8; player.vx = 0; } if (player.x + player.w > W - 8) { player.x = W - 8 - player.w; player.vx = 0; }
+        player.grounded = false;
+        if (player.vy >= 0) for (const p of platforms) {
+          if (player.x + player.w > p.x && player.x < p.x + p.w && lastY + player.h <= p.y && player.y + player.h >= p.y) {
+            player.y = p.y - player.h; player.vy = 0; player.grounded = true; break;
+          }
+        }
+        for (const c of coins) if (!c.collected && Math.hypot(player.x + player.w / 2 - c.x, player.y + player.h / 2 - c.y) < 24) { c.collected = true; score++; }
+        for (const h of hazards) if (overlaps(player, h)) end(false);
+        highest = Math.max(highest, 625 - player.y);
+        // Keep the camera at the starting view; scroll only once the player climbs above it.
+        cameraY = Math.min(0, player.y - 270);
+        if (player.y - cameraY > H + 28) end(false);
+        if (player.y < platforms.at(-1).y - 42) end(true);
+        updateHud();
+      }
+      function roundRect(x,y,w,h,r,fill) { ctx.beginPath(); ctx.roundRect(x,y,w,h,r); ctx.fillStyle=fill; ctx.fill(); }
+      function draw() {
+        ctx.clearRect(0,0,W,H);
+        const sky = ctx.createLinearGradient(0,0,0,H); sky.addColorStop(0,'#667fbe'); sky.addColorStop(.55,'#253b72'); sky.addColorStop(1,'#112149'); ctx.fillStyle=sky; ctx.fillRect(0,0,W,H);
+        ctx.save(); ctx.translate(0, -cameraY);
+        // Tower core and circular wall bands suggest a spiraling tower.
+        ctx.fillStyle = '#1c315f'; ctx.fillRect(42, cameraY - 120, W - 84, H - cameraY + 260);
+        for (let y = Math.floor((cameraY - 100) / 72) * 72; y < H - cameraY + 100; y += 72) {
+          ctx.strokeStyle = '#8cb5e755'; ctx.lineWidth = 3; ctx.beginPath(); ctx.ellipse(W/2,y,W*.43,19,0,0,Math.PI*2); ctx.stroke();
+        }
+        for (const p of platforms) {
+          const base = p.start ? '#63b9a3' : '#91c9e6', highlight = p.start ? '#c6ffdc' : '#e1f7ff';
+          roundRect(p.x,p.y,p.w,p.h,7,base); roundRect(p.x+4,p.y+3,p.w-8,5,3,highlight);
+          if (p.start) { ctx.fillStyle = '#effff5'; ctx.font = '800 10px sans-serif'; ctx.textAlign = 'center'; ctx.fillText('START', p.x + p.w / 2, p.y - 8); }
+        }
+        for (const h of hazards) { roundRect(h.x,h.y,h.w,h.h,4,'#e94e55'); ctx.fillStyle='#ff9b82'; for(let x=h.x+5;x<h.x+h.w;x+=8){ctx.fillRect(x,h.y+3,3,5);} }
+        for (const c of coins) if (!c.collected) { ctx.beginPath(); ctx.arc(c.x,c.y,c.r,0,Math.PI*2); ctx.fillStyle='#ffdb4d'; ctx.fill(); ctx.lineWidth=3; ctx.strokeStyle='#fff4a3'; ctx.stroke(); ctx.fillStyle='#c98b21'; ctx.font='bold 11px sans-serif'; ctx.textAlign='center'; ctx.fillText('★',c.x,c.y+4); }
+        // Small explorer character.
+        roundRect(player.x,player.y+9,player.w,player.h-9,7,'#f4b34d'); ctx.fillStyle='#fff0c7'; ctx.beginPath(); ctx.arc(player.x+player.w/2,player.y+8,10,0,Math.PI*2); ctx.fill();
+        ctx.fillStyle='#18244c'; ctx.fillRect(player.x+(player.facing>0?15:6),player.y+7,3,3); ctx.fillStyle='#d94b5b'; ctx.fillRect(player.x+3,player.y+18,player.w-6,4);
+        ctx.restore();
+        if (state === 'playing' && player.y - cameraY > H - 76) { ctx.fillStyle='#dceeff'; ctx.globalAlpha=.45; ctx.fillRect(0,H-14,W,14); ctx.globalAlpha=1; }
+      }
+      function loop() { update(); draw(); requestAnimationFrame(loop); }
+      addEventListener('keydown', e => { if (['ArrowLeft','ArrowRight','ArrowUp','Space'].includes(e.code)) { e.preventDefault(); keys.add(e.code); } if (state === 'ended' && e.code === 'Enter') reset(); });
+      addEventListener('keyup', e => keys.delete(e.code)); restart.addEventListener('click', reset);
+      buildLevel();
+      player.x = platforms[0].x + platforms[0].w / 2 - player.w / 2;
+      player.y = platforms[0].y - player.h;
+      player.grounded = true;
+      score = 0; highest = 0; cameraY = 0; state = 'intro'; updateHud(); loop();
+    })();
+  </script>
+</body>
+</html>
