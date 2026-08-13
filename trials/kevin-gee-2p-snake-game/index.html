@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Snake Sprint</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <main class="game-shell">
+      <header class="topbar">
+        <a class="brand" href="./index.html" aria-label="Snake Sprint home">SNAKE<span>SPRINT</span></a>
+        <div class="timer-wrap" aria-label="Time remaining">
+          <span class="timer-label">ROUND TIME</span>
+          <strong id="timer">02:00</strong>
+        </div>
+        <button class="restart-button" id="restartButton" type="button">Restart <kbd>R</kbd></button>
+      </header>
+
+      <section class="play-area" aria-label="Snake game">
+        <aside class="player-card player-one">
+          <div class="player-title"><span class="dot"></span><span>PLAYER 01</span></div>
+          <div class="score" id="scoreOne">000</div>
+          <div class="controls"><kbd>W</kbd><span>↑</span><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd></div>
+          <p>Use WASD to steer.</p>
+        </aside>
+
+        <div class="board-wrap">
+          <canvas id="gameCanvas" width="600" height="600" tabindex="0" aria-label="Snake game board"></canvas>
+          <div class="overlay" id="overlay">
+            <div class="overlay-content">
+              <p class="eyebrow" id="overlayEyebrow">READY?</p>
+              <h1 id="overlayTitle">SNAKE SPRINT</h1>
+              <p id="overlayMessage">Collect the fruit. Outlast the clock.</p>
+              <button id="startButton" type="button">Start game <span>↗</span></button>
+            </div>
+          </div>
+        </div>
+
+        <aside class="player-card player-two" id="playerTwoCard">
+          <div class="player-title"><span class="dot"></span><span>PLAYER 02</span></div>
+          <div class="score" id="scoreTwo">---</div>
+          <div class="controls arrows"><kbd>↑</kbd><kbd>←</kbd><kbd>↓</kbd><kbd>→</kbd></div>
+          <p id="playerTwoHint">Press an arrow key to join.</p>
+        </aside>
+      </section>
+
+      <footer>
+        <p>Grab fruit <span class="fruit-icon">✦</span> to grow · Don’t crash into a wall or another snake</p>
+        <p class="footer-status" id="statusText">Press start when you're ready.</p>
+      </footer>
+    </main>
+    <script src="game.js"></script>
+  </body>
+</html>

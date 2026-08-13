@@ -1,5 +1,14 @@
 [
   {
+    "slug": "kevin-gee-2p-snake-game",
+    "trialId": "3eb86b29-ec66-485f-88a8-16ff21a6a53f",
+    "studentName": "Kevin Gee",
+    "title": "2p snake game",
+    "description": "2 player snake game with a timer system for a time attack game mode",
+    "submittedAt": "2026-08-13T20:16:31.784Z",
+    "thumbnail": "kevin-gee-2p-snake-game/thumb.png"
+  },
+  {
     "slug": "trial-student-2048",
     "trialId": "1b925fe8-f8ff-46b8-b00b-5f85015b0ffe",
     "studentName": "Trial Student",
