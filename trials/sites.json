@@ -1,1 +1,11 @@
-[]
+[
+  {
+    "slug": "trial-student-2048-edition",
+    "trialId": "1b925fe8-f8ff-46b8-b00b-5f85015b0ffe",
+    "studentName": "Trial Student",
+    "title": "2048: +- Edition",
+    "description": "A twist on classic 2048! Now, instead of just normal tiles, there are negative tiles that when hitting a positive tile of the same value, will cancel each other out.",
+    "submittedAt": "2026-08-13T18:43:51.723Z",
+    "thumbnail": "trials/trial-student-2048-edition/thumb.png"
+  }
+]
