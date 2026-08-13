@@ -1,5 +1,14 @@
 [
   {
+    "slug": "victor-phan-pomodoro-marbles",
+    "trialId": "4b3c2a2b-273e-434b-8fe9-17e8af911f51",
+    "studentName": "Victor Phan",
+    "title": "Pomodoro Marbles",
+    "description": "A Pomodoro timer with a marble-run themed screensaver. Watch as marbles run through chutes, springs, and curves while you study!",
+    "submittedAt": "2026-08-13T21:35:12.384Z",
+    "thumbnail": "victor-phan-pomodoro-marbles/thumb.png"
+  },
+  {
     "slug": "kevin-gee-2p-snake-game",
     "trialId": "3eb86b29-ec66-485f-88a8-16ff21a6a53f",
     "studentName": "Kevin Gee",
