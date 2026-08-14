@@ -1,0 +1,702 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Mario Clone</title>
+  <style>
+    :root {
+      --sky: #86d7ff;
+      --sky2: #d7f5ff;
+      --ground: #7a4b25;
+      --dirt: #9c6a39;
+      --brick: #c96a32;
+      --brick2: #ffb16c;
+      --pipe: #29a34a;
+      --pipe-dark: #1c7d37;
+      --ui: rgba(10, 18, 30, 0.72);
+      --text: #f7fbff;
+      --accent: #ffd44d;
+      --enemy: #d94b3d;
+      --power: #f9f06b;
+      --flag: #f5f5f5;
+      --goal: #49d17d;
+    }
+
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0;
+      height: 100%;
+      overflow: hidden;
+      background:
+        linear-gradient(var(--sky), var(--sky2) 65%, #97d05a 65%, #69b33f 100%);
+      font-family: Arial, Helvetica, sans-serif;
+      color: var(--text);
+    }
+
+    #game {
+      display: block;
+      width: 100vw;
+      height: 100vh;
+      image-rendering: pixelated;
+    }
+
+    .hud {
+      position: fixed;
+      top: 16px;
+      left: 16px;
+      right: 16px;
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      pointer-events: none;
+      z-index: 10;
+      font-size: 14px;
+    }
+
+    .panel {
+      background: var(--ui);
+      backdrop-filter: blur(8px);
+      border: 1px solid rgba(255,255,255,0.15);
+      border-radius: 14px;
+      padding: 10px 14px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.18);
+    }
+
+    .panel strong { color: var(--accent); }
+
+    .center-overlay {
+      position: fixed;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      background: rgba(6, 10, 18, 0.35);
+      z-index: 20;
+    }
+
+    .card {
+      width: min(560px, calc(100vw - 32px));
+      background: rgba(10, 18, 30, 0.88);
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 22px;
+      padding: 24px;
+      box-shadow: 0 24px 60px rgba(0,0,0,0.32);
+    }
+
+    .card h1 {
+      margin: 0 0 10px;
+      font-size: 28px;
+    }
+
+    .card p {
+      margin: 8px 0;
+      line-height: 1.5;
+      color: rgba(247, 251, 255, 0.9);
+    }
+
+    .keys {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+      margin: 16px 0;
+      font-size: 14px;
+    }
+
+    .keys div {
+      background: rgba(255,255,255,0.06);
+      border-radius: 12px;
+      padding: 10px 12px;
+    }
+
+    button {
+      appearance: none;
+      border: none;
+      background: linear-gradient(180deg, #ffd85f, #f4b93d);
+      color: #1a1a1a;
+      font-weight: 700;
+      border-radius: 999px;
+      padding: 12px 18px;
+      cursor: pointer;
+      margin-top: 8px;
+    }
+
+    button:hover { filter: brightness(1.05); }
+    .hidden { display: none; }
+  </style>
+</head>
+<body>
+  <canvas id="game"></canvas>
+
+  <div class="hud">
+    <div class="panel" id="stats">Score: <strong id="score">0</strong> | Lives: <strong id="lives">3</strong> | Power: <strong id="power">Small</strong></div>
+    <div class="panel">Reach the flag. Enter connected pipes to travel. Stomp enemies from above.</div>
+  </div>
+
+  <div class="center-overlay" id="overlay">
+    <div class="card">
+      <h1>Mario Clone</h1>
+      <p>Run, jump, grab a powerup, use the connected pipe system, and reach the end flag to win.</p>
+      <div class="keys">
+        <div><strong>Move:</strong> Arrow keys or A/D</div>
+        <div><strong>Jump:</strong> Space / W / Up</div>
+        <div><strong>Pipe travel:</strong> Down on a pipe</div>
+        <div><strong>Restart:</strong> R</div>
+      </div>
+      <button id="startBtn">Start Game</button>
+    </div>
+  </div>
+
+  <script>
+    const canvas = document.getElementById('game');
+    const ctx = canvas.getContext('2d');
+    const scoreEl = document.getElementById('score');
+    const livesEl = document.getElementById('lives');
+    const powerEl = document.getElementById('power');
+    const overlay = document.getElementById('overlay');
+    const startBtn = document.getElementById('startBtn');
+
+    const TILE = 32;
+    const WORLD_W = 120;
+    const WORLD_H = 18;
+    const GRAVITY = 0.55;
+    const MOVE_SPEED = 2.35;
+    const JUMP_SPEED = -10.2;
+    const PIPE_TRAVEL_TIME = 1200;
+
+    let dpr = 1;
+    let viewW = 0;
+    let viewH = 0;
+    let cameraX = 0;
+    let keys = {};
+    let state;
+    let lastTs = 0;
+
+    function resize() {
+      dpr = window.devicePixelRatio || 1;
+      viewW = window.innerWidth;
+      viewH = window.innerHeight;
+      canvas.width = Math.floor(viewW * dpr);
+      canvas.height = Math.floor(viewH * dpr);
+      canvas.style.width = viewW + 'px';
+      canvas.style.height = viewH + 'px';
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    }
+
+    function buildMap() {
+      const map = Array.from({ length: WORLD_H }, () => Array(WORLD_W).fill(0));
+      for (let x = 0; x < WORLD_W; x++) {
+        map[17][x] = 1;
+        map[16][x] = 2;
+      }
+      for (let x = 6; x < 12; x++) map[13][x] = 3;
+      for (let x = 14; x < 20; x++) map[11][x] = 3;
+      for (let x = 24; x < 31; x++) map[12][x] = 3;
+      for (let x = 36; x < 43; x++) map[9][x] = 3;
+      for (let x = 48; x < 57; x++) map[13][x] = 3;
+      for (let x = 62; x < 70; x++) map[10][x] = 3;
+      for (let x = 76; x < 83; x++) map[12][x] = 3;
+      for (let x = 90; x < 96; x++) map[11][x] = 3;
+      for (let x = 100; x < 108; x++) map[13][x] = 3;
+
+      map[15][18] = 4;
+      map[15][19] = 4;
+      map[15][42] = 4;
+      map[15][43] = 4;
+      map[15][78] = 4;
+      map[15][79] = 4;
+
+      map[15][84] = 5;
+      map[14][84] = 5;
+      map[13][84] = 5;
+      map[12][84] = 5;
+
+      map[15][110] = 6;
+      map[14][110] = 6;
+      map[13][110] = 6;
+      map[12][110] = 6;
+      map[11][110] = 6;
+      return map;
+    }
+
+    function resetGame() {
+      state = {
+        running: false,
+        won: false,
+        dead: false,
+        score: 0,
+        lives: 3,
+        power: 1,
+        map: buildMap(),
+        pipes: [
+          { x: 18, y: 15, destX: 42, destY: 15 },
+          { x: 42, y: 15, destX: 78, destY: 15 },
+          { x: 78, y: 15, destX: 18, destY: 15 },
+          { x: 84, y: 12, destX: 110, destY: 12 },
+          { x: 110, y: 12, destX: 84, destY: 12 }
+        ],
+        powerups: [
+          { x: 15.5 * TILE, y: 10 * TILE, active: true, vx: 1.1, vy: 0 }
+        ],
+        enemies: [
+          { x: 28 * TILE, y: 15 * TILE - 24, w: 24, h: 24, vx: -1.0, vy: 0, alive: true },
+          { x: 66 * TILE, y: 15 * TILE - 24, w: 24, h: 24, vx: 1.1, vy: 0, alive: true }
+        ],
+        player: {
+          x: 4 * TILE,
+          y: 10 * TILE,
+          w: 24,
+          h: 30,
+          vx: 0,
+          vy: 0,
+          onGround: false,
+          facing: 1,
+          invuln: 0,
+          pipeLock: 0,
+          pipeTarget: null,
+          pipeCooldown: 0
+        },
+        flag: { x: 112 * TILE, y: 6 * TILE, h: 11 * TILE },
+      };
+      cameraX = 0;
+      updateHud();
+    }
+
+    function updateHud() {
+      scoreEl.textContent = state.score;
+      livesEl.textContent = state.lives;
+      powerEl.textContent = state.power === 1 ? 'Small' : 'Big';
+    }
+
+    function tileAt(x, y) {
+      const tx = Math.floor(x / TILE);
+      const ty = Math.floor(y / TILE);
+      if (ty < 0 || ty >= WORLD_H || tx < 0 || tx >= WORLD_W) return 0;
+      return state.map[ty][tx];
+    }
+
+    function isSolid(tile) {
+      return tile === 1 || tile === 2 || tile === 3 || tile === 4 || tile === 5 || tile === 6;
+    }
+
+    function rectCollidesSolid(x, y, w, h) {
+      const points = [
+        [x, y], [x + w, y], [x, y + h], [x + w, y + h]
+      ];
+      return points.some(([px, py]) => isSolid(tileAt(px, py)));
+    }
+
+    function getSolidTilesAround(x, y, w, h) {
+      const minTx = Math.floor(x / TILE) - 1;
+      const maxTx = Math.floor((x + w) / TILE) + 1;
+      const minTy = Math.floor(y / TILE) - 1;
+      const maxTy = Math.floor((y + h) / TILE) + 1;
+      const tiles = [];
+      for (let ty = minTy; ty <= maxTy; ty++) {
+        for (let tx = minTx; tx <= maxTx; tx++) {
+          if (tx < 0 || ty < 0 || tx >= WORLD_W || ty >= WORLD_H) continue;
+          const t = state.map[ty][tx];
+          if (isSolid(t)) tiles.push({ tx, ty, t });
+        }
+      }
+      return tiles;
+    }
+
+    function resolveRect(entity) {
+      entity.onGround = false;
+      entity.x += entity.vx;
+      let tiles = getSolidTilesAround(entity.x, entity.y, entity.w, entity.h);
+      for (const tile of tiles) {
+        const tx = tile.tx * TILE;
+        const ty = tile.ty * TILE;
+        if (entity.x < tx + TILE && entity.x + entity.w > tx && entity.y < ty + TILE && entity.y + entity.h > ty) {
+          if (entity.vx > 0) entity.x = tx - entity.w;
+          else if (entity.vx < 0) entity.x = tx + TILE;
+          entity.vx = 0;
+        }
+      }
+
+      entity.vy += GRAVITY;
+      if (entity.vy > 12) entity.vy = 12;
+      entity.y += entity.vy;
+      tiles = getSolidTilesAround(entity.x, entity.y, entity.w, entity.h);
+      for (const tile of tiles) {
+        const tx = tile.tx * TILE;
+        const ty = tile.ty * TILE;
+        if (entity.x < tx + TILE && entity.x + entity.w > tx && entity.y < ty + TILE && entity.y + entity.h > ty) {
+          if (entity.vy > 0) {
+            entity.y = ty - entity.h;
+            entity.vy = 0;
+            entity.onGround = true;
+          } else if (entity.vy < 0) {
+            entity.y = ty + TILE;
+            entity.vy = 0;
+          }
+        }
+      }
+    }
+
+    function playerRect() {
+      const p = state.player;
+      return { x: p.x, y: p.y, w: p.w, h: p.h };
+    }
+
+    function hurtPlayer() {
+      const p = state.player;
+      if (p.invuln > 0) return;
+      if (state.power > 1) {
+        state.power = 1;
+        p.invuln = 90;
+      } else {
+        state.lives -= 1;
+        p.invuln = 120;
+        if (state.lives <= 0) {
+          state.dead = true;
+          showOverlay('Game Over', 'Press Restart or R to try again.');
+        } else {
+          p.x = 4 * TILE;
+          p.y = 10 * TILE;
+          p.vx = 0;
+          p.vy = 0;
+        }
+      }
+      updateHud();
+    }
+
+    function showOverlay(title, message) {
+      overlay.innerHTML = `
+        <div class="card">
+          <h1>${title}</h1>
+          <p>${message}</p>
+          <div class="keys">
+            <div><strong>Move:</strong> Arrow keys or A/D</div>
+            <div><strong>Jump:</strong> Space / W / Up</div>
+            <div><strong>Pipe travel:</strong> Down on a pipe</div>
+            <div><strong>Restart:</strong> R</div>
+          </div>
+          <button id="restartBtn">Restart</button>
+        </div>
+      `;
+      overlay.classList.remove('hidden');
+      document.getElementById('restartBtn').onclick = () => {
+        resetGame();
+        overlay.classList.add('hidden');
+        state.running = true;
+      };
+    }
+
+    function maybeEnterPipe() {
+      const p = state.player;
+      if (p.pipeCooldown > 0 || !p.onGround || !keys['ArrowDown'] && !keys['s'] && !keys['S']) return;
+      for (const pipe of state.pipes) {
+        const px = pipe.x * TILE;
+        const py = pipe.y * TILE - TILE;
+        if (p.x + p.w > px && p.x < px + TILE * 2 && p.y + p.h > py && p.y + p.h < py + 16) {
+          p.pipeLock = PIPE_TRAVEL_TIME;
+          p.pipeTarget = { x: pipe.destX * TILE, y: pipe.destY * TILE - TILE };
+          p.vx = 0;
+          p.vy = 0;
+          p.pipeCooldown = 45;
+          return;
+        }
+      }
+    }
+
+    function updatePlayer(dt) {
+      const p = state.player;
+      if (p.invuln > 0) p.invuln -= 1;
+      if (p.pipeCooldown > 0) p.pipeCooldown -= 1;
+
+      if (p.pipeLock > 0 && p.pipeTarget) {
+        p.pipeLock -= dt;
+        const t = 1 - Math.max(0, p.pipeLock) / PIPE_TRAVEL_TIME;
+        p.x += (p.pipeTarget.x - p.x) * 0.18;
+        p.y += (p.pipeTarget.y - p.y) * 0.18;
+        p.vx = 0;
+        p.vy = 0;
+        if (t >= 0.96) {
+          p.x = p.pipeTarget.x;
+          p.y = p.pipeTarget.y;
+          p.pipeLock = 0;
+          p.pipeTarget = null;
+        }
+        return;
+      }
+
+      const left = keys['ArrowLeft'] || keys['a'] || keys['A'];
+      const right = keys['ArrowRight'] || keys['d'] || keys['D'];
+      const jump = keys[' '] || keys['Spacebar'] || keys['w'] || keys['W'] || keys['ArrowUp'];
+
+      if (left) { p.vx = -MOVE_SPEED; p.facing = -1; }
+      else if (right) { p.vx = MOVE_SPEED; p.facing = 1; }
+      else p.vx *= 0.78;
+
+      if (jump && p.onGround) {
+        p.vy = JUMP_SPEED;
+        p.onGround = false;
+      }
+
+      maybeEnterPipe();
+      resolveRect(p);
+
+      if (p.y > 24 * TILE) {
+        hurtPlayer();
+      }
+    }
+
+    function updateEnemies() {
+      const p = state.player;
+      for (const e of state.enemies) {
+        if (!e.alive) continue;
+        e.vy += GRAVITY;
+        if (e.vy > 12) e.vy = 12;
+        e.x += e.vx;
+        let blocked = false;
+        for (const tile of getSolidTilesAround(e.x, e.y, e.w, e.h)) {
+          const tx = tile.tx * TILE, ty = tile.ty * TILE;
+          if (e.x < tx + TILE && e.x + e.w > tx && e.y < ty + TILE && e.y + e.h > ty) {
+            if (e.vx > 0) e.x = tx - e.w; else e.x = tx + TILE;
+            e.vx *= -1;
+            blocked = true;
+          }
+        }
+        e.y += e.vy;
+        for (const tile of getSolidTilesAround(e.x, e.y, e.w, e.h)) {
+          const tx = tile.tx * TILE, ty = tile.ty * TILE;
+          if (e.x < tx + TILE && e.x + e.w > tx && e.y < ty + TILE && e.y + e.h > ty) {
+            if (e.vy > 0) { e.y = ty - e.h; e.vy = 0; }
+            else if (e.vy < 0) { e.y = ty + TILE; e.vy = 0; }
+          }
+        }
+        if (!blocked && Math.random() < 0.002) e.vx *= -1;
+
+        const pr = playerRect();
+        if (e.alive && pr.x < e.x + e.w && pr.x + pr.w > e.x && pr.y < e.y + e.h && pr.y + pr.h > e.y) {
+          if (p.vy > 0 && p.y + p.h - 6 < e.y) {
+            e.alive = false;
+            p.vy = JUMP_SPEED * 0.55;
+            state.score += 100;
+            updateHud();
+          } else {
+            hurtPlayer();
+          }
+        }
+      }
+    }
+
+    function updatePowerups() {
+      const p = state.player;
+      for (const item of state.powerups) {
+        if (!item.active) continue;
+        item.vy += GRAVITY;
+        if (item.vy > 8) item.vy = 8;
+        item.x += item.vx;
+        item.y += item.vy;
+        let horizontalBounce = false;
+        for (const tile of getSolidTilesAround(item.x, item.y, 20, 20)) {
+          const tx = tile.tx * TILE, ty = tile.ty * TILE;
+          if (item.x < tx + TILE && item.x + 20 > tx && item.y < ty + TILE && item.y + 20 > ty) {
+            if (item.vy > 0) { item.y = ty - 20; item.vy = 0; }
+            else if (item.vy < 0) { item.y = ty + TILE; item.vy = 0; }
+            else {
+              item.vx *= -1;
+              horizontalBounce = true;
+            }
+          }
+        }
+        if (!horizontalBounce && Math.random() < 0.003) item.vx *= -1;
+
+        if (p.x < item.x + 20 && p.x + p.w > item.x && p.y < item.y + 20 && p.y + p.h > item.y) {
+          item.active = false;
+          state.power = 2;
+          state.score += 500;
+          updateHud();
+        }
+      }
+    }
+
+    function updateFlag() {
+      const p = state.player;
+      if (p.x + p.w > state.flag.x && p.x < state.flag.x + 16 && p.y + p.h > state.flag.y && p.y < state.flag.y + state.flag.h) {
+        state.won = true;
+        state.running = false;
+        showOverlay('You Win!', 'You reached the end flag. Press Restart to play again.');
+      }
+    }
+
+    function updateCamera() {
+      cameraX = Math.max(0, Math.min(state.player.x - viewW * 0.45, WORLD_W * TILE - viewW));
+    }
+
+    function drawBackground() {
+      ctx.fillStyle = '#86d7ff';
+      ctx.fillRect(0, 0, viewW, viewH);
+      const offset = -cameraX * 0.2;
+      ctx.fillStyle = 'rgba(255,255,255,0.55)';
+      for (let i = 0; i < 8; i++) {
+        const x = ((i * 220) + offset) % (WORLD_W * TILE);
+        ctx.beginPath();
+        ctx.ellipse(x, 110, 60, 22, 0, 0, Math.PI * 2);
+        ctx.ellipse(x + 40, 100, 54, 18, 0, 0, Math.PI * 2);
+        ctx.ellipse(x + 82, 112, 48, 16, 0, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+
+    function drawTile(tile, x, y) {
+      if (tile === 0) return;
+      if (tile === 1) {
+        ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--ground');
+        ctx.fillRect(x, y, TILE, TILE);
+        ctx.fillStyle = 'rgba(255,255,255,0.08)';
+        ctx.fillRect(x, y, TILE, 6);
+      } else if (tile === 2) {
+        ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--dirt');
+        ctx.fillRect(x, y, TILE, TILE);
+      } else if (tile === 3) {
+        ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--brick');
+        ctx.fillRect(x, y, TILE, TILE);
+        ctx.strokeStyle = getComputedStyle(document.documentElement).getPropertyValue('--brick2');
+        ctx.strokeRect(x + 2, y + 2, TILE - 4, TILE - 4);
+      } else if (tile === 4 || tile === 5 || tile === 6) {
+        const w = tile === 4 ? TILE * 2 : TILE;
+        const h = tile === 4 ? TILE * 2 : TILE * (tile === 5 ? 3 : 5);
+        const px = tile === 4 ? x : x;
+        const py = tile === 4 ? y - TILE : y - (h - TILE);
+        ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--pipe-dark');
+        ctx.fillRect(px - 2, py - 4, w + 4, h + 4);
+        ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--pipe');
+        ctx.fillRect(px, py, w, h);
+        ctx.fillStyle = 'rgba(255,255,255,0.14)';
+        ctx.fillRect(px + 4, py + 4, 6, h - 8);
+      }
+    }
+
+    function drawPlayer() {
+      const p = state.player;
+      const blink = p.invuln > 0 && Math.floor(p.invuln / 6) % 2 === 0;
+      if (blink) return;
+      const color = state.power > 1 ? '#d64735' : '#ff8c3a';
+      ctx.fillStyle = color;
+      ctx.fillRect(p.x - cameraX, p.y, p.w, p.h);
+      ctx.fillStyle = '#1a1a1a';
+      ctx.fillRect(p.x - cameraX + (p.facing > 0 ? 16 : 6), p.y + 8, 4, 4);
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(p.x - cameraX + (p.facing > 0 ? 18 : 8), p.y + 9, 1, 1);
+      ctx.fillStyle = '#2b2b2b';
+      ctx.fillRect(p.x - cameraX + 4, p.y + p.h - 5, 6, 5);
+      ctx.fillRect(p.x - cameraX + 14, p.y + p.h - 5, 6, 5);
+      if (state.power > 1) {
+        ctx.fillStyle = '#ffdc76';
+        ctx.fillRect(p.x - cameraX - 2, p.y + 10, 4, 10);
+      }
+    }
+
+    function drawEnemy(e) {
+      if (!e.alive) return;
+      ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--enemy');
+      ctx.fillRect(e.x - cameraX, e.y, e.w, e.h);
+      ctx.fillStyle = '#fff';
+      ctx.fillRect(e.x - cameraX + 6, e.y + 7, 4, 4);
+      ctx.fillRect(e.x - cameraX + 14, e.y + 7, 4, 4);
+      ctx.fillStyle = '#222';
+      ctx.fillRect(e.x - cameraX + 7, e.y + 8, 2, 2);
+      ctx.fillRect(e.x - cameraX + 15, e.y + 8, 2, 2);
+    }
+
+    function drawPowerup(item) {
+      if (!item.active) return;
+      ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--power');
+      ctx.beginPath();
+      ctx.arc(item.x - cameraX + 10, item.y + 10, 10, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#7b5f00';
+      ctx.fillRect(item.x - cameraX + 8, item.y + 4, 4, 10);
+    }
+
+    function drawFlag() {
+      const f = state.flag;
+      const baseX = f.x - cameraX;
+      ctx.strokeStyle = '#444';
+      ctx.lineWidth = 4;
+      ctx.beginPath();
+      ctx.moveTo(baseX, f.y + f.h);
+      ctx.lineTo(baseX, f.y - 12);
+      ctx.stroke();
+      ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--flag');
+      ctx.fillRect(baseX, f.y - 8, 24, 18);
+      ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--goal');
+      ctx.fillRect(baseX + 2, f.y - 6, 20, 14);
+      ctx.fillStyle = '#245f3d';
+      ctx.fillRect(baseX - 8, f.y + f.h - 10, 18, 10);
+    }
+
+    function drawWorld() {
+      const startX = Math.floor(cameraX / TILE) - 1;
+      const endX = Math.ceil((cameraX + viewW) / TILE) + 1;
+      for (let y = 0; y < WORLD_H; y++) {
+        for (let x = startX; x <= endX; x++) {
+          if (x < 0 || x >= WORLD_W) continue;
+          const tile = state.map[y][x];
+          if (!tile) continue;
+          drawTile(tile, x * TILE - cameraX, y * TILE);
+        }
+      }
+      for (const item of state.powerups) drawPowerup(item);
+      for (const e of state.enemies) drawEnemy(e);
+      drawFlag();
+      drawPlayer();
+    }
+
+    function draw() {
+      drawBackground();
+      drawWorld();
+      if (!state.running && !state.won && !state.dead) {
+        ctx.fillStyle = 'rgba(0,0,0,0.12)';
+        ctx.fillRect(0, 0, viewW, viewH);
+      }
+    }
+
+    function step(ts) {
+      const dt = ts - lastTs;
+      lastTs = ts;
+      if (state.running) {
+        updatePlayer(dt || 16.666);
+        updateEnemies();
+        updatePowerups();
+        updateFlag();
+        updateCamera();
+      }
+      draw();
+      requestAnimationFrame(step);
+    }
+
+    window.addEventListener('keydown', (e) => {
+      keys[e.key] = true;
+      if (e.key === 'r' || e.key === 'R') {
+        resetGame();
+        overlay.classList.add('hidden');
+        state.running = true;
+      }
+      if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', ' '].includes(e.key)) e.preventDefault();
+      if (!state.running && (e.key === 'Enter' || e.key === ' ')) {
+        overlay.classList.add('hidden');
+        state.running = true;
+      }
+    });
+
+    window.addEventListener('keyup', (e) => {
+      keys[e.key] = false;
+    });
+
+    window.addEventListener('resize', resize);
+    startBtn.addEventListener('click', () => {
+      overlay.classList.add('hidden');
+      state.running = true;
+    });
+
+    resize();
+    resetGame();
+    requestAnimationFrame(step);
+  </script>
+</body>
+</html>
