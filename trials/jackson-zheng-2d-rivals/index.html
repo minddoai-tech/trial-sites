@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rivals 2D - Arena Shooter</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<canvas id="game"></canvas>
+
+<div id="menu">
+  <h1>RIVALS 2D</h1>
+  <p class="sub">Fast-paced top-down arena shooter</p>
+  <div class="controls">
+    <div><b>WASD</b> move</div>
+    <div><b>Mouse</b> aim</div>
+    <div><b>Click</b> shoot</div>
+    <div><b>R</b> reload</div>
+    <div><b>M</b> mute</div>
+    <div><b>Esc</b> pause</div>
+  </div>
+  <button id="start">START GAME</button>
+  <p class="hint">Grab weapon pickups. Survive. Outplay the bots.</p>
+</div>
+
+<div id="pause" class="hidden">
+  <h2>PAUSED</h2>
+  <button id="resume">RESUME</button>
+</div>
+
+<div id="upgrade" class="modal hidden">
+  <h2>LEVEL <span id="upLevel">1</span> CLEAR!</h2>
+  <p class="sub">Choose an upgrade</p>
+  <div id="upgradeOptions" class="modal-options"></div>
+</div>
+
+<div id="weapon" class="modal hidden">
+  <h2>WEAPONS</h2>
+  <p class="sub">Upgrade your current weapon or switch to another</p>
+  <div id="weaponOptions" class="modal-options"></div>
+</div>
+
+<script src="game.js"></script>
+</body>
+</html>
