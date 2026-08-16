@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Battle Formation</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<section id="home" class="screen">
+  <header class="home-top">
+    <h1 class="game-title">Battle Formation</h1>
+    <div class="home-stats">
+      <div class="stat-pill money-pill">Coins <span id="home-money">0</span></div>
+      <div class="stat-pill">Wave <span id="home-wave">1</span></div>
+    </div>
+  </header>
+
+  <div id="intermission-banner" class="intermission hidden">
+    <div class="im-info">
+      <span class="im-title">Wave <span id="im-wave">1</span> cleared!</span>
+      <span class="im-sub">Spend your coins now - the next wave arrives in <b id="im-countdown">10</b>s and it is bigger.</span>
+      <div class="im-track"><div id="im-bar" class="im-bar"></div></div>
+    </div>
+    <button id="im-fight" class="btn primary im-btn">Fight Next Wave</button>
+  </div>
+
+  <div class="home-body">
+    <aside class="panel shop-panel">
+      <h2 class="panel-title">Recruit</h2>
+      <p class="panel-sub">Buy troops for your army. Coins are earned by defeating enemies in battle.</p>
+
+      <div class="shop-item" data-type="knight">
+        <div class="shop-icon icon-knight"></div>
+        <div class="shop-info">
+          <div class="shop-name">Knight</div>
+          <div class="shop-cost">50 coins</div>
+        </div>
+        <button class="buy-btn" data-buy="knight">Buy</button>
+        <div class="shop-count" id="count-knight">0</div>
+      </div>
+
+      <div class="shop-item" data-type="archer">
+        <div class="shop-icon icon-archer"></div>
+        <div class="shop-info">
+          <div class="shop-name">Archer</div>
+          <div class="shop-cost">65 coins</div>
+        </div>
+        <button class="buy-btn" data-buy="archer">Buy</button>
+        <div class="shop-count" id="count-archer">0</div>
+      </div>
+
+      <div class="shop-item" data-type="catapult">
+        <div class="shop-icon icon-catapult"></div>
+        <div class="shop-info">
+          <div class="shop-name">Catapult</div>
+          <div class="shop-cost">200 coins</div>
+          <div class="shop-note">Takes a 2x2 square</div>
+        </div>
+        <button class="buy-btn" data-buy="catapult">Buy</button>
+        <div class="shop-count" id="count-catapult">0</div>
+      </div>
+
+      <div id="shop-msg" class="shop-msg"></div>
+    </aside>
+
+    <main class="formation-wrap">
+      <div class="formation-head">
+        <h2 class="panel-title">Spawn Formation</h2>
+        <span class="formation-hint">Drag troops to move them. Right-click a troop to dismiss it.</span>
+      </div>
+      <div class="board-frame">
+        <canvas id="formation-canvas"></canvas>
+      </div>
+      <div class="legend">
+        <span class="legend-item"><span class="swatch sw-knight"></span>Knight</span>
+        <span class="legend-item"><span class="swatch sw-archer"></span>Archer</span>
+        <span class="legend-item"><span class="swatch sw-catapult"></span>Catapult (2x2)</span>
+      </div>
+    </main>
+
+    <aside class="panel actions-panel">
+      <h2 class="panel-title">Your Army</h2>
+      <div id="army-summary" class="army-summary"></div>
+
+      <button id="start-battle" class="btn primary big">Start Battle</button>
+      <button id="reset-game" class="btn ghost">Reset Game</button>
+
+      <details class="help" open>
+        <summary>How to Play</summary>
+        <ul>
+          <li>Recruit knights, archers, and catapults, then arrange them on the 20x15 spawn grid.</li>
+          <li>Press <strong>Start Battle</strong>. Your troops hold their formation and march forward.</li>
+          <li>Press <strong>Attack</strong>, then drag a rectangle over troops to select them.</li>
+          <li>Click a point to send the selected troops there. They fight enemies they meet.</li>
+          <li>Knights are tough melee, archers shoot arrows, catapults lob explosive rocks.</li>
+          <li>Each enemy you defeat drops coins that fly up to your coin bar.</li>
+          <li>Win a wave and you get 10 seconds at base to spend your coins before the enemy comes back bigger.</li>
+          <li>You can also press <strong>Withdraw</strong> in battle to retreat to base and keep your survivors.</li>
+          <li>Your army falls when a wave defeats it; you return here to recruit more and try again.</li>
+        </ul>
+      </details>
+    </aside>
+  </div>
+</section>
+
+<section id="battle" class="screen hidden">
+  <div class="battle-hud">
+    <div class="hud-item money-pill">Coins <span id="battle-money">0</span></div>
+    <div class="hud-item">Wave <span id="battle-wave">1</span></div>
+    <div class="hud-item">Your army <span id="battle-mytroops">0</span></div>
+    <div class="hud-item">Enemy <span id="battle-enemies">0</span></div>
+    <div class="hud-actions">
+      <button id="btn-attack" class="hud-btn">Attack</button>
+      <button id="btn-move" class="hud-btn active">Move</button>
+      <button id="btn-withdraw" class="hud-btn ghost">Withdraw</button>
+    </div>
+  </div>
+  <div id="battle-hint" class="battle-hint"></div>
+  <div class="battle-stage">
+    <canvas id="battle-canvas"></canvas>
+
+    <div id="defeat-overlay" class="overlay hidden">
+      <div class="overlay-card">
+        <h2>Your Army Was Defeated</h2>
+        <p class="overlay-text" id="defeat-text"></p>
+        <button id="btn-to-base" class="btn primary">Return to Base</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<script src="js/units.js"></script>
+<script src="js/particles.js"></script>
+<script src="js/formation.js"></script>
+<script src="js/battle.js"></script>
+<script src="js/main.js"></script>
+</body>
+</html>

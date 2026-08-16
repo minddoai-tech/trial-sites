@@ -1,0 +1,208 @@
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+
+:root{
+  --bg:#141922;
+  --bg-2:#1a2230;
+  --panel:#1d2534;
+  --border:#2c3750;
+  --border-soft:#243048;
+  --text:#dfe6f1;
+  --text-dim:#8b96ab;
+  --accent:#5f87ff;
+  --gold:#f2c14e;
+  --gold-2:#c9a227;
+  --green:#4ac06f;
+  --red:#e0534b;
+}
+
+html,body{height:100%}
+body{
+  font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
+  background:var(--bg);
+  color:var(--text);
+  overflow:hidden;
+  user-select:none;
+  -webkit-user-select:none;
+}
+
+.screen{position:fixed;inset:0;overflow:auto}
+.hidden{display:none!important}
+
+button{font-family:inherit;cursor:pointer}
+
+/* ---------- HOME ---------- */
+#home{background:
+  radial-gradient(1000px 500px at 20% -10%, rgba(95,135,255,0.10), transparent 60%),
+  radial-gradient(900px 500px at 90% 110%, rgba(242,193,78,0.07), transparent 60%),
+  var(--bg);
+}
+
+.home-top{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:18px 28px;border-bottom:1px solid var(--border);
+  background:rgba(26,34,48,0.85);
+  position:sticky;top:0;z-index:10;backdrop-filter:blur(8px);
+}
+.game-title{font-size:1.5rem;font-weight:800;letter-spacing:0.5px}
+.home-stats{display:flex;gap:10px}
+
+.stat-pill{
+  background:var(--panel);border:1px solid var(--border);
+  padding:7px 14px;border-radius:20px;font-size:0.85rem;color:var(--text-dim);
+}
+.stat-pill span{color:var(--text);font-weight:700}
+.money-pill span{color:var(--gold);font-weight:800}
+
+.intermission{
+  display:flex;align-items:center;justify-content:space-between;gap:16px;
+  padding:12px 20px;margin:14px 24px 0;
+  background:linear-gradient(135deg, rgba(95,135,255,0.16), rgba(242,193,78,0.12));
+  border:1px solid var(--accent);border-radius:12px;
+}
+.im-info{flex:1;min-width:0}
+.im-title{font-weight:800;color:var(--text);margin-right:10px}
+.im-sub{color:var(--text-dim);font-size:0.88rem}
+.im-sub b{color:var(--gold)}
+.im-track{height:6px;background:var(--bg);border-radius:3px;margin-top:8px;overflow:hidden}
+.im-bar{height:100%;width:100%;background:linear-gradient(90deg,var(--gold),var(--gold-2));border-radius:3px}
+.im-btn{width:auto;margin:0;padding:10px 24px}
+@media(max-width:640px){
+  .intermission{flex-direction:column;align-items:stretch}
+  .im-btn{width:100%}
+}
+
+
+.home-body{
+  display:grid;
+  grid-template-columns:260px minmax(0,1fr) 280px;
+  gap:20px;padding:24px;max-width:1500px;margin:0 auto;
+  align-items:start;
+}@media(max-width:1100px){
+  .home-body{grid-template-columns:1fr 1fr}
+  .actions-panel{grid-column:1/-1}
+}
+@media(max-width:760px){
+  .home-body{grid-template-columns:1fr}
+  .shop-panel{order:2}
+  .actions-panel{order:3}
+}
+
+.panel{
+  background:var(--panel);border:1px solid var(--border);
+  border-radius:14px;padding:20px;
+}
+.panel-title{font-size:1.05rem;font-weight:700;margin-bottom:6px}
+.panel-sub{font-size:0.82rem;color:var(--text-dim);margin-bottom:16px;line-height:1.5}
+
+.shop-item{
+  display:flex;align-items:center;gap:10px;
+  padding:10px;border:1px solid var(--border-soft);border-radius:12px;margin-bottom:10px;
+  background:var(--bg-2);
+}
+.shop-icon{width:44px;height:44px;flex:0 0 auto;border-radius:10px;display:flex;align-items:center;justify-content:center}
+.icon-knight{background:rgba(95,135,255,0.18);color:#8fb0ff}
+.icon-archer{background:rgba(74,192,111,0.18);color:#7fd89c}
+.icon-catapult{background:rgba(193,122,66,0.18);color:#e0a06a}
+.shop-info{flex:1;min-width:0}
+.shop-name{font-size:0.92rem;font-weight:700}
+.shop-cost{font-size:0.78rem;color:var(--gold)}
+.shop-note{font-size:0.72rem;color:var(--text-dim)}
+.buy-btn{
+  border:none;border-radius:8px;padding:8px 12px;font-size:0.85rem;font-weight:700;
+  background:linear-gradient(135deg,var(--accent),#3a5fd0);color:#fff;
+  transition:transform .12s ease, filter .12s ease;
+}
+.buy-btn:hover{transform:translateY(-1px);filter:brightness(1.1)}
+.buy-btn:active{transform:translateY(1px)}
+.buy-btn.disabled{filter:grayscale(0.7) brightness(0.6);cursor:not-allowed}
+.shop-count{
+  min-width:24px;height:24px;border-radius:12px;background:var(--bg);
+  border:1px solid var(--border);color:var(--text-dim);
+  display:flex;align-items:center;justify-content:center;font-size:0.8rem;font-weight:700;
+}
+.shop-msg{min-height:18px;font-size:0.8rem;color:var(--red);margin-top:4px}
+
+.formation-wrap{min-width:0}
+.formation-head{display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin-bottom:8px}
+.formation-hint{font-size:0.78rem;color:var(--text-dim)}
+.board-frame{
+  background:var(--bg-2);border:1px solid var(--border);border-radius:14px;
+  padding:10px;display:inline-block;box-shadow:0 10px 30px rgba(0,0,0,0.3);
+}
+#formation-canvas{display:block;border-radius:8px;background:#f4f6f8;cursor:pointer}
+.legend{display:flex;gap:16px;margin-top:10px;flex-wrap:wrap}
+.legend-item{display:flex;align-items:center;gap:6px;font-size:0.8rem;color:var(--text-dim)}
+.swatch{width:12px;height:12px;border-radius:4px;display:inline-block}
+.sw-knight{background:#5f87ff}
+.sw-archer{background:#4ac06f}
+.sw-catapult{background:#c17a42}
+
+.army-summary{
+  font-size:0.88rem;color:var(--text-dim);line-height:1.7;margin-bottom:18px;
+  padding:12px;border:1px solid var(--border-soft);border-radius:10px;background:var(--bg-2);
+}
+.army-summary b{color:var(--text)}
+
+.btn{
+  display:block;width:100%;border:none;border-radius:12px;
+  padding:13px;font-size:1rem;font-weight:800;margin-bottom:10px;
+  transition:transform .12s ease, filter .12s ease;
+}
+.btn.primary{background:linear-gradient(135deg,var(--accent),#3a5fd0);color:#fff}
+.btn.big{padding:16px;font-size:1.1rem}
+.btn.primary:hover{transform:translateY(-1px);filter:brightness(1.1)}
+.btn.primary:active{transform:translateY(1px)}
+.btn.ghost{background:var(--bg-2);color:var(--text-dim);border:1px solid var(--border)}
+.btn.ghost:hover{color:var(--text);border-color:var(--accent)}
+.btn:disabled{filter:grayscale(0.8) brightness(0.6);cursor:not-allowed;transform:none}
+
+.help{margin-top:18px;border-top:1px solid var(--border-soft);padding-top:14px}
+.help summary{cursor:pointer;font-weight:700;font-size:0.92rem;color:var(--text)}
+.help ul{margin:10px 0 0;padding-left:18px;font-size:0.8rem;color:var(--text-dim);line-height:1.65}
+
+/* ---------- BATTLE ---------- */
+#battle{display:flex;flex-direction:column;background:#0f141d}
+
+.battle-hud{
+  flex:0 0 auto;display:flex;align-items:center;gap:14px;
+  padding:0 16px;height:54px;background:var(--bg-2);
+  border-bottom:1px solid var(--border);
+}
+.hud-item{font-size:0.85rem;color:var(--text-dim)}
+.hud-item span{color:var(--text);font-weight:700}
+.hud-actions{margin-left:auto;display:flex;gap:8px}
+.hud-btn{
+  border:1px solid var(--border);background:var(--panel);color:var(--text-dim);
+  padding:7px 16px;border-radius:20px;font-size:0.85rem;font-weight:700;
+  transition:all .12s ease;
+}
+.hud-btn:hover{color:var(--text)}
+.hud-btn.active{
+  background:linear-gradient(135deg,var(--accent),#3a5fd0);color:#fff;border-color:transparent;
+}
+.hud-btn.ghost:hover{color:var(--red);border-color:var(--red)}
+
+.battle-hint{
+  flex:0 0 auto;padding:7px 16px;font-size:0.8rem;color:#aab4c7;
+  background:#161e2c;border-bottom:1px solid #223048;
+}
+
+.battle-stage{position:relative;flex:1;min-height:0}
+#battle-canvas{position:absolute;inset:0;width:100%;height:100%;display:block;cursor:crosshair}
+
+.overlay{
+  position:absolute;inset:0;z-index:20;
+  display:flex;align-items:center;justify-content:center;
+  background:rgba(8,12,20,0.72);backdrop-filter:blur(3px);
+}
+.overlay-card{
+  background:var(--panel);border:1px solid var(--border);border-radius:16px;
+  padding:34px 44px;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,0.5);
+  max-width:420px;
+}
+.overlay-card h2{font-size:1.6rem;margin-bottom:10px}
+.overlay-text{color:var(--text-dim);font-size:0.92rem;margin-bottom:22px;line-height:1.6}
+.overlay-card .btn{margin-top:4px}
+
+@keyframes coinpop{0%{transform:scale(1.5);color:#fff}100%{transform:scale(1)}}
+.pop{animation:coinpop .35s ease-out}
