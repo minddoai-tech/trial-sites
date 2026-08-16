@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Hard Hat Hustle</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <main class="game-shell">
+    <section class="topbar" aria-label="Game information">
+      <div class="brand"><span class="helmet">●</span> HARD HAT HUSTLE</div>
+      <div class="stat"><span>Distance</span><strong id="distance">0m</strong></div>
+      <div class="stat"><span>Best</span><strong id="best">0m</strong></div>
+    </section>
+
+    <section id="game" class="game" aria-label="Construction runner game" tabindex="0">
+      <div class="skyline skyline-back"></div>
+      <div class="skyline skyline-front"></div>
+      <div class="crane"><i></i><b></b></div>
+      <div class="sun"></div>
+      <div class="road" id="road">
+        <div class="lane-line lane-one"></div>
+        <div class="lane-line lane-two"></div>
+        <div id="obstacles"></div>
+        <div id="runner" class="runner lane-1" aria-label="Construction worker">
+          <div class="hardhat"></div><div class="head"></div><div class="body"></div><div class="arm arm-left"></div><div class="arm arm-right"></div><div class="leg leg-left"></div><div class="leg leg-right"></div>
+        </div>
+      </div>
+      <div id="startScreen" class="overlay">
+        <div class="panel">
+          <p class="eyebrow">CONSTRUCTION SITE RUNNER</p>
+          <h1>Hard Hat<br><em>Hustle</em></h1>
+          <p>Race through the work zone. Dodge barriers, cones, and cement mixers to reach <strong>500m</strong>.</p>
+          <div class="keys"><kbd>A</kbd><span>move left</span><kbd>D</kbd><span>move right</span></div>
+          <button id="startButton">Start shift</button>
+        </div>
+      </div>
+      <div id="endScreen" class="overlay hidden" aria-live="polite">
+        <div class="panel">
+          <p id="endEyebrow" class="eyebrow">SHIFT OVER</p>
+          <h2 id="endTitle">Watch your step!</h2>
+          <p id="endText">You made it 0m down the site.</p>
+          <button id="restartButton">Run again</button>
+        </div>
+      </div>
+    </section>
+    <p class="hint">Use <b>A</b> and <b>D</b> (or ← →) to change lanes</p>
+  </main>
+  <script src="game.js"></script>
+</body>
+</html>
