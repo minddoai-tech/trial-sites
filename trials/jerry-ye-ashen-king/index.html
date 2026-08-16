@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Ashen King</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <main class="game-shell">
+    <header>
+      <div class="brand"><span class="sigil">◆</span><div><h1>ASHEN KING</h1><p>Three phases. One blade.</p></div></div>
+      <button id="muteBtn" class="icon-btn" aria-label="Toggle sound">SOUND ON</button>
+    </header>
+
+    <section class="stage-wrap">
+      <canvas id="game" width="1280" height="720" aria-label="Ashen King sword fighting game"></canvas>
+      <div class="hud">
+        <div class="boss-hud">
+          <div class="boss-line"><span>THE ASHEN KING</span><span id="phaseLabel">PHASE I</span></div>
+          <div class="bar boss-bar"><i id="bossHealth"></i></div>
+          <div class="phase-pips"><b class="active"></b><b></b><b></b></div>
+        </div>
+        <div class="player-hud">
+          <div class="player-line"><span>WANDERER</span><span id="hitsLabel">10 / 10</span></div>
+          <div id="playerHealth" class="health-pips"></div>
+        </div>
+      </div>
+
+      <div id="startScreen" class="overlay visible">
+        <div class="panel">
+          <p class="eyebrow">THE LAST DUEL</p><h2>BREAK THE CROWN</h2>
+          <p>Defeat the Ashen King across three escalating phases. His blade can hurt you—his body cannot.</p>
+          <div class="controls-grid">
+            <span><kbd>A</kbd><kbd>D</kbd><small>MOVE</small></span><span><kbd>W</kbd><small>JUMP</small></span>
+            <span><kbd>Q</kbd><small>DASH</small></span><span><kbd>F</kbd><small>BLOCK</small></span>
+            <span><kbd class="mouse">◉</kbd><small>ATTACK</small></span>
+          </div>
+          <button id="startBtn" class="primary">ENTER THE ARENA</button>
+        </div>
+      </div>
+
+      <div id="endScreen" class="overlay">
+        <div class="panel"><p id="endEyebrow" class="eyebrow"></p><h2 id="endTitle"></h2><p id="endText"></p><button id="restartBtn" class="primary">FIGHT AGAIN</button></div>
+      </div>
+      <div id="announcement" class="announcement"></div>
+    </section>
+
+    <footer>
+      <div><kbd>A</kbd><kbd>D</kbd> MOVE <kbd>W</kbd> JUMP <kbd>Q</kbd> DASH <kbd>F</kbd> BLOCK <kbd>◉</kbd> ATTACK</div>
+      <p>Deplete each boss bar · Recover 4 health between phases · Survive 10 hits</p>
+    </footer>
+  </main>
+  <script src="game.js"></script>
+</body>
+</html>
