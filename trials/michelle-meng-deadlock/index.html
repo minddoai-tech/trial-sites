@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#101418">
+  <title>Deadlock — 1v1 Duel</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <main id="game" aria-label="Deadlock first-person duel">
+    <canvas id="gameCanvas" aria-label="3D game view"></canvas>
+
+    <div class="grain" aria-hidden="true"></div>
+    <div id="damageFlash" aria-hidden="true"></div>
+
+    <header class="hud-top">
+      <section class="fighter-card player-card" aria-label="Player status">
+        <span class="fighter-label">YOU</span>
+        <div id="playerHealth" class="health-pips" aria-label="3 health"></div>
+        <span id="playerShield" class="shield-count">NO SHIELD</span>
+      </section>
+
+      <div class="round-mark">
+        <span>DEADLOCK</span>
+        <strong id="roundLabel">ROUND 01</strong>
+      </div>
+
+      <section class="fighter-card enemy-card" aria-label="Opponent status">
+        <span class="fighter-label">BOSS</span>
+        <div id="enemyHealth" class="health-pips" aria-label="3 health"></div>
+        <span id="enemyShield" class="shield-count">NO SHIELD</span>
+      </section>
+    </header>
+
+    <div id="crosshair" aria-hidden="true">
+      <i class="crosshair-top"></i>
+      <i class="crosshair-right"></i>
+      <i class="crosshair-bottom"></i>
+      <i class="crosshair-left"></i>
+      <b></b>
+    </div>
+    <div id="hitMarker" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+
+    <aside class="item-slot" aria-label="Current item">
+      <span class="slot-key">RMB</span>
+      <div id="itemIcon" class="item-icon empty-icon">—</div>
+      <div>
+        <small>ITEM SLOT</small>
+        <strong id="itemName">EMPTY</strong>
+      </div>
+    </aside>
+
+    <aside class="controls-hint" aria-label="Controls">
+      <span><kbd>WASD</kbd> MOVE</span>
+      <span><kbd>SPACE</kbd> JUMP</span>
+      <span><kbd>MOUSE</kbd> LOOK</span>
+      <span><kbd>LMB</kbd> FIRE</span>
+    </aside>
+
+    <div id="toast" role="status" aria-live="polite"></div>
+    <div id="eventFeed" aria-live="polite"></div>
+
+    <section id="startScreen" class="screen-overlay active" aria-labelledby="gameTitle">
+      <div class="overlay-panel">
+        <p class="eyebrow">A ONE-ON-ONE SHOOTING DUEL</p>
+        <h1 id="gameTitle">DEAD<span>LOCK</span></h1>
+        <p class="tagline">Three body shots. One headshot. Take the arena.</p>
+
+        <div class="rules-grid">
+          <div><strong>03</strong><span>BODY HITS<br>TO WIN</span></div>
+          <div><strong>01</strong><span>HEADSHOT<br>TO WIN</span></div>
+          <div><strong>02</strong><span>ITEM TYPES<br>TO FIND</span></div>
+        </div>
+
+        <button id="startButton" type="button">ENTER THE ARENA <span>→</span></button>
+        <p class="mouse-note">Click to lock the mouse · Press ESC to pause</p>
+      </div>
+    </section>
+
+    <section id="pauseScreen" class="screen-overlay" aria-labelledby="pauseTitle">
+      <div class="overlay-panel compact-panel">
+        <p class="eyebrow">MATCH PAUSED</p>
+        <h2 id="pauseTitle">STAY SHARP.</h2>
+        <button id="resumeButton" type="button">RESUME DUEL <span>→</span></button>
+        <p class="mouse-note">WASD to move · Space to jump · Mouse to aim · LMB to shoot · RMB to use item</p>
+      </div>
+    </section>
+
+    <section id="endScreen" class="screen-overlay" aria-labelledby="resultTitle">
+      <div class="overlay-panel compact-panel">
+        <p id="resultEyebrow" class="eyebrow">ROUND COMPLETE</p>
+        <h2 id="resultTitle">VICTORY.</h2>
+        <p id="resultDetail" class="result-detail">Boss eliminated with three body hits.</p>
+        <div class="match-score">
+          <div><span>YOU</span><strong id="playerScore">1</strong></div>
+          <i></i>
+          <div><span>BOSS</span><strong id="enemyScore">0</strong></div>
+        </div>
+        <button id="rematchButton" type="button">NEXT ROUND <span>→</span></button>
+      </div>
+    </section>
+  </main>
+
+  <script src="game.js"></script>
+</body>
+</html>
