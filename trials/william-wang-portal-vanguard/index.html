@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Portal Vanguard</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%2319212b'/%3E%3Cellipse cx='32' cy='32' rx='17' ry='24' fill='none' stroke='%2355e6d2' stroke-width='7'/%3E%3C/svg%3E">
+  <style>
+    :root{--ink:#19212b;--paper:#f7f3e8;--blue:#42a5d9;--red:#ef5b5b;--gold:#f5b942;--green:#4dc58a}
+    *{box-sizing:border-box}html,body{height:100%;margin:0}body{display:grid;place-items:center;background:#141b24;color:var(--paper);font-family:Inter,ui-sans-serif,system-ui,sans-serif;overflow:hidden}
+    #shell{position:relative;width:min(100vw,1280px);aspect-ratio:16/9;max-height:100vh;background:#223047;overflow:hidden;box-shadow:0 20px 80px #0008}
+    canvas{width:100%;height:100%;display:block;image-rendering:auto}
+    #hud{position:absolute;inset:20px 24px auto;display:flex;align-items:flex-start;justify-content:space-between;pointer-events:none;text-shadow:0 2px 4px #0008}
+    #level{font-weight:900;letter-spacing:.12em;text-transform:uppercase;font-size:clamp(13px,1.4vw,20px)}
+    #subtitle{font-size:clamp(11px,1vw,15px);opacity:.78;margin-top:4px;letter-spacing:.04em}
+    #hearts{display:flex;gap:5px;font-size:clamp(15px,1.7vw,24px);filter:drop-shadow(0 2px 1px #0008)}
+    #bossWrap{position:absolute;top:78px;left:50%;width:min(440px,52%);transform:translateX(-50%);display:none;text-align:center;font-weight:800;font-size:12px;letter-spacing:.13em}
+    #bossBar{height:13px;background:#1b222d;border:2px solid #f7f3e8;margin-top:6px;box-shadow:0 2px 0 #0005}
+    #bossFill{height:100%;background:var(--red);transition:width .12s}
+    #screen{position:absolute;inset:0;display:grid;place-items:center;background:linear-gradient(#172238d9,#0d121ce8);padding:24px;text-align:center}
+    .card{width:min(650px,94%);padding:clamp(26px,5vw,60px);background:#f7f3e8;color:var(--ink);border:5px solid var(--ink);box-shadow:12px 12px 0 #080c12}
+    h1{font-size:clamp(39px,7vw,84px);line-height:.82;margin:0 0 20px;text-transform:uppercase;letter-spacing:-.065em}h1 span{color:var(--red)}
+    .tag{font-weight:800;letter-spacing:.2em;text-transform:uppercase;color:#617083;font-size:12px}
+    p{line-height:1.55;margin:16px auto;max-width:520px}.keys{display:flex;justify-content:center;gap:12px;flex-wrap:wrap;margin:24px 0}.key{display:flex;align-items:center;gap:7px;font-weight:800}.key b{display:grid;place-items:center;width:35px;height:35px;border:2px solid var(--ink);box-shadow:3px 3px 0 var(--ink);background:white}
+    button{font:900 15px/1 Inter,ui-sans-serif,system-ui,sans-serif;letter-spacing:.14em;text-transform:uppercase;padding:14px 25px;border:0;background:var(--red);color:white;box-shadow:5px 5px 0 var(--ink);cursor:pointer}button:hover{transform:translate(2px,2px);box-shadow:3px 3px 0 var(--ink)}button:focus-visible{outline:4px solid var(--gold);outline-offset:4px}
+    #toast{position:absolute;left:50%;top:21%;transform:translate(-50%,-10px);padding:10px 16px;background:#17202de6;border:2px solid #fff3;color:#fff;font-weight:800;letter-spacing:.08em;text-align:center;opacity:0;transition:.25s;pointer-events:none;white-space:nowrap}#toast.show{opacity:1;transform:translate(-50%,0)}
+    #help{position:absolute;bottom:16px;right:20px;font-size:11px;letter-spacing:.08em;opacity:.55;pointer-events:none}
+    @media(max-width:650px){#hud{inset:10px 12px auto}#bossWrap{top:49px}.card{padding:22px}#help{display:none}}
+  </style>
+</head>
+<body>
+<main id="shell" aria-label="Portal Vanguard game">
+  <canvas id="game" width="1280" height="720"></canvas>
+  <div id="hud"><div><div id="level">Level 1</div><div id="subtitle">The First Gate</div></div><div id="hearts" aria-label="10 hearts"></div></div>
+  <div id="bossWrap">BOSS<div id="bossBar"><div id="bossFill"></div></div></div>
+  <div id="toast"></div><div id="help">A / D MOVE · W JUMP · R SHOOT · P PAUSE</div>
+  <section id="screen">
+    <div class="card"><div class="tag">Five gates. One final stand.</div><h1>Portal<br><span>Vanguard</span></h1><p>Run, leap, and shoot your way through five escalating worlds. Reach each portal—and defeat what waits beyond the last one.</p><div class="keys"><div class="key"><b>A</b> LEFT</div><div class="key"><b>D</b> RIGHT</div><div class="key"><b>W</b> JUMP</div><div class="key"><b>R</b> FIRE</div></div><button id="start">Start mission</button></div>
+  </section>
+</main>
+<script>
+(() => {
+  'use strict';
+  const canvas=document.querySelector('#game'), ctx=canvas.getContext('2d');
+  const screen=document.querySelector('#screen'), levelEl=document.querySelector('#level'), subEl=document.querySelector('#subtitle'), heartsEl=document.querySelector('#hearts');
+  const bossWrap=document.querySelector('#bossWrap'), bossFill=document.querySelector('#bossFill'), toast=document.querySelector('#toast');
+  const W=1280,H=720,G=2100,FLOOR=620, keys={}, clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+  let mode='menu',level=0,cam=0,last=0,shots=[],enemyShots=[],particles=[],enemies=[],shake=0,toastTimer=0,loopStarted=false;
+  const player={x:70,y:540,w:34,h:58,vx:0,vy:0,dir:1,ground:false,hp:10,inv:0,shootCd:0};
+  const themes=[
+    ['#88d5e8','#d9f1ef','#436878'],['#e7a36b','#ffd7a3','#704a49'],['#606b8d','#b2abc7','#33384c'],['#82918a','#c2c9af','#3f5148'],['#3b315a','#9a5b78','#251d36']
+  ];
+  const levels=[
+    {name:'Level 1',sub:'The First Gate',tip:'Reach the portal',platforms:[[0,620,420,100],[500,560,170,25],[745,485,170,25],[980,550,220,25],[1270,455,180,25],[1520,535,220,25],[1800,620,300,100]],hazards:[],spawns:[],portal:[1990,540]},
+    {name:'Level 2',sub:'Ashfall Run',tip:'Spikes and lava kill instantly',platforms:[[0,620,350,100],[430,545,170,25],[690,470,180,25],[950,590,170,30],[1210,500,170,25],[1490,420,180,25],[1780,620,320,100]],hazards:[[350,640,80,80,'lava'],[600,640,90,80,'lava'],[870,640,80,80,'lava'],[1120,640,90,80,'lava'],[1380,640,110,80,'lava'],[1670,640,110,80,'lava'],[1015,564,36,26,'spike'],[1270,474,36,26,'spike']],spawns:[['walker',760,412],['walker',1260,442],['walker',1840,562]],portal:[1990,540]},
+    {name:'Level 3',sub:'The Iron Warden',tip:'Turret hits cost 2 hearts',platforms:[[0,620,500,100],[580,540,180,25],[840,460,180,25],[1100,540,180,25],[1360,440,180,25],[1620,535,180,25],[1880,620,220,100]],hazards:[[500,640,80,80,'lava'],[760,640,80,80,'lava'],[1020,640,80,80,'lava'],[1280,640,80,80,'lava'],[1540,640,80,80,'lava'],[1800,640,80,80,'lava']],spawns:[['turret',650,492],['miniboss',1420,364],['turret',1690,487]],portal:[1990,540],boss:true},
+    {name:'Level 4',sub:'Bone Battalion',tip:'Use the high route',platforms:[[0,620,2100,100],[260,515,200,24],[540,420,180,24],[810,510,190,24],[1080,405,200,24],[1380,510,180,24],[1650,410,200,24]],hazards:[[680,594,52,26,'spike'],[1015,594,52,26,'spike'],[1575,594,52,26,'spike']],spawns:[['skeleton',390,562],['skeleton',610,562],['skeleton',830,562],['skeleton',1050,562],['skeleton',1290,562],['skeleton',1510,562],['skeleton',1760,562],['skeleton',1910,562]],portal:[2020,540]},
+    {name:'Level 5',sub:'The Last Eclipse',tip:'Defeat the Eclipse King',platforms:[[0,620,2100,100],[300,505,190,24],[620,410,190,24],[950,500,190,24],[1280,395,190,24],[1610,500,190,24]],hazards:[[510,594,55,26,'spike'],[860,594,55,26,'spike'],[1190,594,55,26,'spike'],[1515,594,55,26,'spike']],spawns:[['finalboss',1810,466]],portal:null,boss:true}
+  ];
+  function boxHit(a,b){return a.x<b.x+b.w&&a.x+a.w>b.x&&a.y<b.y+b.h&&a.y+a.h>b.y}
+  function resetLevel(){const L=levels[level];player.x=70;player.y=540;player.vx=player.vy=0;player.hp=10;player.inv=0;shots=[];enemyShots=[];particles=[];cam=0;enemies=L.spawns.map((s,i)=>makeEnemy(...s,i));levelEl.textContent=L.name;subEl.textContent=L.sub;bossWrap.style.display=L.boss?'block':'none';updateHud();say(L.tip,1800)}
+  function makeEnemy(type,x,y,id){const data={type,x,y,homeX:x,id,dead:false,vx:0,vy:0,cd:45+id*8,phase:0,patrolDir:id%2?1:-1}; if(type==='walker')Object.assign(data,{w:38,h:58,hp:3,max:3,speed:.75,patrolRange:55});if(type==='skeleton')Object.assign(data,{w:34,h:58,hp:2,max:2,speed:1.65});if(type==='turret')Object.assign(data,{w:44,h:48,hp:4,max:4});if(type==='miniboss')Object.assign(data,{w:74,h:96,hp:12,max:12,speed:.8});if(type==='finalboss')Object.assign(data,{w:110,h:154,hp:48,max:48,speed:1.35});return data}
+  function updateHud(){heartsEl.innerHTML='';for(let i=0;i<10;i++){const s=document.createElement('span');s.textContent=i<player.hp?'♥':'♡';s.style.color=i<player.hp?'#ef5b5b':'#fff8';heartsEl.appendChild(s)}heartsEl.setAttribute('aria-label',`${player.hp} hearts`);const boss=enemies.find(e=>!e.dead&&(e.type==='miniboss'||e.type==='finalboss'));bossFill.style.width=(boss?boss.hp/boss.max*100:0)+'%'}
+  function say(text,ms=1300){toast.textContent=text;toast.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>toast.classList.remove('show'),ms)}
+  function start(){mode='play';screen.style.display='none';level=0;resetLevel();last=performance.now();if(!loopStarted){loopStarted=true;requestAnimationFrame(loop)}}
+  function die(){if(mode!=='play')return;mode='dead';burst(player.x+17,player.y+25,'#ef5b5b',24);shake=18;setTimeout(()=>{mode='play';resetLevel()},800)}
+  function hurt(n){if(player.inv>0||mode!=='play')return;player.hp=Math.max(0,player.hp-n);player.inv=70;player.vy=-7;player.vx=-player.dir*5;shake=9;updateHud();if(player.hp<=0)die()}
+  function burst(x,y,c,n=10){for(let i=0;i<n;i++)particles.push({x,y,vx:(Math.random()-.5)*8,vy:(Math.random()-.7)*8,life:25+Math.random()*25,c})}
+  function fire(){if(player.shootCd>0)return;player.shootCd=15;shots.push({x:player.x+(player.dir>0?player.w:-24),y:player.y+21,w:24,h:11,vx:player.dir*12,life:100});burst(player.x+player.w/2+player.dir*24,player.y+27,'#f5b942',4)}
+  function enemyFire(e,kind='normal',angle=null){const dx=player.x-e.x,dy=player.y-e.y,mag=Math.hypot(dx,dy)||1,speed=kind==='boss'?5.4:4.3;enemyShots.push({x:e.x+e.w/2,y:e.y+e.h/3,w:kind==='boss'?14:10,h:kind==='boss'?14:10,vx:angle==null?dx/mag*speed:Math.cos(angle)*speed,vy:angle==null?dy/mag*speed:Math.sin(angle)*speed,life:240,damage:e.type==='turret'?2:1,c:kind==='boss'?'#a96cff':'#ef5b5b'})}
+  function update(dt){if(mode!=='play')return;const L=levels[level],step=dt/16.667;player.inv=Math.max(0,player.inv-step);player.shootCd=Math.max(0,player.shootCd-step);
+    const move=(keys.KeyD?1:0)-(keys.KeyA?1:0);player.vx+=(move*0.8-player.vx*.18)*step;if(move)player.dir=move;if(keys.KeyW&&player.ground){player.vy=-13.5;player.ground=false;keys.KeyW=false}if(keys.KeyR)fire();player.vy+=.68*step;player.x+=player.vx*step;player.y+=player.vy*step;player.x=clamp(player.x,0,G-player.w);player.ground=false;
+    for(const p of L.platforms){const b={x:p[0],y:p[1],w:p[2],h:p[3]};if(boxHit(player,b)&&player.vy>=0&&player.y+player.h-player.vy*step<=p[1]+4){player.y=p[1]-player.h;player.vy=0;player.ground=true}}
+    if(player.y>H+80)die();for(const h of L.hazards){if(boxHit(player,{x:h[0]+4,y:h[1],w:h[2]-8,h:h[3]}))die()}
+    for(const e of enemies){if(e.dead)continue;e.cd-=step;const dist=player.x-e.x;if(e.type==='walker'){if(Math.abs(e.x-e.homeX)>=e.patrolRange)e.patrolDir=-Math.sign(e.x-e.homeX);e.vx=e.patrolDir*e.speed;e.x+=e.vx*step;if(boxHit(player,e))hurt(1)}else if(e.type==='skeleton'||e.type==='miniboss'){e.vx=Math.sign(dist)*e.speed;e.x+=e.vx*step;if(boxHit(player,e))hurt(1)}
+      if(e.type==='turret'&&e.cd<=0&&Math.abs(dist)<650){enemyFire(e);e.cd=135}
+      if(e.type==='miniboss'&&e.cd<=0){enemyFire(e,'boss');e.cd=115}
+      if(e.type==='finalboss'){e.phase+=step;e.x=clamp(e.x+Math.sign(dist)*e.speed*step,1450,1960);if(boxHit(player,e))hurt(1);if(e.cd<=0){const pattern=Math.floor(e.phase/180)%3;if(pattern===0){[-.3,0,.3].forEach(a=>enemyFire(e,'boss',Math.PI+a))}else if(pattern===1){for(let a=0;a<Math.PI*2;a+=Math.PI/5)enemyFire(e,'boss',a)}else{enemyFire(e,'boss');enemyFire(e,'boss')}e.cd=pattern===2?48:90}}
+    }
+    for(const s of shots){s.x+=s.vx*step;s.life-=step;for(const e of enemies){if(!e.dead&&boxHit(s,e)){s.life=0;e.hp--;burst(s.x,s.y,'#f5b942',7);if(e.hp<=0){e.dead=true;burst(e.x+e.w/2,e.y+e.h/2,'#f5b942',22);if(e.type==='miniboss')say('WARDEN DEFEATED — PORTAL OPEN',2200);if(e.type==='finalboss')win()}updateHud();break}}}
+    for(const s of enemyShots){s.x+=s.vx*step;s.y+=s.vy*step;s.life-=step;if(boxHit(s,player)){s.life=0;hurt(s.damage)}}shots=shots.filter(s=>s.life>0&&s.x>0&&s.x<G);enemyShots=enemyShots.filter(s=>s.life>0&&s.y>-50&&s.y<H+50);
+    for(const p of particles){p.x+=p.vx*step;p.y+=p.vy*step;p.vy+=.25*step;p.life-=step}particles=particles.filter(p=>p.life>0);
+    if(L.portal&&Math.abs(player.x-L.portal[0])<55&&player.y>480){const gateBoss=enemies.find(e=>!e.dead&&e.type==='miniboss');if(gateBoss)say('DEFEAT THE WARDEN FIRST');else nextLevel()}
+    cam+=(clamp(player.x-330,0,G-W)-cam)*.09;shake*=.84;
+  }
+  function nextLevel(){mode='transition';burst(player.x,player.y,'#55e6d2',35);setTimeout(()=>{level++;mode='play';resetLevel()},650)}
+  function win(){mode='win';setTimeout(()=>{screen.style.display='grid';screen.innerHTML='<div class="card"><div class="tag">The five gates are safe</div><h1>Mission<br><span>Complete</span></h1><p>The Eclipse King has fallen. You crossed every world with the portal light still burning.</p><button id="again">Play again</button></div>';document.querySelector('#again').onclick=start},700)}
+  function draw(){const L=levels[level]||levels[0],t=themes[level]||themes[0],sx=(Math.random()-.5)*shake,sy=(Math.random()-.5)*shake;ctx.save();ctx.translate(sx,sy);const grad=ctx.createLinearGradient(0,0,0,H);grad.addColorStop(0,t[0]);grad.addColorStop(1,t[1]);ctx.fillStyle=grad;ctx.fillRect(0,0,W,H);drawBackground(t);ctx.save();ctx.translate(-cam,0);
+    for(const p of L.platforms)drawPlatform(p,t);for(const h of L.hazards)drawHazard(h);if(L.portal)drawPortal(...L.portal);
+    for(const e of enemies)if(!e.dead)drawEnemy(e);for(const s of shots){ctx.fillStyle='#fff4b0';ctx.fillRect(s.x,s.y,s.w,s.h);ctx.fillStyle='#f5b942';ctx.fillRect(s.x+4,s.y+1,s.w,s.h-2)}for(const s of enemyShots){ctx.fillStyle=s.c;ctx.beginPath();ctx.arc(s.x,s.y,s.w/2,0,7);ctx.fill()}
+    for(const p of particles){ctx.globalAlpha=clamp(p.life/20,0,1);ctx.fillStyle=p.c;ctx.fillRect(p.x,p.y,5,5)}ctx.globalAlpha=1;drawPlayer();ctx.restore();ctx.restore();
+  }
+  function drawBackground(t){ctx.globalAlpha=.16;ctx.fillStyle=t[2];for(let i=0;i<9;i++){const x=((i*240-cam*.18)%1600)-120,hh=100+(i%3)*55;ctx.beginPath();ctx.moveTo(x,FLOOR);ctx.lineTo(x+130,FLOOR-hh);ctx.lineTo(x+280,FLOOR);ctx.fill()}ctx.globalAlpha=1;ctx.fillStyle='#fff6';for(let i=0;i<30;i++){const x=(i*179+level*41)%W,y=(i*83)%370;ctx.fillRect(x,y,2,2)}}
+  function drawPlatform(p,t){ctx.fillStyle=t[2];ctx.fillRect(...p);ctx.fillStyle='#f7f3e8';ctx.fillRect(p[0],p[1],p[2],8);ctx.fillStyle='#ffffff20';for(let x=p[0]+20;x<p[0]+p[2];x+=42)ctx.fillRect(x,p[1]+20,18,4)}
+  function drawHazard(h){if(h[4]==='spike'){ctx.fillStyle='#e9edf0';for(let x=h[0];x<h[0]+h[2];x+=18){ctx.beginPath();ctx.moveTo(x,h[1]+h[3]);ctx.lineTo(x+9,h[1]);ctx.lineTo(x+18,h[1]+h[3]);ctx.fill()}}else{ctx.fillStyle='#ef5b5b';ctx.fillRect(h[0],h[1],h[2],h[3]);ctx.fillStyle='#ffbe55';for(let x=h[0];x<h[0]+h[2];x+=28){ctx.beginPath();ctx.arc(x,h[1]+4+Math.sin(performance.now()/200+x)*4,8,0,7);ctx.fill()}}}
+  function drawPortal(x,y){const locked=level===2&&enemies.some(e=>!e.dead&&e.type==='miniboss');ctx.save();ctx.translate(x,y);ctx.strokeStyle=locked?'#ef5b5b':'#55e6d2';ctx.lineWidth=12;ctx.shadowBlur=22;ctx.shadowColor=ctx.strokeStyle;ctx.beginPath();ctx.ellipse(0,30,35,65,0,0,7);ctx.stroke();ctx.globalAlpha=.3;ctx.fillStyle=ctx.strokeStyle;ctx.fill();ctx.restore()}
+  function drawPlayer(){if(player.inv>0&&Math.floor(player.inv/4)%2)return;ctx.save();ctx.translate(player.x+player.w/2,player.y);ctx.scale(player.dir,1);ctx.fillStyle='#18212b';ctx.fillRect(-14,9,28,37);ctx.fillStyle='#f5b942';ctx.fillRect(-11,0,22,18);ctx.fillStyle='#42a5d9';ctx.fillRect(-18,18,36,14);ctx.fillStyle='#18212b';ctx.fillRect(-13,45,10,13);ctx.fillRect(4,45,10,13);ctx.fillStyle='#f7f3e8';ctx.fillRect(4,5,4,4);ctx.fillStyle='#ef5b5b';ctx.fillRect(13,22,20,8);ctx.restore()}
+  function drawEnemy(e){ctx.save();ctx.translate(e.x,e.y);if(e.type==='turret'){ctx.fillStyle='#2b3245';ctx.fillRect(0,18,44,30);ctx.fillStyle='#ef5b5b';ctx.fillRect(17,5,12,24);ctx.fillRect(e.x>player.x?-19:29,10,30,10);ctx.fillStyle='#ffdb65';ctx.fillRect(19,25,7,7)}else if(e.type==='skeleton'){ctx.fillStyle='#e9e5d7';ctx.beginPath();ctx.arc(17,12,12,0,7);ctx.fill();ctx.fillRect(13,24,8,27);ctx.fillRect(2,29,30,6);ctx.fillRect(6,48,6,10);ctx.fillRect(22,48,6,10);ctx.fillStyle='#1a202a';ctx.fillRect(10,9,4,5);ctx.fillRect(21,9,4,5)}else if(e.type==='finalboss'){ctx.fillStyle='#251d36';ctx.fillRect(14,38,82,116);ctx.fillStyle='#a96cff';ctx.beginPath();ctx.moveTo(8,45);ctx.lineTo(27,4);ctx.lineTo(42,39);ctx.lineTo(70,0);ctx.lineTo(91,43);ctx.fill();ctx.fillStyle='#ef5b5b';ctx.fillRect(28,55,16,9);ctx.fillRect(66,55,16,9);ctx.fillStyle='#f7f3e8';ctx.fillRect(40,92,30,7)}else{const mini=e.type==='miniboss';ctx.fillStyle=mini?'#34394a':'#704a49';ctx.fillRect(0,mini?22:12,e.w,e.h-(mini?22:12));ctx.fillStyle=mini?'#ef5b5b':'#f5b942';ctx.fillRect(mini?10:6,0,e.w-(mini?20:12),mini?38:24);ctx.fillStyle='#111a22';ctx.fillRect(e.w*.62,mini?10:7,mini?8:5,mini?8:5)}ctx.restore()}
+  function loop(now){const dt=Math.min(32,now-last||16);last=now;update(dt);draw();requestAnimationFrame(loop)}
+  addEventListener('keydown',e=>{if(['KeyA','KeyD','KeyW','KeyR','KeyP'].includes(e.code))e.preventDefault();if(e.code==='KeyP'&&mode!=='menu'){mode=mode==='paused'?'play':'paused';say(mode==='paused'?'PAUSED':'GO!')}keys[e.code]=true});addEventListener('keyup',e=>keys[e.code]=false);document.querySelector('#start').onclick=start;draw();
+})();
+</script>
+</body>
+</html>

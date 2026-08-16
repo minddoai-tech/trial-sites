@@ -1,5 +1,14 @@
 [
   {
+    "slug": "william-wang-portal-vanguard",
+    "trialId": "4b3c2a2b-273e-434b-8fe9-17e8af911f51",
+    "studentName": "William Wang",
+    "title": "Portal Vanguard",
+    "description": "Side scrolling shoot em up game with a final boss to beat at the end",
+    "submittedAt": "2026-08-16T20:55:07.010Z",
+    "thumbnail": "william-wang-portal-vanguard/thumb.png"
+  },
+  {
     "slug": "will-guo-footbal-26-simulator",
     "trialId": "3f91e9d7-75bd-4128-a4b1-1c790dcb18f8",
     "studentName": "Will Guo",
@@ -43,15 +52,6 @@
     "description": "The arrow keys help you move around, the space bar helps you jump. Avoid falling down or touching the red blocks. Collect all 16 coins to win",
     "submittedAt": "2026-08-13T23:35:50.002Z",
     "thumbnail": "leiya-liu-sprial-ascent/thumb.png"
-  },
-  {
-    "slug": "william-wang-pomodoro-marble-tracks",
-    "trialId": "4b3c2a2b-273e-434b-8fe9-17e8af911f51",
-    "studentName": "William Wang",
-    "title": "Pomodoro Marble Tracks",
-    "description": "A Pomodoro timer with a marble-run themed screensaver built-in. Watch as marbles run through chutes, springs, and curves while you study!",
-    "submittedAt": "2026-08-13T21:41:13.650Z",
-    "thumbnail": "william-wang-pomodoro-marble-tracks/thumb.png"
   },
   {
     "slug": "trial-student-2048",
