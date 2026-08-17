@@ -1,5 +1,14 @@
 [
   {
+    "slug": "sophia-rolling-neon-ball",
+    "trialId": "28b196d7-ec55-4d9c-ab7f-58c17557dad6",
+    "studentName": "Sophia",
+    "title": "Rolling Neon Ball",
+    "description": "It's a game where the user has to press arrow keys to control a ball through an obstacle course.",
+    "submittedAt": "2026-08-17T20:55:39.486Z",
+    "thumbnail": "sophia-rolling-neon-ball/thumb.png"
+  },
+  {
     "slug": "jason-sun-construction-run",
     "trialId": "11574b91-acf0-4781-92da-4ec92e8e9477",
     "studentName": "Jason Sun",

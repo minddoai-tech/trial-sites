@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#08131f" />
+    <title>Skyline Roll</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <main class="game-shell" aria-label="Skyline Roll game">
+      <canvas id="game-canvas" aria-label="Rolling ball course"></canvas>
+
+      <header class="topbar">
+        <div class="brand">
+          <span class="brand-mark" aria-hidden="true"></span>
+          <div>
+            <p>SKYLINE</p>
+            <h1>ROLL</h1>
+          </div>
+        </div>
+
+        <div class="level-progress" aria-label="Level progress">
+          <span class="level-label">LEVEL <strong id="level-number">1</strong></span>
+          <div id="level-dots" class="level-dots" aria-hidden="true"></div>
+        </div>
+
+        <button id="restart-button" class="icon-button" type="button" aria-label="Restart current level" title="Restart current level">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M20 11a8 8 0 1 0-2.35 5.65M20 5v6h-6" />
+          </svg>
+        </button>
+      </header>
+
+      <section class="hud" aria-live="polite">
+        <div class="hud-card">
+          <span class="hud-kicker" id="level-kicker">THE FIRST STEP</span>
+          <strong id="level-name">Highline</strong>
+        </div>
+        <div class="hud-card checkpoint-card">
+          <span class="checkpoint-icon" aria-hidden="true"></span>
+          <div>
+            <span class="hud-kicker">CHECKPOINT</span>
+            <strong id="checkpoint-label">START</strong>
+          </div>
+        </div>
+      </section>
+
+      <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+      <aside class="controls-hint" aria-label="Controls">
+        <div class="key-cluster" aria-hidden="true">
+          <span></span><kbd>↑</kbd><span></span>
+          <kbd>←</kbd><kbd>↓</kbd><kbd>→</kbd>
+        </div>
+        <div>
+          <strong>ARROW KEYS</strong>
+          <span>Roll with momentum</span>
+        </div>
+      </aside>
+
+      <div class="touch-controls" aria-label="Touch controls">
+        <button data-key="ArrowUp" class="touch-key up" type="button" aria-label="Move forward">↑</button>
+        <button data-key="ArrowLeft" class="touch-key left" type="button" aria-label="Move left">←</button>
+        <button data-key="ArrowDown" class="touch-key down" type="button" aria-label="Move backward">↓</button>
+        <button data-key="ArrowRight" class="touch-key right" type="button" aria-label="Move right">→</button>
+      </div>
+
+      <div id="overlay" class="overlay visible" role="dialog" aria-modal="true" aria-labelledby="overlay-title">
+        <div class="modal">
+          <div class="modal-orbit" aria-hidden="true"><span></span></div>
+          <p id="overlay-kicker" class="modal-kicker">4 LONG RUNS · ONE SKYLINE</p>
+          <h2 id="overlay-title">Chase the horizon.<br /><em>Keep rolling.</em></h2>
+          <p id="overlay-copy" class="modal-copy">
+            Follow the continuous sky track to the glowing finish. Build momentum,
+            coast down slopes, dodge the swinging axes, and activate distant checkpoints.
+          </p>
+          <div id="instruction-grid" class="instruction-grid">
+            <div><kbd>↑</kbd><span><strong>FORWARD</strong>Hold to accelerate</span></div>
+            <div><kbd>←</kbd><kbd>→</kbd><span><strong>STEER</strong>Balance on the edge</span></div>
+            <div><kbd>↓</kbd><span><strong>BRAKE / BACK</strong>Control your speed</span></div>
+          </div>
+          <button id="primary-button" class="primary-button" type="button">
+            <span>BEGIN RUN</span><b aria-hidden="true">→</b>
+          </button>
+          <p id="modal-footnote" class="modal-footnote">Falling or getting hit returns you to your latest checkpoint.</p>
+        </div>
+      </div>
+
+      <div class="vignette" aria-hidden="true"></div>
+    </main>
+    <script src="game.js"></script>
+  </body>
+</html>
