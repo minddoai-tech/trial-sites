@@ -1,14 +1,5 @@
 [
   {
-    "slug": "student-b-retro-arcade",
-    "trialId": "1e51db74-df04-4d94-a76d-c6046dc9f933",
-    "studentName": "Student B",
-    "title": "Retro Arcade",
-    "description": "Play games like Tetris in your browser",
-    "submittedAt": "2026-08-17T21:52:47.167Z",
-    "thumbnail": "student-b-retro-arcade/thumb.png"
-  },
-  {
     "slug": "student-a-pomodoro-marble-timer",
     "trialId": "c491c526-c3ab-4221-beec-d6d41b0fe006",
     "studentName": "Student A",
