@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ClawQuest Task Arcade</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&family=Nunito:wght@400;700;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="sparkle-layer" aria-hidden="true"></div>
+
+  <main class="app-shell">
+    <header class="hero-card">
+      <div>
+        <p class="eyebrow">Pastel productivity arcade</p>
+        <h1>ClawQuest</h1>
+        <p class="hero-copy">
+          Drop tasks into the prize pit. Press play when you are ready, and let the friendly claw choose your next tiny quest.
+        </p>
+      </div>
+      <div class="hero-mascot" aria-hidden="true">
+        <span class="mascot-face">ʕ •ᴥ• ʔ</span>
+      </div>
+    </header>
+
+    <section class="dashboard-grid">
+      <aside class="panel task-panel" aria-labelledby="add-task-title">
+        <div class="panel-heading">
+          <span class="sticker">✦</span>
+          <div>
+            <h2 id="add-task-title">Add a prize task</h2>
+            <p>Make it small, cute, and easy to start.</p>
+          </div>
+        </div>
+
+        <form id="taskForm" class="task-form">
+          <label>
+            Task name
+            <input id="taskInput" type="text" maxlength="72" placeholder="Fold laundry, reply to Maya..." required />
+          </label>
+
+          <div class="form-row">
+            <label>
+              Category
+              <select id="categoryInput">
+                <option value="home">Home Hamster</option>
+                <option value="work">Work Bunny</option>
+                <option value="study">Study Star</option>
+                <option value="health">Health Kitty</option>
+                <option value="admin">Admin Cloud</option>
+              </select>
+            </label>
+
+            <label>
+              Energy
+              <select id="energyInput">
+                <option value="tiny">Tiny</option>
+                <option value="medium">Medium</option>
+                <option value="boss">Boss</option>
+              </select>
+            </label>
+          </div>
+
+          <button class="primary-button" type="submit">Drop into pit</button>
+        </form>
+
+        <div class="focus-card" id="focusCard">
+          <span class="mini-label">Current quest</span>
+          <h3>No task selected yet</h3>
+          <p>Press Play and the claw will pick one capsule for you.</p>
+        </div>
+      </aside>
+
+      <section class="machine-panel" aria-label="Claw machine game area">
+        <div class="machine-top">
+          <div>
+            <span class="mini-label">Prize pit</span>
+            <h2>Choose by chance. Finish with sparkle.</h2>
+          </div>
+          <div class="score-card" aria-live="polite">
+            <span>Tickets</span>
+            <strong id="ticketCount">0</strong>
+          </div>
+        </div>
+
+        <div class="machine-window">
+          <div class="machine-glass"></div>
+          <div class="claw-track">
+            <div id="claw" class="claw">
+              <div class="claw-cable"></div>
+              <div class="claw-head">
+                <span>•ᴗ•</span>
+              </div>
+              <div class="claw-arms">
+                <i></i><i></i><i></i>
+              </div>
+            </div>
+          </div>
+          <div id="prizePit" class="prize-pit" aria-live="polite"></div>
+        </div>
+
+        <div class="controls">
+          <button id="playButton" class="play-button" type="button">▶ Play claw</button>
+          <button id="shuffleButton" class="soft-button" type="button">Shuffle pit</button>
+          <button id="completeButton" class="soft-button success" type="button" disabled>Mark complete</button>
+        </div>
+      </section>
+
+      <aside class="panel side-panel">
+        <div class="panel-heading">
+          <span class="sticker">♡</span>
+          <div>
+            <h2>Reward shelf</h2>
+            <p>Every finished quest unlocks a tiny prize.</p>
+          </div>
+        </div>
+        <div id="rewardShelf" class="reward-shelf" aria-live="polite"></div>
+
+        <div class="panel-heading compact">
+          <span class="sticker">☁</span>
+          <div>
+            <h2>Backlog</h2>
+            <p>Your capsules waiting in the pit.</p>
+          </div>
+        </div>
+        <ul id="taskList" class="task-list"></ul>
+      </aside>
+    </section>
+  </main>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+  <script src="script.js"></script>
+</body>
+</html>
