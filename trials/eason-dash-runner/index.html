@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Dash Runner</title>
+    <link rel="stylesheet" href="style.css">
+  </head>
+  <body>
+    <main class="game-shell">
+      <section class="hud" aria-label="Game status and controls">
+        <div>
+          <p class="eyebrow">Dash Runner</p>
+          <h1>Jump, dodge, reach the portal.</h1>
+        </div>
+        <div class="hud-actions">
+          <button id="restartButton" type="button">Restart level</button>
+          <button id="newRunButton" type="button">New run</button>
+        </div>
+      </section>
+
+      <section class="stage-wrap" aria-label="Playable game">
+        <canvas id="gameCanvas" width="960" height="540">
+          Your browser needs canvas support to play Dash Runner.
+        </canvas>
+        <div id="messageOverlay" class="message-overlay is-hidden" aria-live="polite">
+          <div class="message-panel">
+            <p id="messageKicker">Ready</p>
+            <h2 id="messageTitle">Level 1</h2>
+            <p id="messageBody">Press Space to jump. Reach the portal without hitting walls or spikes.</p>
+            <button id="messageButton" type="button">Start</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="status-bar" aria-label="Run details">
+        <p><strong id="levelLabel">Level 1</strong></p>
+        <p>Attempts: <strong id="attemptLabel">1</strong></p>
+        <p>Controls: <strong>Space</strong> or <strong>tap/click</strong> to jump. <strong>R</strong> restarts.</p>
+      </section>
+    </main>
+
+    <script src="game.js?v=spaced-course"></script>
+  </body>
+</html>

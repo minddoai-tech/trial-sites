@@ -1,5 +1,14 @@
 [
   {
+    "slug": "eason-dash-runner",
+    "trialId": "0706ce8c-555b-4ddb-bdca-13fbbc38d759",
+    "studentName": "Eason",
+    "title": "dash runner",
+    "description": "geometry dash clone",
+    "submittedAt": "2026-08-18T23:59:30.192Z",
+    "thumbnail": "eason-dash-runner/thumb.png"
+  },
+  {
     "slug": "student-a-pomodoro-marble-timer",
     "trialId": "c491c526-c3ab-4221-beec-d6d41b0fe006",
     "studentName": "Student A",
