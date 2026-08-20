@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Maze Fire</title>
+  <style>
+    :root { color-scheme: dark; --ink:#eaf2ef; --muted:#9eb1aa; --accent:#5ee6a8; --danger:#ff6577; }
+    * { box-sizing:border-box; }
+    body { margin:0; min-height:100vh; display:grid; place-items:center; overflow:hidden; background:#09100e; color:var(--ink); font:500 14px/1.4 system-ui,sans-serif; }
+    .shell { width:min(1100px,100vw); padding:18px; }
+    header { display:flex; justify-content:space-between; align-items:end; gap:20px; margin-bottom:10px; }
+    h1 { margin:0; font-size:clamp(22px,4vw,34px); letter-spacing:-1px; }
+    .tag { color:var(--accent); font-size:11px; letter-spacing:2px; text-transform:uppercase; }
+    .stats { display:flex; gap:10px; }
+    .stat { min-width:100px; padding:8px 13px; border:1px solid #263b34; border-radius:10px; background:#101b17; }
+    .stat span { display:block; color:var(--muted); font-size:10px; letter-spacing:1.4px; text-transform:uppercase; }
+    .stat strong { font-size:18px; }
+    .game { position:relative; border:1px solid #2a4038; border-radius:14px; overflow:hidden; background:#101914; box-shadow:0 28px 80px #0009; }
+    canvas { display:block; width:100%; aspect-ratio:7/5; }
+    .overlay { position:absolute; inset:0; display:grid; place-items:center; padding:22px; background:#07100cdd; text-align:center; transition:.2s; }
+    .overlay.hidden { opacity:0; pointer-events:none; }
+    .card { max-width:540px; padding:30px; border:1px solid #315346; border-radius:18px; background:#0d1814; }
+    .card h2 { margin:0 0 8px; font-size:34px; }
+    .card p { margin:8px 0 22px; color:var(--muted); }
+    .keys { display:flex; justify-content:center; flex-wrap:wrap; gap:9px; margin:18px 0; }
+    kbd { min-width:40px; padding:8px 11px; border:1px solid #3a574d; border-bottom-width:3px; border-radius:7px; background:#17241f; color:white; font:700 13px system-ui; }
+    button { border:0; border-radius:9px; padding:12px 22px; background:var(--accent); color:#072016; font:800 14px system-ui; cursor:pointer; }
+    button:hover { filter:brightness(1.1); transform:translateY(-1px); }
+    footer { display:flex; justify-content:space-between; gap:20px; padding-top:10px; color:var(--muted); font-size:12px; }
+    @media(max-width:650px){ .shell{padding:8px} header{align-items:center}.stat{min-width:75px;padding:6px 9px}.stat strong{font-size:15px} footer{display:none} }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <header>
+      <div><div class="tag">Top-down survival</div><h1>Maze Fire</h1></div>
+      <div class="stats"><div class="stat"><span>Health</span><strong id="health">♥ ♥ ♥</strong></div><div class="stat"><span>Enemies</span><strong id="enemyCount">8</strong></div></div>
+    </header>
+    <section class="game">
+      <canvas id="game" width="756" height="540" aria-label="Maze Fire game"></canvas>
+      <div class="overlay" id="overlay">
+        <div class="card"><div class="tag">Escape the maze</div><h2 id="overlayTitle">Maze Fire</h2><p id="overlayText">Destroy every enemy before they hit you three times. Walls stop movement, sight, and bullets.</p><div class="keys"><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd><kbd>Space</kbd></div><p>Move and face with WASD · Hold Space to shoot forward</p><button id="startButton">Enter the maze</button></div>
+      </div>
+    </section>
+    <footer><span>Green: you · Red: enemies · Pink heart: restore 1 health</span><span>Press R at any time to restart</span></footer>
+  </main>
+  <script>
+    (() => {
+      'use strict';
+      const canvas=document.querySelector('#game'), ctx=canvas.getContext('2d');
+      const overlay=document.querySelector('#overlay'), title=document.querySelector('#overlayTitle'), text=document.querySelector('#overlayText');
+      const startBtn=document.querySelector('#startButton'), healthEl=document.querySelector('#health'), enemyEl=document.querySelector('#enemyCount');
+      const TILE=36, COLS=21, ROWS=15, WORLD={w:COLS*TILE,h:ROWS*TILE};
+      let map=[
+        '#####################','#.....#.......#.....#','#.###.#.#####.#.###.#','#.#...#.....#.#...#.#','#.#.#######.#.###.#.#','#.#.........#.....#.#','#.#####.#########.#.#','#.....#.....#.....#.#','#####.#####.#.#####.#','#.....#.....#.......#','#.#####.###########.#','#.......#.....#.....#','#.#######.###.#.###.#','#...........#.......#','#####################'
+      ];
+      const spawn={x:1.5*TILE,y:1.5*TILE};
+      const keys={};
+      let player,enemies=[],bullets=[],particles=[],heartPickup=null,camera={x:0,y:0},state='menu',last=0,shake=0;
+      const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+      const wallAt=(x,y)=>{const c=Math.floor(x/TILE),r=Math.floor(y/TILE);return !map[r]||map[r][c]==='#';};
+      function generateMaze(){
+        const grid=Array.from({length:ROWS},()=>Array(COLS).fill('#'));
+        const stack=[[1,1]];grid[1][1]='.';
+        while(stack.length){
+          const [c,r]=stack[stack.length-1];
+          const options=[[2,0],[-2,0],[0,2],[0,-2]].filter(([dc,dr])=>{const nc=c+dc,nr=r+dr;return nc>0&&nc<COLS-1&&nr>0&&nr<ROWS-1&&grid[nr][nc]==='#';});
+          if(!options.length){stack.pop();continue;}
+          const [dc,dr]=options[Math.floor(Math.random()*options.length)];
+          grid[r+dr/2][c+dc/2]='.';grid[r+dr][c+dc]='.';stack.push([c+dc,r+dr]);
+        }
+        return grid.map(row=>row.join(''));
+      }
+      function pickEnemySpawns(count){
+        const cells=[];
+        for(let r=1;r<ROWS-1;r++)for(let c=1;c<COLS-1;c++)if(map[r][c]==='.'&&Math.abs(c-1)+Math.abs(r-1)>7)cells.push([c,r]);
+        for(let i=cells.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[cells[i],cells[j]]=[cells[j],cells[i]];}
+        const chosen=[];
+        for(const cell of cells){if(chosen.every(([c,r])=>Math.abs(c-cell[0])+Math.abs(r-cell[1])>3)){chosen.push(cell);if(chosen.length===count)break;}}
+        return chosen.length===count?chosen:cells.slice(0,count);
+      }
+      function circleHitsWall(x,y,r){
+        for(let yy=y-r;yy<=y+r;yy+=r*2)for(let xx=x-r;xx<=x+r;xx+=r*2)if(wallAt(xx,yy))return true;
+        return wallAt(x+r,y)||wallAt(x-r,y)||wallAt(x,y+r)||wallAt(x,y-r);
+      }
+      function clearSight(a,b){const d=Math.hypot(b.x-a.x,b.y-a.y),steps=Math.ceil(d/12);for(let i=1;i<steps;i++){const t=i/steps;if(wallAt(a.x+(b.x-a.x)*t,a.y+(b.y-a.y)*t))return false;}return true;}
+      function reset(){
+        map=generateMaze();
+        const enemySpawns=pickEnemySpawns(8);
+        const heartCells=[];for(let r=1;r<ROWS-1;r++)for(let c=1;c<COLS-1;c++)if(map[r][c]==='.'&&Math.abs(c-1)+Math.abs(r-1)>5&&!enemySpawns.some(([ec,er])=>ec===c&&er===r))heartCells.push([c,r]);
+        const heartCell=heartCells[Math.floor(Math.random()*heartCells.length)];
+        heartPickup=heartCell?{x:(heartCell[0]+.5)*TILE,y:(heartCell[1]+.5)*TILE}:null;
+        player={x:spawn.x,y:spawn.y,r:9,hp:3,angle:0,cool:0,flash:0,invuln:0};
+        enemies=enemySpawns.map(([c,r],i)=>({x:(c+.5)*TILE,y:(r+.5)*TILE,r:9,hp:2,cool:.5+i*.13,angle:0,flash:0,phase:i}));
+        bullets=[];particles=[];camera={x:0,y:0};shake=0;updateHud();state='playing';overlay.classList.add('hidden');last=performance.now();
+      }
+      function updateHud(){healthEl.textContent='♥ '.repeat(player?.hp||0).trim()||'—';enemyEl.textContent=enemies?.length??8;}
+      function moveBody(o,dx,dy){if(!circleHitsWall(o.x+dx,o.y,o.r))o.x+=dx;if(!circleHitsWall(o.x,o.y+dy,o.r))o.y+=dy;}
+      function burst(x,y,color,n=9){for(let i=0;i<n;i++){const a=Math.random()*Math.PI*2,s=40+Math.random()*120;particles.push({x,y,vx:Math.cos(a)*s,vy:Math.sin(a)*s,life:.25+Math.random()*.35,color});}}
+      function shoot(owner,angle,enemy=false){const speed=enemy?230:390;bullets.push({x:owner.x+Math.cos(angle)*14,y:owner.y+Math.sin(angle)*14,vx:Math.cos(angle)*speed,vy:Math.sin(angle)*speed,r:enemy?4:3,enemy,life:2});owner.cool=enemy?1.05:.18;owner.flash=.08;}
+      function finish(win){state=win?'won':'lost';title.textContent=win?'Maze cleared!':'You were caught';text.textContent=win?'Every enemy is down. The maze belongs to you.':'Three hits took you down. Restart to return to the maze entrance.';startBtn.textContent='Play again';overlay.classList.remove('hidden');}
+      function update(dt){
+        if(state!=='playing')return;
+        player.cool-=dt;player.flash-=dt;player.invuln-=dt;
+        let dx=(keys.KeyD?1:0)-(keys.KeyA?1:0),dy=(keys.KeyS?1:0)-(keys.KeyW?1:0);if(dx||dy){const m=Math.hypot(dx,dy);player.angle=Math.atan2(dy,dx);moveBody(player,dx/m*125*dt,dy/m*125*dt);}
+        if(keys.Space&&player.cool<=0)shoot(player,player.angle,false);
+        if(heartPickup&&player.hp<3&&Math.hypot(player.x-heartPickup.x,player.y-heartPickup.y)<player.r+10){player.hp++;burst(heartPickup.x,heartPickup.y,'#ff7eb6',18);heartPickup=null;updateHud();}
+        for(const e of enemies){
+          e.cool-=dt;e.flash-=dt;const d=Math.hypot(player.x-e.x,player.y-e.y);e.angle=Math.atan2(player.y-e.y,player.x-e.x);
+          if(d<225&&clearSight(e,player)){if(e.cool<=0)shoot(e,e.angle,true);} else if(d>100){const a=e.phase+performance.now()/2200;moveBody(e,Math.cos(a)*15*dt,Math.sin(a)*15*dt);}
+        }
+        for(let i=bullets.length-1;i>=0;i--){const b=bullets[i];b.x+=b.vx*dt;b.y+=b.vy*dt;b.life-=dt;if(b.life<=0||wallAt(b.x,b.y)){burst(b.x,b.y,b.enemy?'#ff6577':'#b8ffe1',3);bullets.splice(i,1);continue;}
+          if(b.enemy){if(player.invuln<=0&&Math.hypot(b.x-player.x,b.y-player.y)<b.r+player.r){bullets.splice(i,1);player.hp--;player.invuln=.8;shake=9;burst(player.x,player.y,'#ff6577',14);updateHud();if(player.hp<=0)finish(false);}}
+          else {const hit=enemies.find(e=>Math.hypot(b.x-e.x,b.y-e.y)<b.r+e.r);if(hit){bullets.splice(i,1);hit.hp--;hit.flash=.1;burst(hit.x,hit.y,'#ff6577',6);if(hit.hp<=0){burst(hit.x,hit.y,'#ff6577',20);enemies.splice(enemies.indexOf(hit),1);updateHud();if(!enemies.length)finish(true);}}}
+        }
+        for(let i=particles.length-1;i>=0;i--){const p=particles[i];p.x+=p.vx*dt;p.y+=p.vy*dt;p.vx*=.92;p.vy*=.92;p.life-=dt;if(p.life<=0)particles.splice(i,1);}
+        camera.x=0;camera.y=0;shake*=.88;
+      }
+      function draw(){
+        ctx.clearRect(0,0,canvas.width,canvas.height);ctx.save();ctx.translate((Math.random()-.5)*shake-camera.x,(Math.random()-.5)*shake-camera.y);
+        ctx.fillStyle='#05080e';ctx.fillRect(0,0,WORLD.w,WORLD.h);
+        const c0=Math.max(0,Math.floor(camera.x/TILE)),c1=Math.min(COLS-1,Math.ceil((camera.x+canvas.width)/TILE)),r0=Math.max(0,Math.floor(camera.y/TILE)),r1=Math.min(ROWS-1,Math.ceil((camera.y+canvas.height)/TILE));
+        for(let r=r0;r<=r1;r++)for(let c=c0;c<=c1;c++){const x=c*TILE,y=r*TILE;if(map[r][c]==='#'){ctx.fillStyle='#10205e';ctx.fillRect(x,y,TILE,TILE);ctx.strokeStyle='#3e6cff';ctx.lineWidth=2;ctx.strokeRect(x+2,y+2,TILE-4,TILE-4);}else{ctx.fillStyle='#060b16';ctx.fillRect(x,y,TILE,TILE);ctx.fillStyle='#172242';ctx.beginPath();ctx.arc(x+TILE/2,y+TILE/2,1.4,0,7);ctx.fill();}}
+        for(const b of bullets){ctx.beginPath();ctx.arc(b.x,b.y,b.r,0,7);ctx.fillStyle=b.enemy?'#ff8b99':'#d5ffe9';ctx.shadowBlur=14;ctx.shadowColor=ctx.fillStyle;ctx.fill();ctx.shadowBlur=0;}
+        if(heartPickup){const pulse=1+Math.sin(performance.now()/180)*.08;ctx.save();ctx.translate(heartPickup.x,heartPickup.y);ctx.scale(pulse,pulse);ctx.shadowBlur=14;ctx.shadowColor='#ff7eb6';ctx.fillStyle='#ff7eb6';ctx.beginPath();ctx.moveTo(0,8);ctx.bezierCurveTo(-15,-1,-9,-12,0,-5);ctx.bezierCurveTo(9,-12,15,-1,0,8);ctx.fill();ctx.restore();}
+        for(const e of enemies){ctx.save();ctx.translate(e.x,e.y);ctx.rotate(e.angle);ctx.fillStyle=e.flash>0?'white':'#ff6577';ctx.fillRect(2,-2,15,4);ctx.beginPath();ctx.arc(0,0,e.r,0,7);ctx.fill();ctx.fillStyle='#5d1d29';ctx.beginPath();ctx.arc(3,0,2.5,0,7);ctx.fill();ctx.restore();}
+        if(player){ctx.save();ctx.globalAlpha=player.invuln>0&&Math.floor(player.invuln*12)%2?.3:1;ctx.translate(player.x,player.y);ctx.rotate(player.angle);ctx.fillStyle=player.flash>0?'white':'#5ee6a8';ctx.fillRect(3,-2,16,4);ctx.beginPath();ctx.arc(0,0,player.r,0,7);ctx.fill();ctx.fillStyle='#123d2c';ctx.beginPath();ctx.arc(3,0,2.5,0,7);ctx.fill();ctx.restore();}
+        for(const p of particles){ctx.globalAlpha=clamp(p.life*3,0,1);ctx.fillStyle=p.color;ctx.fillRect(p.x-2,p.y-2,4,4);}ctx.globalAlpha=1;ctx.restore();
+        if(state==='playing'){ctx.fillStyle='#d9eee5bb';ctx.font='12px system-ui';ctx.fillText('ELIMINATE ALL HOSTILES',18,28);}
+      }
+      function loop(now){const dt=Math.min(.033,(now-last)/1000||0);last=now;update(dt);draw();requestAnimationFrame(loop);}
+      addEventListener('keydown',e=>{keys[e.code]=true;if(['Space','KeyW','KeyA','KeyS','KeyD'].includes(e.code))e.preventDefault();if(e.code==='KeyR')reset();});
+      addEventListener('keyup',e=>keys[e.code]=false);
+      addEventListener('blur',()=>{for(const key in keys)keys[key]=false;});
+      startBtn.addEventListener('click',reset);requestAnimationFrame(loop);
+    })();
+  </script>
+</body>
+</html>
