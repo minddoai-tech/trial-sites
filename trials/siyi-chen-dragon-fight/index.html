@@ -1,0 +1,961 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Knight vs Dragon</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            background: #1a1a2e;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: #fff;
+        }
+        #gameContainer {
+            position: relative;
+        }
+        canvas {
+            border: 3px solid #e94560;
+            border-radius: 8px;
+            background: #16213e;
+        }
+        #ui {
+            display: flex;
+            justify-content: space-between;
+            width: 800px;
+            margin-bottom: 15px;
+            padding: 10px 20px;
+            background: rgba(0, 0, 0, 0.5);
+            border-radius: 8px;
+        }
+        .health-bar {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .health-bar label {
+            font-size: 14px;
+            font-weight: bold;
+        }
+        .bar {
+            width: 150px;
+            height: 20px;
+            background: #333;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        .bar-fill {
+            height: 100%;
+            transition: width 0.3s;
+            border-radius: 10px;
+        }
+        #knightHealth {
+            background: linear-gradient(90deg, #00b894, #55efc4);
+        }
+        #dragonHealth {
+            background: linear-gradient(90deg, #d63031, #ff7675);
+        }
+        #instructions {
+            margin-top: 15px;
+            padding: 15px 25px;
+            background: rgba(0, 0, 0, 0.5);
+            border-radius: 8px;
+            text-align: center;
+            font-size: 14px;
+        }
+        #instructions h3 {
+            margin-bottom: 8px;
+            color: #e94560;
+        }
+        #instructions p {
+            color: #ddd;
+        }
+        #gameOver {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.9);
+            padding: 40px;
+            border-radius: 15px;
+            text-align: center;
+            display: none;
+            border: 3px solid #e94560;
+        }
+        #gameOver h1 {
+            font-size: 36px;
+            margin-bottom: 20px;
+        }
+        #gameOver button {
+            padding: 12px 30px;
+            font-size: 18px;
+            background: #e94560;
+            border: none;
+            border-radius: 8px;
+            color: white;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        #gameOver button:hover {
+            background: #ff6b6b;
+        }
+    </style>
+</head>
+<body>
+    <div id="ui">
+        <div class="health-bar">
+            <label>Knight</label>
+            <div class="bar">
+                <div id="knightHealth" class="bar-fill" style="width: 100%"></div>
+            </div>
+        </div>
+        <div class="health-bar">
+            <label>Dragon</label>
+            <div class="bar">
+                <div id="dragonHealth" class="bar-fill" style="width: 100%"></div>
+            </div>
+        </div>
+    </div>
+    <div id="gameContainer">
+        <canvas id="gameCanvas" width="800" height="450"></canvas>
+        <div id="gameOver">
+            <h1 id="gameOverText">Game Over</h1>
+            <button onclick="restartGame()">Play Again</button>
+        </div>
+    </div>
+    <div id="instructions">
+        <h3>Controls</h3>
+        <p>WASD - Move | SPACE - Jump | F - Attack</p>
+        <p style="color: #e74c3c; margin-top: 5px;">Dragon: Fireballs (5s) + Claw (2s) + Smart Movement</p>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const gameOverScreen = document.getElementById('gameOver');
+        const gameOverText = document.getElementById('gameOverText');
+        const knightHealthBar = document.getElementById('knightHealth');
+        const dragonHealthBar = document.getElementById('dragonHealth');
+
+        const GROUND = canvas.height - 80;
+        const GRAVITY = 0.6;
+        const JUMP_FORCE = -14;
+
+        const keys = {};
+        let gameRunning = true;
+
+        class Knight {
+            constructor() {
+                this.width = 40;
+                this.height = 60;
+                this.x = 100;
+                this.y = GROUND - this.height;
+                this.vx = 0;
+                this.vy = 0;
+                this.speed = 5;
+                this.health = 10;
+                this.maxHealth = 10;
+                this.onGround = true;
+                this.attacking = false;
+                this.attackTimer = 0;
+                this.attackCooldown = 0;
+                this.facing = 1;
+                this.color = '#3498db';
+                this.hitFlash = 0;
+            }
+
+            update() {
+                this.vx = 0;
+                if (keys['a']) { this.vx = -this.speed; this.facing = -1; }
+                if (keys['d']) { this.vx = this.speed; this.facing = 1; }
+                if (keys[' '] && this.onGround) {
+                    this.vy = JUMP_FORCE;
+                    this.onGround = false;
+                }
+                if (keys['f'] && this.attackCooldown <= 0) {
+                    this.attacking = true;
+                    this.attackTimer = 15;
+                    this.attackCooldown = 30;
+                }
+
+                this.vy += GRAVITY;
+                this.x += this.vx;
+                this.y += this.vy;
+
+                if (this.x < 0) this.x = 0;
+                if (this.x > canvas.width - this.width) this.x = canvas.width - this.width;
+
+                if (this.y >= GROUND - this.height) {
+                    this.y = GROUND - this.height;
+                    this.vy = 0;
+                    this.onGround = true;
+                }
+
+                if (this.attackTimer > 0) this.attackTimer--;
+                else this.attacking = false;
+                if (this.attackCooldown > 0) this.attackCooldown--;
+                if (this.hitFlash > 0) this.hitFlash--;
+            }
+
+            draw() {
+                ctx.save();
+                ctx.translate(this.x + this.width / 2, this.y + this.height / 2);
+                ctx.scale(this.facing, 1);
+
+                const flash = this.hitFlash > 0;
+                const bodyColor = flash ? '#ff6b6b' : this.color;
+
+                // Legs with boots
+                ctx.fillStyle = flash ? '#ff6b6b' : '#2c3e50';
+                ctx.fillRect(-10, 25, 8, 10);
+                ctx.fillRect(2, 25, 8, 10);
+                ctx.fillStyle = flash ? '#ff6b6b' : '#1a252f';
+                ctx.fillRect(-11, 32, 10, 8);
+                ctx.fillRect(1, 32, 10, 8);
+
+                // Body armor
+                ctx.fillStyle = bodyColor;
+                ctx.beginPath();
+                ctx.moveTo(-14, -12);
+                ctx.lineTo(14, -12);
+                ctx.lineTo(16, 25);
+                ctx.lineTo(-16, 25);
+                ctx.closePath();
+                ctx.fill();
+                
+                // Armor details
+                ctx.fillStyle = flash ? '#ff6b6b' : '#2980b9';
+                ctx.fillRect(-8, -5, 16, 4);
+                ctx.fillRect(-6, 5, 12, 4);
+                ctx.fillStyle = flash ? '#ff6b6b' : '#f1c40f';
+                ctx.fillRect(-2, -10, 4, 4);
+
+                // Head with helmet
+                ctx.fillStyle = flash ? '#ff6b6b' : '#7f8c8d';
+                ctx.beginPath();
+                ctx.arc(0, -22, 12, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Helmet visor
+                ctx.fillStyle = flash ? '#ff6b6b' : '#2c3e50';
+                ctx.fillRect(-8, -20, 16, 10);
+                ctx.fillStyle = flash ? '#ff6b6b' : '#ecf0f1';
+                ctx.fillRect(-4, -18, 3, 4);
+                ctx.fillRect(1, -18, 3, 4);
+
+                // Sword arm
+                if (this.attacking) {
+                    // Arm
+                    ctx.fillStyle = flash ? '#ff6b6b' : '#2c3e50';
+                    ctx.fillRect(12, -5, 8, 12);
+                    
+                    // Sword
+                    ctx.save();
+                    ctx.translate(16, -2);
+                    ctx.rotate(-0.3 + (1 - this.attackTimer / 15) * 1.2);
+                    
+                    // Blade
+                    ctx.fillStyle = '#bdc3c7';
+                    ctx.beginPath();
+                    ctx.moveTo(-1, -25);
+                    ctx.lineTo(1, -25);
+                    ctx.lineTo(2, 5);
+                    ctx.lineTo(-2, 5);
+                    ctx.closePath();
+                    ctx.fill();
+                    
+                    // Blade edge highlight
+                    ctx.fillStyle = '#ecf0f1';
+                    ctx.beginPath();
+                    ctx.moveTo(0, -24);
+                    ctx.lineTo(1, -24);
+                    ctx.lineTo(1, 4);
+                    ctx.lineTo(0, 4);
+                    ctx.closePath();
+                    ctx.fill();
+                    
+                    // Guard
+                    ctx.fillStyle = flash ? '#ff6b6b' : '#f1c40f';
+                    ctx.fillRect(-5, 4, 10, 3);
+                    
+                    // Handle
+                    ctx.fillStyle = flash ? '#ff6b6b' : '#8b4513';
+                    ctx.fillRect(-2, 7, 4, 8);
+                    
+                    // Pommel
+                    ctx.fillStyle = flash ? '#ff6b6b' : '#f1c40f';
+                    ctx.beginPath();
+                    ctx.arc(0, 16, 2, 0, Math.PI * 2);
+                    ctx.fill();
+                    
+                    ctx.restore();
+                } else {
+                    // Arm
+                    ctx.fillStyle = flash ? '#ff6b6b' : '#2c3e50';
+                    ctx.fillRect(12, 0, 8, 10);
+                    
+                    // Sword (idle position)
+                    ctx.save();
+                    ctx.translate(16, 3);
+                    ctx.rotate(0.5);
+                    
+                    // Blade
+                    ctx.fillStyle = '#bdc3c7';
+                    ctx.beginPath();
+                    ctx.moveTo(-1, -20);
+                    ctx.lineTo(1, -20);
+                    ctx.lineTo(2, 5);
+                    ctx.lineTo(-2, 5);
+                    ctx.closePath();
+                    ctx.fill();
+                    
+                    // Blade edge highlight
+                    ctx.fillStyle = '#ecf0f1';
+                    ctx.beginPath();
+                    ctx.moveTo(0, -19);
+                    ctx.lineTo(1, -19);
+                    ctx.lineTo(1, 4);
+                    ctx.lineTo(0, 4);
+                    ctx.closePath();
+                    ctx.fill();
+                    
+                    // Guard
+                    ctx.fillStyle = flash ? '#ff6b6b' : '#f1c40f';
+                    ctx.fillRect(-5, 4, 10, 3);
+                    
+                    // Handle
+                    ctx.fillStyle = flash ? '#ff6b6b' : '#8b4513';
+                    ctx.fillRect(-2, 7, 4, 8);
+                    
+                    // Pommel
+                    ctx.fillStyle = flash ? '#ff6b6b' : '#f1c40f';
+                    ctx.beginPath();
+                    ctx.arc(0, 16, 2, 0, Math.PI * 2);
+                    ctx.fill();
+                    
+                    ctx.restore();
+                }
+
+                ctx.restore();
+            }
+
+            getAttackBox() {
+                if (!this.attacking) return null;
+                const swingProgress = 1 - this.attackTimer / 15;
+                const swordReach = 35 + swingProgress * 15;
+                return {
+                    x: this.facing === 1 ? this.x + this.width : this.x - swordReach,
+                    y: this.y,
+                    width: swordReach,
+                    height: this.height
+                };
+            }
+
+            takeDamage(amount) {
+                this.health -= amount;
+                this.hitFlash = 10;
+                updateHealthBars();
+                if (this.health <= 0) {
+                    this.health = 0;
+                    endGame('Dragon Wins!');
+                }
+            }
+        }
+
+        class Dragon {
+            constructor() {
+                this.width = 80;
+                this.height = 120;
+                this.x = canvas.width - 200;
+                this.y = GROUND - this.height;
+                this.vx = 0;
+                this.health = 15;
+                this.maxHealth = 15;
+                this.color = '#e74c3c';
+                this.fireballCooldown = 0;
+                this.fireballInterval = 300;
+                this.clawCooldown = 0;
+                this.clawInterval = 120;
+                this.clawing = false;
+                this.clawTimer = 0;
+                this.hitFlash = 0;
+                this.breathTimer = 0;
+                this.facing = -1;
+                this.breathing = false;
+
+                // AI Movement
+                this.state = 'approach';
+                this.stateTimer = 0;
+                this.speed = 1.5;
+                this.minRange = 80;
+                this.maxRange = 200;
+            }
+
+            update() {
+                if (this.fireballCooldown > 0) this.fireballCooldown--;
+                if (this.clawCooldown > 0) this.clawCooldown--;
+                if (this.hitFlash > 0) this.hitFlash--;
+                if (this.breathTimer > 0) this.breathTimer--;
+                if (this.clawTimer > 0) this.clawTimer--;
+                else this.clawing = false;
+
+                // Track knight position
+                const dx = knight.x - this.x;
+                const dist = Math.abs(dx);
+                this.facing = dx < 0 ? -1 : 1;
+
+                // Boss AI Movement
+                this.stateTimer++;
+                
+                if (this.state === 'approach') {
+                    // Move towards knight
+                    if (dist > this.minRange) {
+                        this.vx = this.facing * this.speed;
+                    } else {
+                        this.vx = 0;
+                        // Switch to retreat after being close for a while
+                        if (this.stateTimer > 120) {
+                            this.state = 'retreat';
+                            this.stateTimer = 0;
+                        }
+                    }
+                } else if (this.state === 'retreat') {
+                    // Back away from knight
+                    if (dist < this.maxRange) {
+                        this.vx = -this.facing * this.speed * 0.8;
+                    } else {
+                        this.vx = 0;
+                        // Switch to strafe after backing away
+                        if (this.stateTimer > 60) {
+                            this.state = 'strafe';
+                            this.stateTimer = 0;
+                        }
+                    }
+                } else if (this.state === 'strafe') {
+                    // Circle around at distance
+                    if (dist < this.minRange + 30) {
+                        this.vx = -this.facing * this.speed;
+                    } else if (dist > this.maxRange - 30) {
+                        this.vx = this.facing * this.speed;
+                    } else {
+                        // Move perpendicular-ish by varying speed
+                        this.vx = Math.sin(this.stateTimer * 0.05) * this.speed;
+                    }
+                    
+                    // Return to approach after strafing
+                    if (this.stateTimer > 90) {
+                        this.state = 'approach';
+                        this.stateTimer = 0;
+                    }
+                }
+
+                // Apply movement
+                this.x += this.vx;
+
+                // Keep in bounds
+                if (this.x < 50) this.x = 50;
+                if (this.x > canvas.width - this.width - 50) this.x = canvas.width - this.width - 50;
+
+                // Breathing animation when about to shoot
+                if (this.fireballCooldown <= 60 && this.fireballCooldown > 0) {
+                    this.breathing = true;
+                } else {
+                    this.breathing = false;
+                }
+
+                // Shoot fireball
+                if (this.fireballCooldown <= 0) {
+                    this.shootFireball();
+                    this.fireballCooldown = this.fireballInterval;
+                }
+
+                // Claw attack when close
+                if (dist < 100 && this.clawCooldown <= 0 && !this.clawing) {
+                    this.claw();
+                }
+            }
+
+            draw() {
+                ctx.save();
+                ctx.translate(this.x + this.width / 2, this.y + this.height / 2);
+                ctx.scale(this.facing, 1);
+
+                const flash = this.hitFlash > 0;
+
+                // Body
+                ctx.fillStyle = flash ? '#ff9999' : this.color;
+                ctx.beginPath();
+                ctx.ellipse(0, 10, 35, 45, 0, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Head
+                ctx.fillStyle = flash ? '#ff9999' : '#c0392b';
+                ctx.beginPath();
+                ctx.ellipse(20, -35, 25, 20, 0, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Eye
+                ctx.fillStyle = flash ? '#fff' : '#f1c40f';
+                ctx.beginPath();
+                ctx.arc(30, -38, 6, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.fillStyle = '#000';
+                ctx.beginPath();
+                ctx.arc(32, -38, 3, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Jaw
+                ctx.fillStyle = flash ? '#ff9999' : '#c0392b';
+                ctx.beginPath();
+                ctx.moveTo(35, -28);
+                ctx.lineTo(55, -25 + (this.breathing ? Math.sin(this.breathTimer * 0.5) * 5 : 0));
+                ctx.lineTo(55, -18 + (this.breathing ? Math.sin(this.breathTimer * 0.5) * 3 : 0));
+                ctx.lineTo(35, -22);
+                ctx.fill();
+
+                // Horns
+                ctx.fillStyle = flash ? '#ff9999' : '#7f8c8d';
+                ctx.beginPath();
+                ctx.moveTo(10, -50);
+                ctx.lineTo(5, -65);
+                ctx.lineTo(15, -50);
+                ctx.fill();
+                ctx.beginPath();
+                ctx.moveTo(25, -50);
+                ctx.lineTo(28, -65);
+                ctx.lineTo(33, -50);
+                ctx.fill();
+
+                // Wings
+                ctx.fillStyle = flash ? '#ff9999' : '#922b21';
+                ctx.beginPath();
+                ctx.moveTo(-15, -20);
+                ctx.lineTo(-55, -50);
+                ctx.lineTo(-30, 10);
+                ctx.closePath();
+                ctx.fill();
+
+                // Tail
+                ctx.fillStyle = flash ? '#ff9999' : this.color;
+                ctx.beginPath();
+                ctx.moveTo(-30, 20);
+                ctx.lineTo(-60, 30);
+                ctx.lineTo(-50, 15);
+                ctx.lineTo(-35, 25);
+                ctx.fill();
+
+                // Legs
+                ctx.fillStyle = flash ? '#ff9999' : '#922b21';
+                ctx.fillRect(-20, 45, 15, 20);
+                ctx.fillRect(5, 45, 15, 20);
+
+                // Fire breathing effect
+                if (this.breathing) {
+                    ctx.fillStyle = `rgba(255, 165, 0, ${0.3 + Math.sin(this.breathTimer * 0.3) * 0.2})`;
+                    ctx.beginPath();
+                    ctx.moveTo(55, -25);
+                    ctx.lineTo(80, -22);
+                    ctx.lineTo(80, -15);
+                    ctx.lineTo(55, -22);
+                    ctx.fill();
+                }
+
+                // Claw attack animation
+                if (this.clawing) {
+                    ctx.fillStyle = '#ff3333';
+                    const clawProgress = 1 - (this.clawTimer / 20);
+                    const clawExtend = clawProgress < 0.5 ? clawProgress * 2 : (1 - clawProgress) * 2;
+                    
+                    // Claws
+                    for (let i = 0; i < 3; i++) {
+                        ctx.beginPath();
+                        ctx.moveTo(40, -5 + i * 12);
+                        ctx.lineTo(40 + 40 * clawExtend, -10 + i * 12);
+                        ctx.lineTo(40 + 40 * clawExtend, -2 + i * 12);
+                        ctx.closePath();
+                        ctx.fill();
+                    }
+                }
+
+                ctx.restore();
+            }
+
+            shootFireball() {
+                // Calculate angle to knight
+                const dx = knight.x - this.x;
+                const dy = knight.y - this.y;
+                const dist = Math.sqrt(dx * dx + dy * dy);
+                
+                // Decide attack pattern: 60% horizontal, 40% diagonal down
+                if (Math.random() < 0.4 && dist > 100) {
+                    // Diagonal downward fireball
+                    const angle = Math.atan2(dy + 50, dx); // Aim slightly below knight
+                    fireballs.push(new Fireball(
+                        this.x + this.width / 2,
+                        this.y + 30,
+                        Math.cos(angle),
+                        Math.sin(angle)
+                    ));
+                } else {
+                    // Horizontal fireball
+                    const dir = knight.x < this.x ? -1 : 1;
+                    fireballs.push(new Fireball(
+                        this.x + this.width / 2,
+                        this.y + 30,
+                        dir,
+                        0
+                    ));
+                }
+            }
+
+            claw() {
+                this.clawing = true;
+                this.clawTimer = 20;
+                this.clawCooldown = this.clawInterval;
+                // Dash forward during claw
+                this.vx = this.facing * 6;
+            }
+
+            getClawBox() {
+                if (!this.clawing || this.clawTimer < 5) return null;
+                return {
+                    x: this.facing === 1 ? this.x + this.width : this.x - 60,
+                    y: this.y + 30,
+                    width: 60,
+                    height: 60
+                };
+            }
+
+            takeDamage(amount) {
+                this.health -= amount;
+                this.hitFlash = 12;
+                updateHealthBars();
+                if (this.health <= 0) {
+                    this.health = 0;
+                    endGame('Knight Wins!');
+                }
+            }
+        }
+
+        class Fireball {
+            constructor(x, y, dirX, dirY = 0) {
+                this.x = x;
+                this.y = y;
+                this.radius = 10;
+                this.speed = 5;
+                this.dirX = dirX;
+                this.dirY = dirY;
+                this.damage = 1;
+                this.alive = true;
+                this.particles = [];
+                // Normalize direction
+                const len = Math.sqrt(dirX * dirX + dirY * dirY);
+                if (len > 0) {
+                    this.dirX = dirX / len;
+                    this.dirY = dirY / len;
+                }
+            }
+
+            update() {
+                this.x += this.speed * this.dirX;
+                this.y += this.speed * this.dirY;
+
+                // Trail particles
+                if (Math.random() > 0.5) {
+                    this.particles.push({
+                        x: this.x - this.dirX * 10,
+                        y: this.y - this.dirY * 10,
+                        life: 15,
+                        size: Math.random() * 5 + 3
+                    });
+                }
+
+                this.particles = this.particles.filter(p => {
+                    p.life--;
+                    p.size *= 0.95;
+                    return p.life > 0;
+                });
+
+                if (this.x < -50 || this.x > canvas.width + 50 || this.y < -50 || this.y > canvas.height + 50) {
+                    this.alive = false;
+                }
+            }
+
+            draw() {
+                // Particles
+                this.particles.forEach(p => {
+                    const alpha = p.life / 15;
+                    ctx.fillStyle = `rgba(255, ${100 + Math.random() * 50}, 0, ${alpha})`;
+                    ctx.beginPath();
+                    ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+                    ctx.fill();
+                });
+
+                // Core
+                const gradient = ctx.createRadialGradient(
+                    this.x, this.y, 0,
+                    this.x, this.y, this.radius
+                );
+                gradient.addColorStop(0, '#fff');
+                gradient.addColorStop(0.3, '#ff6600');
+                gradient.addColorStop(0.7, '#ff0000');
+                gradient.addColorStop(1, 'rgba(255, 0, 0, 0)');
+
+                ctx.fillStyle = gradient;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+
+        class Particle {
+            constructor(x, y, color) {
+                this.x = x;
+                this.y = y;
+                this.vx = (Math.random() - 0.5) * 8;
+                this.vy = (Math.random() - 0.5) * 8;
+                this.life = 30;
+                this.size = Math.random() * 4 + 2;
+                this.color = color;
+            }
+
+            update() {
+                this.x += this.vx;
+                this.y += this.vy;
+                this.life--;
+                this.size *= 0.95;
+            }
+
+            draw() {
+                const alpha = this.life / 30;
+                ctx.fillStyle = this.color.replace('1)', `${alpha})`);
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+
+        let knight, dragon, fireballs, particles;
+
+        function init() {
+            knight = new Knight();
+            dragon = new Dragon();
+            fireballs = [];
+            particles = [];
+            gameRunning = true;
+            gameOverScreen.style.display = 'none';
+            updateHealthBars();
+        }
+
+        function updateHealthBars() {
+            knightHealthBar.style.width = `${(knight.health / knight.maxHealth) * 100}%`;
+            dragonHealthBar.style.width = `${(dragon.health / dragon.maxHealth) * 100}%`;
+        }
+
+        function checkCollision(rect1, rect2) {
+            return rect1.x < rect2.x + rect2.width &&
+                   rect1.x + rect1.width > rect2.x &&
+                   rect1.y < rect2.y + rect2.height &&
+                   rect1.y + rect1.height > rect2.y;
+        }
+
+        function spawnHitParticles(x, y, color) {
+            for (let i = 0; i < 10; i++) {
+                particles.push(new Particle(x, y, color));
+            }
+        }
+
+        function drawBackground() {
+            // Sky gradient
+            const skyGradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+            skyGradient.addColorStop(0, '#0f0c29');
+            skyGradient.addColorStop(0.5, '#302b63');
+            skyGradient.addColorStop(1, '#24243e');
+            ctx.fillStyle = skyGradient;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Stars
+            ctx.fillStyle = '#fff';
+            for (let i = 0; i < 50; i++) {
+                const x = (i * 137.5) % canvas.width;
+                const y = (i * 73.7) % (GROUND - 50);
+                const twinkle = Math.sin(Date.now() * 0.003 + i) * 0.5 + 0.5;
+                ctx.globalAlpha = twinkle;
+                ctx.beginPath();
+                ctx.arc(x, y, 1, 0, Math.PI * 2);
+                ctx.fill();
+            }
+            ctx.globalAlpha = 1;
+
+            // Mountains
+            ctx.fillStyle = '#1a1a2e';
+            ctx.beginPath();
+            ctx.moveTo(0, GROUND);
+            ctx.lineTo(100, GROUND - 120);
+            ctx.lineTo(200, GROUND - 60);
+            ctx.lineTo(350, GROUND - 150);
+            ctx.lineTo(500, GROUND - 80);
+            ctx.lineTo(650, GROUND - 130);
+            ctx.lineTo(800, GROUND - 70);
+            ctx.lineTo(800, GROUND);
+            ctx.fill();
+
+            // Ground
+            ctx.fillStyle = '#2d5a27';
+            ctx.fillRect(0, GROUND, canvas.width, canvas.height - GROUND);
+
+            // Grass details
+            ctx.fillStyle = '#3d7a37';
+            for (let i = 0; i < 100; i++) {
+                const x = (i * 8.3) % canvas.width;
+                const h = 5 + Math.sin(i * 0.5) * 3;
+                ctx.fillRect(x, GROUND, 3, h);
+            }
+        }
+
+        function drawDamageNumbers() {
+            // Could add floating damage numbers here
+        }
+
+        function update() {
+            if (!gameRunning) return;
+
+            knight.update();
+            dragon.update();
+            fireballs.forEach(fb => fb.update());
+            fireballs = fireballs.filter(fb => fb.alive);
+
+            particles.forEach(p => p.update());
+            particles = particles.filter(p => p.life > 0);
+
+            // Knight attack hits dragon
+            const attackBox = knight.getAttackBox();
+            if (attackBox) {
+                const dragonBox = {
+                    x: dragon.x,
+                    y: dragon.y,
+                    width: dragon.width,
+                    height: dragon.height
+                };
+                if (checkCollision(attackBox, dragonBox)) {
+                    if (knight.attackTimer === 10) {
+                        dragon.takeDamage(2);
+                        spawnHitParticles(dragon.x + dragon.width / 2, dragon.y + dragon.height / 2, 'rgba(255, 100, 100, 1)');
+                    }
+                }
+            }
+
+            // Fireball hits knight
+            fireballs.forEach(fb => {
+                const knightBox = {
+                    x: knight.x,
+                    y: knight.y,
+                    width: knight.width,
+                    height: knight.height
+                };
+                const fbBox = {
+                    x: fb.x - fb.radius,
+                    y: fb.y - fb.radius,
+                    width: fb.radius * 2,
+                    height: fb.radius * 2
+                };
+                if (checkCollision(knightBox, fbBox)) {
+                    knight.takeDamage(fb.damage);
+                    spawnHitParticles(knight.x + knight.width / 2, knight.y + knight.height / 2, 'rgba(255, 200, 0, 1)');
+                    fb.alive = false;
+                }
+            });
+
+            // Dragon claw hits knight
+            const clawBox = dragon.getClawBox();
+            if (clawBox) {
+                const knightBox = {
+                    x: knight.x,
+                    y: knight.y,
+                    width: knight.width,
+                    height: knight.height
+                };
+                if (checkCollision(knightBox, clawBox) && dragon.clawTimer === 10) {
+                    knight.takeDamage(2);
+                    spawnHitParticles(knight.x + knight.width / 2, knight.y + knight.height / 2, 'rgba(255, 50, 50, 1)');
+                }
+            }
+        }
+
+        function draw() {
+            drawBackground();
+            dragon.draw();
+            fireballs.forEach(fb => fb.draw());
+            knight.draw();
+            particles.forEach(p => p.draw());
+
+            // Knight attack indicator
+            if (knight.attacking) {
+                ctx.fillStyle = 'rgba(255, 255, 0, 0.3)';
+                const box = knight.getAttackBox();
+                if (box) {
+                    ctx.fillRect(box.x, box.y, box.width, box.height);
+                }
+            }
+
+            // Dragon claw attack indicator
+            const clawBox = dragon.getClawBox();
+            if (clawBox) {
+                ctx.fillStyle = 'rgba(255, 0, 0, 0.4)';
+                ctx.fillRect(clawBox.x, clawBox.y, clawBox.width, clawBox.height);
+            }
+
+            // Dragon cooldown indicators
+            ctx.fillStyle = '#fff';
+            ctx.font = '11px monospace';
+            ctx.textAlign = 'center';
+            const fbCd = Math.ceil(dragon.fireballCooldown / 60);
+            const clawCd = Math.ceil(dragon.clawCooldown / 60);
+            ctx.fillText(`Fire: ${fbCd}s`, dragon.x + dragon.width / 2, dragon.y - 20);
+            ctx.fillText(`Claw: ${clawCd}s`, dragon.x + dragon.width / 2, dragon.y - 5);
+            
+            // Dragon state indicator
+            ctx.fillStyle = dragon.state === 'approach' ? '#ff6b6b' : 
+                           dragon.state === 'retreat' ? '#feca57' : '#48dbfb';
+            ctx.fillText(dragon.state.toUpperCase(), dragon.x + dragon.width / 2, dragon.y - 35);
+        }
+
+        function endGame(message) {
+            gameRunning = false;
+            gameOverText.textContent = message;
+            gameOverScreen.style.display = 'block';
+        }
+
+        function restartGame() {
+            init();
+        }
+
+        function gameLoop() {
+            update();
+            draw();
+            requestAnimationFrame(gameLoop);
+        }
+
+        document.addEventListener('keydown', (e) => {
+            keys[e.key.toLowerCase()] = true;
+            if (e.key === ' ') e.preventDefault();
+        });
+
+        document.addEventListener('keyup', (e) => {
+            keys[e.key.toLowerCase()] = false;
+        });
+
+        init();
+        gameLoop();
+    </script>
+</body>
+</html>
