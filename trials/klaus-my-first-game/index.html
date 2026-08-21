@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Blockbound</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main class="shell">
+    <header>
+      <div>
+        <p class="eyebrow">A tiny 2D block adventure</p>
+        <h1>BLOCKBOUND</h1>
+      </div>
+      <button id="restart" type="button">Restart world</button>
+    </header>
+
+    <section class="game-wrap" aria-label="Blockbound game">
+      <canvas id="game" width="960" height="540">Your browser needs canvas support to play Blockbound.</canvas>
+      <div id="start-screen" class="overlay">
+        <div class="card">
+          <span class="gem-icon">◆</span>
+          <h2>Mine. Survive. Escape.</h2>
+          <p>Find <strong>5 blue crystals</strong>, then reach the glowing portal. Zombies take one of your three hearts when they touch you.</p>
+          <button id="start" type="button">Enter world</button>
+        </div>
+      </div>
+      <div id="end-screen" class="overlay hidden">
+        <div class="card">
+          <span id="end-icon" class="gem-icon">◆</span>
+          <h2 id="end-title">World complete!</h2>
+          <p id="end-copy"></p>
+          <button id="play-again" type="button">Play again</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="info-bar">
+      <div><kbd>A</kbd><kbd>D</kbd><span>Move</span></div>
+      <div><kbd>W</kbd><span>Jump</span></div>
+      <div><kbd>S</kbd><span>Crouch</span></div>
+      <div><kbd>U</kbd><span>Mine ahead</span></div>
+      <div><kbd>I</kbd><span>Mine below</span></div>
+      <p>Tip: blue crystal blocks take two hits. Mine dirt and stone to clear a path.</p>
+    </section>
+
+    <nav class="touch-controls" aria-label="Touch controls">
+      <button data-key="a">◀</button>
+      <button data-key="d">▶</button>
+      <button data-key="w">↑</button>
+      <button data-key="s">↓</button>
+      <button data-key="u" class="mine">⛏</button>
+      <button data-key="i" class="mine">⛏↓</button>
+    </nav>
+  </main>
+  <script src="game.js"></script>
+</body>
+</html>

@@ -1,5 +1,14 @@
 [
   {
+    "slug": "klaus-my-first-game",
+    "trialId": "527aaa32-1cac-477f-9c4d-a6cd38cb455a",
+    "studentName": "Klaus",
+    "title": "my first game",
+    "description": "you have 3 hearts and you die when zombies hit you",
+    "submittedAt": "2026-08-21T23:59:39.518Z",
+    "thumbnail": "klaus-my-first-game/thumb.png"
+  },
+  {
     "slug": "aubrey-tetris",
     "trialId": "a2fd7888-3cc9-4d72-85bb-52203cf279a2",
     "studentName": "Aubrey",
