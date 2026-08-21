@@ -1,5 +1,14 @@
 [
   {
+    "slug": "aubrey-tetris",
+    "trialId": "a2fd7888-3cc9-4d72-85bb-52203cf279a2",
+    "studentName": "Aubrey",
+    "title": "Tetris",
+    "description": "A classic rendition of Tetris",
+    "submittedAt": "2026-08-21T00:21:58.520Z",
+    "thumbnail": "aubrey-tetris/thumb.png"
+  },
+  {
     "slug": "edward-nong-maze-runner",
     "trialId": "1445d1c4-1882-4141-ba7a-d3e5750a2898",
     "studentName": "Edward Nong",
