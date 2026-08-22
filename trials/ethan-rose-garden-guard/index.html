@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Garden Guard</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <main class="game-shell">
+    <header>
+      <div class="brand"><span>🌿</span><div><h1>Garden Guard</h1><p>Keep the bugs away from the treasure.</p></div></div>
+      <div class="stats" aria-label="Game status">
+        <div class="stat coin">🪙 <strong id="coins">10</strong><span>coins</span></div>
+        <div class="stat life">❤️ <strong id="lives">3</strong><span>lives</span></div>
+        <div class="stat wave">🌊 <strong id="wave">1</strong><span>/ 10</span></div>
+      </div>
+    </header>
+
+    <section class="game-layout">
+      <section class="board-card" aria-label="Garden battlefield">
+        <div class="board-toolbar">
+          <div id="message" aria-live="polite">Choose a plant, then click a garden plot.</div>
+          <div class="toolbar-actions"><button id="speedButton" class="speed-button" aria-label="Change game speed">Speed: Normal</button><button id="waveButton" class="primary">Start wave 1</button></div>
+        </div>
+        <canvas id="gameCanvas" width="960" height="600" aria-label="Tower defense board"></canvas>
+        <div class="legend"><span><i class="plot-dot"></i> Planting plot</span><span><i class="path-dot"></i> Bug path</span><span>🎁 Protect the treasure chest</span></div>
+      </section>
+
+      <aside>
+        <section class="panel">
+          <h2>Plant menu</h2>
+          <p class="muted">Pick a defender to plant.</p>
+          <button class="tower-choice selected" data-type="broccoli" id="broccoliChoice">
+            <span class="tower-emoji">🥦</span><span><b>Broccoli</b><small>Quick pea shots · 4 coins</small></span><span class="cost">4</span>
+          </button>
+          <button class="tower-choice" data-type="pepper" id="pepperChoice">
+            <span class="tower-emoji">🌶️</span><span><b>Pepper</b><small>Hot splash shots · 8 coins</small></span><span class="cost">8</span>
+          </button>
+        </section>
+
+        <section class="panel upgrade-panel" id="upgradePanel">
+          <h2>Plant upgrades</h2>
+          <div id="upgradeContent"><p class="muted">Click a planted defender to inspect and upgrade it.</p></div>
+        </section>
+
+        <section class="panel instructions">
+          <h2>How to play</h2>
+          <ol>
+            <li>Choose a plant and place it on a green plot.</li>
+            <li>Press <b>Start wave</b> when ready.</li>
+            <li>Defeated bugs drop coins for more plants and upgrades.</li>
+            <li>Lose all 3 lives and the bugs take the treasure.</li>
+          </ol>
+        </section>
+      </aside>
+    </section>
+  </main>
+
+  <div class="modal hidden" id="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <div class="modal-card">
+      <div id="modalIcon" class="modal-icon">🏆</div>
+      <h2 id="modalTitle">Garden saved!</h2>
+      <p id="modalText"></p>
+      <button id="restartButton" class="primary">Play again</button>
+    </div>
+  </div>
+  <script src="game.js"></script>
+</body>
+</html>

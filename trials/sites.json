@@ -1,5 +1,14 @@
 [
   {
+    "slug": "ethan-rose-garden-guard",
+    "trialId": "e942822f-2261-464b-b9b1-5a1ee8792419",
+    "studentName": "Ethan Rose",
+    "title": "Garden Guard",
+    "description": "Simple garden themed tower defense game",
+    "submittedAt": "2026-08-22T01:02:14.973Z",
+    "thumbnail": "ethan-rose-garden-guard/thumb.png"
+  },
+  {
     "slug": "klaus-my-first-game",
     "trialId": "527aaa32-1cac-477f-9c4d-a6cd38cb455a",
     "studentName": "Klaus",
