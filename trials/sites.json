@@ -1,5 +1,14 @@
 [
   {
+    "slug": "ryan-snack-shack",
+    "trialId": "6b791e95-be04-40fa-a8fd-c4e913325e2b",
+    "studentName": "Ryan",
+    "title": "Snack Shack",
+    "description": "A website to help students create a budget for their lunch time!",
+    "submittedAt": "2026-08-22T01:22:32.487Z",
+    "thumbnail": "ryan-snack-shack/thumb.png"
+  },
+  {
     "slug": "ethan-rose-garden-guard",
     "trialId": "e942822f-2261-464b-b9b1-5a1ee8792419",
     "studentName": "Ethan Rose",

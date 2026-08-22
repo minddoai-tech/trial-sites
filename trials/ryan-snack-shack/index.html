@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Snack Shack — Snacks at Lunch</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- ============ NAV ============ -->
+  <header class="nav">
+    <a href="#top" class="logo">🍿 Snack&nbsp;Shack</a>
+    <nav class="nav-links">
+      <a href="#menu">Menu</a>
+      <a href="#where">Where &amp; When</a>
+      <a href="#how">How to Buy</a>
+    </nav>
+  </header>
+
+  <!-- ============ HERO ============ -->
+  <section class="hero" id="top">
+    <div class="hero-inner">
+      <p class="eyebrow">Open every school day</p>
+      <h1>Good snacks.<br><span class="highlight">Great prices.</span></h1>
+      <p class="tagline">
+        Chips, candy, cookies and cold drinks — right on campus, right when
+        you need them. No app, no line, no problem.
+      </p>
+      <div class="hero-buttons">
+        <a href="#menu" class="btn btn-primary">See the menu</a>
+        <a href="#where" class="btn btn-ghost">Find us →</a>
+      </div>
+      <div class="hero-facts">
+        <div class="fact"><strong>$1–$2</strong><span>Most snacks</span></div>
+        <div class="fact"><strong>12:05</strong><span>Lunch bell</span></div>
+        <div class="fact"><strong>Cash + Venmo</strong><span>Accepted</span></div>
+      </div>
+    </div>
+    <div class="hero-emoji" aria-hidden="true">
+      <span>🍫</span><span>🥨</span><span>🧃</span><span>🍪</span>
+    </div>
+  </section>
+
+  <!-- ============ WHERE & WHEN ============ -->
+  <!-- EDIT ME: change the room number, times and days to match your school -->
+  <section class="section" id="where">
+    <h2 class="section-title">Where &amp; When</h2>
+    <p class="section-sub">Come find us — we're easy to spot.</p>
+
+    <div class="info-grid">
+      <div class="info-card">
+        <div class="info-icon">📍</div>
+        <h3>Where</h3>
+        <p><strong>Cafeteria — back left corner</strong><br>
+           By the vending machines, next to the courtyard doors.</p>
+      </div>
+      <div class="info-card">
+        <div class="info-icon">🕛</div>
+        <h3>When</h3>
+        <p><strong>Lunch: 12:05 – 12:45 PM</strong><br>
+           Monday through Friday. We pack up when the bell rings.</p>
+      </div>
+      <div class="info-card">
+        <div class="info-icon">💵</div>
+        <h3>Payment</h3>
+        <p><strong>Cash or Venmo</strong><br>
+           Exact change is a huge help. Venmo: <em>@snack-shack</em></p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ MENU ============ -->
+  <!-- EDIT ME: add or remove <article class="snack"> blocks to change the menu -->
+  <section class="section menu-section" id="menu">
+    <h2 class="section-title">The Menu</h2>
+    <p class="section-sub">Fresh stock every morning. When it's gone, it's gone!</p>
+
+    <div class="snack-grid">
+
+      <article class="snack">
+        <div class="snack-img"><img src="images/cheetos.png" alt="Bag of Flamin' Hot Cheetos"></div>
+        <h3>Hot Chips</h3>
+        <p class="snack-desc">Flamin' hot, nacho cheese, or classic</p>
+        <span class="price">$1.50</span>
+      </article>
+
+      <article class="snack">
+        <div class="snack-img"><img src="images/kitkat.png" alt="KitKat bar"></div>
+        <h3>Candy Bars</h3>
+        <p class="snack-desc">Snickers, KitKat, Twix, Reese's</p>
+        <span class="price">$1.25</span>
+      </article>
+
+      <article class="snack">
+        <div class="snack-img"><img src="images/cookie.png" alt="Chocolate chip cookie with candy pieces"></div>
+        <h3>Cookies</h3>
+        <p class="snack-desc">Chocolate chip, 2-pack, soft baked</p>
+        <span class="price">$1.00</span>
+      </article>
+
+      <article class="snack">
+        <div class="snack-img"><img src="images/coke.png" alt="Bottle of Coca-Cola"></div>
+        <h3>Cold Soda</h3>
+        <p class="snack-desc">Coke, Sprite, Dr Pepper — ice cold</p>
+        <span class="price">$2.00</span>
+      </article>
+
+      <article class="snack">
+        <!-- Swap the emoji below for: <img src="images/pepsi.png" alt="Can of Pepsi"> -->
+        <div class="snack-img">🥤</div>
+        <h3>Pepsi</h3>
+        <p class="snack-desc">Ice cold 12 oz can</p>
+        <span class="price">$1.25</span>
+      </article>
+
+      <article class="snack">
+        <div class="snack-img">🧃</div>
+        <h3>Juice Boxes</h3>
+        <p class="snack-desc">Apple, fruit punch, or lemonade</p>
+        <span class="price">$1.00</span>
+      </article>
+
+      <article class="snack">
+        <div class="snack-img"><img src="images/pretzels.png" alt="Snyder's of Hanover mini pretzels bag"></div>
+        <h3>Pretzels</h3>
+        <p class="snack-desc">Salted twists, big bag</p>
+        <span class="price">$1.25</span>
+      </article>
+
+      <article class="snack">
+        <div class="snack-img"><img src="images/donettes.png" alt="Hostess powdered Donettes package"></div>
+        <h3>Donuts</h3>
+        <p class="snack-desc">Glazed or powdered — limited daily</p>
+        <span class="price">$1.75</span>
+      </article>
+
+      <article class="snack">
+        <div class="snack-img"><img src="images/skittles.png" alt="Sour Skittles bag"></div>
+        <h3>Sour Candy</h3>
+        <p class="snack-desc">Warheads, Sour Patch, gummy worms</p>
+        <span class="price">$0.75</span>
+      </article>
+
+    </div>
+
+    <p class="menu-note">💡 Buy any <strong>3 snacks for $3.50</strong> — mix and match!</p>
+  </section>
+
+  <!-- ============ HOW TO BUY ============ -->
+  <section class="section" id="how">
+    <h2 class="section-title">How It Works</h2>
+    <p class="section-sub">Three steps. Takes about ten seconds.</p>
+
+    <ol class="steps">
+      <li>
+        <span class="step-num">1</span>
+        <h3>Show up</h3>
+        <p>Head to the cafeteria's back left corner once the lunch bell rings.</p>
+      </li>
+      <li>
+        <span class="step-num">2</span>
+        <h3>Pick your snack</h3>
+        <p>Everything is laid out on the table with prices marked.</p>
+      </li>
+      <li>
+        <span class="step-num">3</span>
+        <h3>Pay &amp; go</h3>
+        <p>Hand over cash or scan the Venmo code. That's it — enjoy!</p>
+      </li>
+    </ol>
+  </section>
+
+  <!-- ============ CTA BANNER ============ -->
+  <section class="cta">
+    <h2>See you at lunch! 🎉</h2>
+    <p>Tell your friends. Requests for new snacks are always welcome.</p>
+  </section>
+
+  <!-- ============ FOOTER ============ -->
+  <footer class="footer">
+    <p><strong>🍿 Snack Shack</strong> — run by students, for students.</p>
+    <p class="fine-print">Questions? Find us at lunch or DM <em>@snack-shack</em>.</p>
+  </footer>
+
+</body>
+</html>

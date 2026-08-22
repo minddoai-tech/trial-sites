@@ -1,0 +1,418 @@
+/* =========================================================
+   SNACK SHACK — stylesheet
+   Change the colors in :root below to re-theme the whole site.
+   ========================================================= */
+
+:root {
+  /* --- Brand colors (edit these!) --- */
+  --sunshine:  #ffc93c;   /* main highlight — yellow  */
+  --tangerine: #ff8a3d;   /* buttons, accents — orange */
+  --bubblegum: #ff5d8f;   /* pops of pink              */
+  --mint:      #2ec4b6;   /* cool contrast — teal      */
+  --cream:     #fffaf0;   /* page background           */
+  --ink:       #2b2118;   /* body text — warm near-black */
+  --ink-soft:  #6b5c4d;   /* muted text                */
+  --white:     #ffffff;
+
+  /* --- Reusable design tokens --- */
+  --radius:    18px;
+  --shadow:    0 6px 0 rgba(43, 33, 24, 0.12);
+  --shadow-lg: 0 14px 30px rgba(43, 33, 24, 0.14);
+  --max-width: 1100px;
+
+  /* --- Snack image box: change these two to resize every product photo --- */
+  --snack-img-w: 100%;
+  --snack-img-h: 150px;
+}
+
+/* --- Reset --- */
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: 'Nunito', system-ui, -apple-system, sans-serif;
+  background-color: var(--cream);
+  color: var(--ink);
+  line-height: 1.6;
+  /* Soft candy-colored glow behind the whole page */
+  background-image:
+    radial-gradient(circle at 12% 8%,  rgba(255, 201, 60, 0.35), transparent 42%),
+    radial-gradient(circle at 88% 22%, rgba(255, 93, 143, 0.22), transparent 40%),
+    radial-gradient(circle at 50% 95%, rgba(46, 196, 182, 0.18), transparent 45%);
+  background-attachment: fixed;
+}
+
+h1, h2, h3 { font-family: 'Fredoka', 'Nunito', sans-serif; line-height: 1.15; }
+
+/* =========================================================
+   NAV
+   ========================================================= */
+.nav {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+  padding: 0.9rem 1.5rem;
+  background: rgba(255, 250, 240, 0.9);
+  backdrop-filter: blur(10px);
+  border-bottom: 3px solid var(--ink);
+}
+
+.logo {
+  font-family: 'Fredoka', sans-serif;
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: var(--ink);
+  text-decoration: none;
+}
+
+.nav-links { display: flex; gap: 1.5rem; flex-wrap: wrap; }
+
+.nav-links a {
+  color: var(--ink);
+  text-decoration: none;
+  font-weight: 700;
+  padding-bottom: 2px;
+  border-bottom: 3px solid transparent;
+  transition: border-color 0.2s, color 0.2s;
+}
+
+.nav-links a:hover { color: var(--tangerine); border-bottom-color: var(--tangerine); }
+
+/* =========================================================
+   HERO
+   ========================================================= */
+.hero {
+  max-width: var(--max-width);
+  margin: 0 auto;
+  padding: 4rem 1.5rem 3rem;
+  text-align: center;
+  position: relative;
+}
+
+.eyebrow {
+  display: inline-block;
+  background: var(--mint);
+  color: var(--white);
+  font-weight: 700;
+  font-size: 0.85rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 0.35rem 0.9rem;
+  border-radius: 999px;
+  margin-bottom: 1.2rem;
+}
+
+.hero h1 {
+  font-size: clamp(2.5rem, 8vw, 4.5rem);
+  font-weight: 700;
+  margin-bottom: 1rem;
+}
+
+/* The yellow marker-pen swipe behind the headline */
+.highlight {
+  background: linear-gradient(180deg, transparent 55%, var(--sunshine) 55%);
+  padding: 0 0.3rem;
+  border-radius: 4px;
+}
+
+.tagline {
+  font-size: 1.15rem;
+  color: var(--ink-soft);
+  max-width: 34rem;
+  margin: 0 auto 2rem;
+}
+
+.hero-buttons {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-bottom: 3rem;
+}
+
+.btn {
+  display: inline-block;
+  padding: 0.85rem 1.8rem;
+  border-radius: 999px;
+  font-weight: 700;
+  font-size: 1.05rem;
+  text-decoration: none;
+  border: 3px solid var(--ink);
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+
+.btn-primary { background: var(--tangerine); color: var(--white); box-shadow: var(--shadow); }
+.btn-ghost   { background: var(--white);     color: var(--ink);   box-shadow: var(--shadow); }
+
+/* Press-down effect: lift on hover, squash on click */
+.btn:hover  { transform: translateY(-3px); box-shadow: 0 9px 0 rgba(43, 33, 24, 0.15); }
+.btn:active { transform: translateY(2px);  box-shadow: 0 2px 0 rgba(43, 33, 24, 0.15); }
+
+.hero-facts {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.fact {
+  background: var(--white);
+  border: 3px solid var(--ink);
+  border-radius: var(--radius);
+  padding: 0.8rem 1.4rem;
+  min-width: 8.5rem;
+  box-shadow: var(--shadow);
+}
+
+.fact strong { display: block; font-family: 'Fredoka', sans-serif; font-size: 1.25rem; }
+.fact span   { font-size: 0.85rem; color: var(--ink-soft); font-weight: 600; }
+
+/* Floating decorative emoji */
+.hero-emoji {
+  display: flex;
+  justify-content: center;
+  gap: clamp(1.5rem, 8vw, 5rem);
+  font-size: clamp(2rem, 6vw, 3rem);
+  margin-top: 2.5rem;
+}
+
+.hero-emoji span { animation: bob 3s ease-in-out infinite; }
+.hero-emoji span:nth-child(2) { animation-delay: 0.4s; }
+.hero-emoji span:nth-child(3) { animation-delay: 0.8s; }
+.hero-emoji span:nth-child(4) { animation-delay: 1.2s; }
+
+@keyframes bob {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-12px); }
+}
+
+/* =========================================================
+   SHARED SECTION STYLES
+   ========================================================= */
+.section {
+  max-width: var(--max-width);
+  margin: 0 auto;
+  padding: 3.5rem 1.5rem;
+}
+
+.section-title {
+  font-size: clamp(1.9rem, 5vw, 2.6rem);
+  text-align: center;
+  margin-bottom: 0.4rem;
+}
+
+.section-sub {
+  text-align: center;
+  color: var(--ink-soft);
+  margin-bottom: 2.5rem;
+  font-size: 1.05rem;
+}
+
+/* =========================================================
+   WHERE & WHEN CARDS
+   ========================================================= */
+.info-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1.5rem;
+}
+
+.info-card {
+  background: var(--white);
+  border: 3px solid var(--ink);
+  border-radius: var(--radius);
+  padding: 1.75rem;
+  box-shadow: var(--shadow);
+  transition: transform 0.2s;
+}
+
+.info-card:hover { transform: translateY(-4px); }
+
+.info-icon { font-size: 2.25rem; line-height: 1; margin-bottom: 0.6rem; }
+.info-card h3 { font-size: 1.35rem; margin-bottom: 0.5rem; color: var(--tangerine); }
+.info-card p  { color: var(--ink-soft); }
+.info-card strong { color: var(--ink); }
+
+/* =========================================================
+   SNACK GRID
+   ========================================================= */
+.menu-section {
+  background: var(--white);
+  border: 3px solid var(--ink);
+  border-radius: 28px;
+  box-shadow: var(--shadow-lg);
+  margin: 1rem auto 2rem;
+  max-width: calc(var(--max-width) - 2rem);
+}
+
+/* auto-fit + minmax = responsive columns with no media queries */
+.snack-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 1.25rem;
+}
+
+.snack {
+  position: relative;
+  background: var(--cream);
+  border: 3px solid var(--ink);
+  border-radius: var(--radius);
+  padding: 1.5rem 1rem 1.25rem;
+  text-align: center;
+  box-shadow: var(--shadow);
+  transition: transform 0.18s, box-shadow 0.18s;
+}
+
+.snack:hover {
+  transform: translateY(-6px) rotate(-1deg);
+  box-shadow: 0 12px 0 rgba(43, 33, 24, 0.14);
+}
+
+/* Fixed-height box so emoji cards and photo cards line up in the grid */
+.snack-img {
+  width: var(--snack-img-w);
+  height: var(--snack-img-h);
+  display: grid;
+  place-items: center;
+  font-size: 3rem;      /* applies to the emoji-only cards */
+  line-height: 1;
+  margin-bottom: 0.75rem;
+  overflow: hidden;     /* nothing can spill outside the box */
+}
+
+.snack-img img {
+  /* Hard ceiling: an image may be smaller than the box, never bigger */
+  max-width: var(--snack-img-w);
+  max-height: var(--snack-img-h);
+  width: auto;
+  height: auto;
+  /* scale-down = shrink oversized images to fit, but never blow up small ones */
+  object-fit: scale-down;
+  border-radius: 8px;
+  /* drop-shadow follows the transparent cutout, unlike box-shadow */
+  filter: drop-shadow(0 4px 6px rgba(43, 33, 24, 0.28));
+  transition: transform 0.18s;
+}
+
+.snack:hover .snack-img img { transform: scale(1.06); }
+
+.snack h3 { font-size: 1.2rem; margin-bottom: 0.3rem; }
+
+.snack-desc {
+  font-size: 0.9rem;
+  color: var(--ink-soft);
+  min-height: 2.6rem;   /* keeps price badges aligned across cards */
+  margin-bottom: 0.9rem;
+}
+
+.price {
+  display: inline-block;
+  background: var(--sunshine);
+  border: 3px solid var(--ink);
+  border-radius: 999px;
+  padding: 0.25rem 1rem;
+  font-family: 'Fredoka', sans-serif;
+  font-weight: 700;
+  font-size: 1.05rem;
+}
+
+.menu-note {
+  margin-top: 2rem;
+  text-align: center;
+  background: var(--bubblegum);
+  color: var(--white);
+  font-weight: 600;
+  padding: 0.9rem 1.25rem;
+  border-radius: var(--radius);
+  border: 3px solid var(--ink);
+}
+
+/* =========================================================
+   STEPS
+   ========================================================= */
+.steps {
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1.5rem;
+  counter-reset: step;
+}
+
+.steps li {
+  background: var(--white);
+  border: 3px solid var(--ink);
+  border-radius: var(--radius);
+  padding: 1.75rem 1.5rem 1.5rem;
+  box-shadow: var(--shadow);
+  position: relative;
+}
+
+.step-num {
+  position: absolute;
+  top: -1.1rem;
+  left: 1.4rem;
+  width: 2.2rem;
+  height: 2.2rem;
+  display: grid;
+  place-items: center;
+  background: var(--mint);
+  color: var(--white);
+  border: 3px solid var(--ink);
+  border-radius: 50%;
+  font-family: 'Fredoka', sans-serif;
+  font-weight: 700;
+}
+
+.steps h3 { font-size: 1.25rem; margin: 0.4rem 0 0.4rem; }
+.steps p  { color: var(--ink-soft); }
+
+/* =========================================================
+   CTA + FOOTER
+   ========================================================= */
+.cta {
+  max-width: calc(var(--max-width) - 2rem);
+  margin: 1rem auto 3rem;
+  padding: 3rem 1.5rem;
+  text-align: center;
+  background: var(--sunshine);
+  border: 3px solid var(--ink);
+  border-radius: 28px;
+  box-shadow: var(--shadow-lg);
+}
+
+.cta h2 { font-size: clamp(1.8rem, 5vw, 2.5rem); margin-bottom: 0.5rem; }
+.cta p  { font-weight: 600; }
+
+.footer {
+  text-align: center;
+  padding: 2rem 1.5rem 3rem;
+  border-top: 3px solid var(--ink);
+}
+
+.footer p { margin-bottom: 0.35rem; }
+.fine-print { color: var(--ink-soft); font-size: 0.9rem; }
+
+/* =========================================================
+   ACCESSIBILITY: respect "reduce motion" system setting
+   ========================================================= */
+@media (prefers-reduced-motion: reduce) {
+  * { animation: none !important; transition: none !important; }
+  html { scroll-behavior: auto; }
+}
+
+/* =========================================================
+   PHONE TWEAKS
+   ========================================================= */
+@media (max-width: 600px) {
+  .nav { justify-content: center; }
+  .nav-links { gap: 1rem; font-size: 0.95rem; }
+  .hero { padding-top: 2.5rem; }
+  .btn { width: 100%; max-width: 18rem; text-align: center; }
+  .menu-section, .cta { border-radius: 20px; }
+}
