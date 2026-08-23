@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Hollow Signal</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <main class="game-shell">
+    <header>
+      <div class="brand"><span class="brand-mark"></span><div><h1>HOLLOW SIGNAL</h1><p>Find the hidden relay portal</p></div></div>
+      <div class="hud">
+        <div class="hud-block"><span class="label">INTEGRITY</span><div id="lives" class="lives" aria-label="3 lives"></div></div>
+        <div class="hud-block"><span class="label">EXPLORED</span><strong id="explored">0%</strong></div>
+        <button id="mapButton" class="icon-button" aria-label="Toggle map"><kbd>M</kbd> MAP</button>
+      </div>
+    </header>
+
+    <section class="viewport" id="viewport">
+      <canvas id="game" width="1280" height="720" aria-label="Hollow Signal platform game"></canvas>
+      <div class="scanlines"></div>
+
+      <div id="startPanel" class="overlay intro-panel">
+        <div class="eyebrow">SECTOR 01 · SIGNAL LOST</div>
+        <h2>Something is waiting<br />in the dark.</h2>
+        <p>Navigate the abandoned relay, evade its defenses, and locate the portal hidden beyond the mapped corridors.</p>
+        <div class="controls">
+          <div><span><kbd>W</kbd><kbd>↑</kbd></span><small>JUMP</small></div>
+          <div><span><kbd>A</kbd><kbd>D</kbd><kbd>←</kbd><kbd>→</kbd></span><small>MOVE</small></div>
+          <div><span><kbd>M</kbd></span><small>MAP</small></div>
+        </div>
+        <button id="startButton" class="primary">ENTER THE RELAY <span>→</span></button>
+      </div>
+
+      <div id="mapPanel" class="overlay map-panel hidden">
+        <div class="map-card">
+          <div class="map-heading"><div><span class="eyebrow">RELAY CARTOGRAPHY</span><h2>SECTOR MAP</h2></div><button id="closeMap" class="close">M&nbsp;&nbsp; CLOSE</button></div>
+          <canvas id="map" width="900" height="480"></canvas>
+          <div class="map-legend"><span><i class="dot player-dot"></i>YOU</span><span><i class="dot portal-dot"></i>SIGNAL</span><span class="fog-note">UNEXPLORED REGIONS OBSCURED</span></div>
+        </div>
+      </div>
+
+      <div id="endPanel" class="overlay result-panel hidden">
+        <div class="result-symbol" id="resultSymbol">◇</div>
+        <div class="eyebrow" id="resultEyebrow">SIGNAL ACQUIRED</div>
+        <h2 id="resultTitle">Portal found.</h2>
+        <p id="resultText">The relay hums back to life.</p>
+        <button id="restartButton" class="primary">PLAY AGAIN <span>↻</span></button>
+      </div>
+    </section>
+
+    <footer><span><i class="status-light"></i>RELAY LINK ACTIVE</span><span>WASD / ARROWS TO MOVE · M TO MAP · R TO RESTART</span></footer>
+  </main>
+  <script src="game.js"></script>
+</body>
+</html>
