@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Crash Cash</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main class="game-shell">
+    <header>
+      <div>
+        <p class="eyebrow">ENDLESS ROAD</p>
+        <h1>CRASH <span>CASH</span></h1>
+      </div>
+      <button id="restartButton" type="button">Restart <kbd>R</kbd></button>
+    </header>
+
+    <section class="game-wrap">
+      <canvas id="game" aria-label="Crash Cash driving game"></canvas>
+
+      <div class="hud" aria-live="polite">
+        <div class="stat"><small>Cash</small><strong id="cash">$0</strong></div>
+        <div class="stat"><small>Speed</small><strong id="speed">0</strong><em>mph</em></div>
+        <div class="stat damage-stat"><small>Crashes</small><strong id="wrecks">0</strong><div class="bar"><i id="damageBar"></i></div></div>
+      </div>
+
+      <div class="goal"><span>DOWNTOWN LOS ANGELES</span><strong id="goalText">Broadway</strong></div>
+
+      <div id="overlay" class="overlay show">
+        <div class="panel">
+          <p class="eyebrow">READY TO ROLL?</p>
+          <h2 id="overlayTitle">Drive. Dodge. Get paid.</h2>
+          <p id="overlayCopy">Earn cash while driving downtown. Turn onto side streets at intersections—and wreck as much as you want.</p>
+          <div class="controls">
+            <div><div class="keys"><kbd>W</kbd><br><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd></div><span>Drive</span></div>
+            <div><div class="keys"><kbd>↑</kbd><br><kbd>←</kbd><kbd>↓</kbd><kbd>→</kbd></div><span>Move camera</span></div>
+          </div>
+          <button id="startButton" type="button">Start engine</button>
+          <small>Press Enter to start · R to restart anytime</small>
+        </div>
+      </div>
+    </section>
+
+    <footer><span><i class="dot green"></i> Cash grows while moving</span><span><i class="dot orange"></i> Turn at intersections</span><span><i class="dot red"></i> Every car takes damage</span></footer>
+  </main>
+  <script src="game.js"></script>
+</body>
+</html>
