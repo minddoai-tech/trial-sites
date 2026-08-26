@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#17201d">
+  <title>Window Watch — Identity Control</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="shell">
+    <header class="topbar">
+      <div class="brand"><span class="brand-mark">W</span><div><b>WINDOW WATCH</b><small>IDENTITY CONTROL // POST 04</small></div></div>
+      <div class="shift"><span>SHIFT PROGRESS</span><div class="pips" id="pips" aria-label="0 of 5 correct"></div><strong id="scoreText">0 / 5</strong></div>
+    </header>
+
+    <main class="workspace">
+      <section class="checkpoint" aria-label="Inspection window">
+        <div class="scene-label"><span class="live-dot"></span> LIVE VIEW <i>CAM 04-A</i></div>
+        <div class="window-frame">
+          <div class="window-bg"><span></span><span></span><span></span></div>
+          <div class="scan-line"></div>
+          <div class="visitor" id="visitor"><canvas id="visitorCanvas" width="600" height="600" aria-label="Traveler at the window"></canvas></div>
+          <div class="glass-glare"></div>
+        </div>
+        <div class="counter"><div class="speaker"></div><div class="slot">DOCUMENT SLOT</div></div>
+        <div class="decision-panel">
+          <button class="decision approve" id="approveBtn"><span class="button-icon">✓</span><span><b>LET PASS</b><small>IDENTITY MATCH</small></span><kbd>A</kbd></button>
+          <button class="decision incinerate" id="incinerateBtn"><span class="button-icon flame-icon">♨</span><span><b>INCINERATE</b><small>IMPOSTOR</small></span><kbd>D</kbd></button>
+        </div>
+      </section>
+
+      <aside class="inspector">
+        <div class="section-title"><span>DOCUMENT RECEIVED</span><i id="caseNumber">CASE 0000</i></div>
+        <article class="license" id="license">
+          <div class="license-watermark">CIVIL</div>
+          <header><div class="seal">C</div><div><b>CIVIL TRANSIT AUTHORITY</b><small>PERSONAL MOVEMENT LICENSE</small></div><span class="license-id" id="licenseId"></span></header>
+          <div class="photo-wrap" id="photoWrap">
+            <canvas id="licenseCanvas" width="520" height="560" aria-label="License portrait. Hold to magnify."></canvas>
+            <div class="focus-corners"></div>
+            <span class="zoom-hint"><i>⌕</i> HOLD TO INSPECT</span>
+          </div>
+          <dl class="license-data">
+            <div class="wide"><dt>FULL NAME</dt><dd id="fullName"></dd></div>
+            <div><dt>DATE OF BIRTH</dt><dd id="dob"></dd></div>
+            <div><dt>HEIGHT</dt><dd id="height"></dd></div>
+            <div><dt>EYE COLOR</dt><dd id="eyes"></dd></div>
+            <div><dt>EXPIRES</dt><dd>31 DEC 2031</dd></div>
+          </dl>
+          <footer><span>AUTHORIZED HOLDER</span><b class="signature" id="signature"></b><div class="barcode"></div></footer>
+        </article>
+
+        <div class="verdict" id="verdict" role="status"><span class="verdict-icon">?</span><p><b>AWAITING DECISION</b><small>Compare the live traveler with the license portrait.</small></p></div>
+
+        <details class="instructions" open>
+          <summary>INSPECTION PROTOCOL</summary>
+          <div class="instruction-grid">
+            <p><span>01</span><b>Inspect</b>Hold and move over the license portrait to magnify details.</p>
+            <p><span>02</span><b>Compare</b>Check hair, eyes, glasses, facial hair, and distinctive marks.</p>
+            <p><span>03</span><b>Decide</b>Pass a match. Incinerate an impostor. One mistake ends the shift.</p>
+          </div>
+        </details>
+      </aside>
+    </main>
+
+    <div class="modal" id="modal">
+      <div class="modal-card">
+        <div class="modal-emblem" id="modalEmblem">W</div>
+        <p class="eyebrow" id="modalEyebrow">IDENTITY CONTROL DIVISION</p>
+        <h1 id="modalTitle">WINDOW WATCH</h1>
+        <p id="modalCopy">Five travelers stand between order and infiltration. Study each license carefully—an impostor may differ by only one detail.</p>
+        <div class="rules"><span><i class="green">✓</i> MATCH → LET PASS</span><span><i class="red">♨</i> IMPOSTOR → INCINERATE</span></div>
+        <button id="startBtn">BEGIN SHIFT <span>→</span></button>
+        <small class="key-hint">Keyboard: A to pass · D to incinerate</small>
+      </div>
+    </div>
+  </div>
+
+  <div class="magnifier" id="magnifier" aria-hidden="true"><canvas id="magnifierCanvas" width="340" height="340"></canvas><span>3×</span></div>
+  <script src="game.js"></script>
+</body>
+</html>
