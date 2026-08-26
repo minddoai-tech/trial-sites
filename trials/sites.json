@@ -1,5 +1,14 @@
 [
   {
+    "slug": "david-zheng-stickman-run",
+    "trialId": "e9e3f6d4-e5ac-48c8-bffa-036e636524b7",
+    "studentName": "David Zheng",
+    "title": "Stickman run",
+    "description": "A stick man parkour game trying to beat levels with traps and boost everywhere",
+    "submittedAt": "2026-08-26T21:50:21.130Z",
+    "thumbnail": "david-zheng-stickman-run/thumb.png"
+  },
+  {
     "slug": "yunxi-shi-identity-watch",
     "trialId": "a6577377-938e-4190-94fc-72ce8618b49a",
     "studentName": "Yunxi Shi",
