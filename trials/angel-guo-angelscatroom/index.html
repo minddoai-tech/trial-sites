@@ -1,0 +1,482 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Midnight's Cozy Rescue</title>
+  <style>
+    :root {
+      --ink: #3f3543;
+      --cream: #fff8ed;
+      --peach: #f4b49c;
+      --rose: #db7f86;
+      --sage: #9ab29b;
+      --gold: #eebc62;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      overflow-x: hidden;
+      color: var(--ink);
+      font-family: ui-rounded, "Trebuchet MS", system-ui, sans-serif;
+      background: #4e475c;
+      display: grid;
+      place-items: center;
+      padding: 18px;
+    }
+    button { font: inherit; }
+    .game-shell {
+      width: min(1060px, 100%);
+      border: 4px solid #3a3240;
+      border-radius: 26px;
+      overflow: hidden;
+      background: var(--cream);
+      box-shadow: 0 24px 70px #211d27aa;
+      user-select: none;
+    }
+    header {
+      min-height: 88px;
+      display: flex;
+      align-items: center;
+      gap: 24px;
+      padding: 14px 22px;
+      background: #fffaf1;
+      border-bottom: 3px solid #3f3543;
+    }
+    .title { min-width: 210px; }
+    .title h1 { margin: 0; font-size: clamp(20px, 3vw, 30px); line-height: 1; }
+    .title p { margin: 6px 0 0; font-size: 13px; opacity: .72; }
+    .stats { flex: 1; display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+    .stat { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 7px; font-weight: 800; font-size: 13px; }
+    .meter { height: 12px; overflow: hidden; border: 2px solid var(--ink); border-radius: 99px; background: #e8ddd2; }
+    .meter > i { display: block; height: 100%; width: 50%; background: var(--rose); transition: width .35s ease; }
+    #hungerBar { background: var(--gold); }
+    #loveBar { background: var(--peach); }
+    .room {
+      position: relative;
+      height: min(67vh, 650px);
+      min-height: 460px;
+      overflow: hidden;
+      touch-action: none;
+      background:
+        linear-gradient(90deg, transparent 49.7%, #e5c9bc 50%, transparent 50.3%),
+        linear-gradient(#f6ded1 0 66%, #c99673 66%);
+    }
+    .room::after {
+      content: "";
+      position: absolute; inset: 66% 0 0;
+      pointer-events: none;
+      background: repeating-linear-gradient(90deg, transparent 0 88px, #986b5b44 89px 92px);
+    }
+    .window {
+      position: absolute; left: 7%; top: 8%; width: 190px; height: 155px;
+      border: 9px solid #fff5e6; border-radius: 80px 80px 5px 5px;
+      background: linear-gradient(#77718d, #b89daf);
+      box-shadow: 0 5px 0 #916f69;
+      overflow: hidden;
+    }
+    .window::before { content: "✦   ·     ✧"; color: #fff7cf; position: absolute; inset: 25px; font-size: 20px; }
+    .window::after { content: ""; position: absolute; left: 50%; top: 0; width: 7px; height: 100%; background: #fff5e6; }
+    .bed {
+      position: absolute; left: 2%; bottom: 18%; width: 42%; height: 25%;
+      border: 5px solid var(--ink); border-radius: 22px 55px 10px 10px;
+      background: repeating-linear-gradient(135deg, #e99694 0 20px, #f3b0a6 20px 40px);
+      box-shadow: 0 18px 0 #805d53;
+    }
+    .bed::before { content: ""; position: absolute; left: 8%; top: -20%; width: 35%; height: 42%; background: #fff3df; border: 4px solid var(--ink); border-radius: 50%; }
+    .rug { position: absolute; width: 46%; height: 24%; left: 35%; bottom: 3%; border-radius: 50%; background: #d9b66f; border: 5px solid #795d55; box-shadow: inset 0 0 0 12px #edce86; }
+    .shelf { position: absolute; right: 8%; top: 14%; width: 180px; height: 13px; background: #8c6256; border: 3px solid var(--ink); }
+    .shelf::before { content: "🌿   📚   🕯️"; position: absolute; bottom: 10px; font-size: 29px; white-space: nowrap; }
+    .scratcher { position: absolute; right: 25%; bottom: 27%; width: 62px; height: 120px; border-bottom: 14px solid #77564d; }
+    .scratcher::before { content: ""; position: absolute; left: 22px; top: 0; width: 22px; height: 112px; border-radius: 12px; background: repeating-linear-gradient(#c99c65 0 6px, #a9794c 7px 9px); }
+    .trash {
+      position: absolute; z-index: 5; right: 4%; bottom: 5%; width: 90px; height: 112px;
+      display: grid; place-items: center; padding-top: 24px;
+      color: #fff; font-weight: 900; font-size: 13px;
+      border: 5px solid var(--ink); border-radius: 10px 10px 25px 25px;
+      background: #718879;
+      transition: transform .15s;
+    }
+    .trash::before { content: ""; position: absolute; width: 108px; height: 18px; left: -14px; top: -12px; border: 5px solid var(--ink); border-radius: 8px; background: #8ba392; }
+    .trash.hot { transform: scale(1.08) rotate(-2deg); background: #8eaa90; }
+    .trash.singing { animation: sing .25s 6 alternate; }
+    @keyframes sing { to { transform: rotate(5deg) scale(1.08); } }
+    .cat-bed {
+      position: absolute; z-index: 3; right: 31%; bottom: 5%; width: 170px; height: 78px;
+      border: 5px solid var(--ink); border-radius: 50% 50% 35% 35%;
+      background: radial-gradient(ellipse at center, #fff0ca 0 45%, #c87980 47% 66%, #8f5860 68%);
+      box-shadow: 0 8px 0 #694d49;
+    }
+    .cat-bed::after { content: "MIDNIGHT"; position: absolute; width: 100%; bottom: -2px; text-align: center; color: #fff3dc; font-size: 11px; font-weight: 900; }
+    .rabbit-cage {
+      position: absolute; z-index: 4; right: 3%; top: 25%; width: 155px; height: 165px;
+      display: grid; place-items: end center; padding-bottom: 15px;
+      border: 6px solid #69565a; border-radius: 70px 70px 12px 12px;
+      background: repeating-linear-gradient(90deg, #ffffff22 0 17px, #69565a 18px 22px);
+    }
+    .rabbit { font-size: 62px; line-height: 1; filter: drop-shadow(0 5px 1px #503c4055); }
+    .rabbit-meter { position: absolute; left: 10px; right: 10px; top: -34px; padding: 5px 8px; border: 3px solid var(--ink); border-radius: 12px; background: #fff8ed; font-size: 12px; font-weight: 900; }
+    .rabbit-meter i { display: inline-block; vertical-align: middle; width: 10%; height: 8px; margin-left: 4px; border-radius: 9px; background: #eebc62; transition: width .3s; }
+    .cat {
+      position: absolute; z-index: 4; left: 52%; bottom: 20%; width: 112px; height: 84px;
+      transition: left 1.6s ease-in-out, top 1.6s ease-in-out, transform .2s;
+      filter: drop-shadow(0 8px 2px #5d443b44);
+    }
+    .cat-body { position: absolute; width: 82px; height: 54px; left: 7px; top: 28px; background: #27242b; border-radius: 50% 48% 42% 45%; }
+    .cat-head { position: absolute; width: 55px; height: 52px; right: 0; top: 10px; background: #29262e; border-radius: 48%; }
+    .cat-head::before, .cat-head::after { content: ""; position: absolute; top: -13px; border-left: 13px solid transparent; border-right: 13px solid transparent; border-bottom: 25px solid #29262e; }
+    .cat-head::before { left: 1px; transform: rotate(-18deg); }
+    .cat-head::after { right: 1px; transform: rotate(18deg); }
+    .face { position: absolute; z-index: 2; top: 23px; left: 10px; color: #f2cc66; letter-spacing: 5px; font-weight: 900; white-space: nowrap; }
+    .tail { position: absolute; left: -24px; top: 28px; width: 48px; height: 18px; border: 10px solid #27242b; border-right: 0; border-bottom: 0; border-radius: 50% 0 0; transform-origin: right center; animation: tail 1.2s ease-in-out infinite alternate; }
+    @keyframes tail { to { transform: rotate(18deg); } }
+    .cat.happy { animation: bounce .3s 3 alternate; }
+    .cat.cry { animation: sob .18s 6 alternate; }
+    .cat.dead { transform: rotate(90deg) translateY(20px) !important; filter: grayscale(1); }
+    .cat.sleeping { transition: left 1s ease, top 1s ease, transform .3s; }
+    .cat.sleeping .face { letter-spacing: 1px; }
+    @keyframes bounce { to { transform: translateY(-18px); } }
+    @keyframes sob { to { transform: translateX(6px); } }
+    .item {
+      position: absolute; z-index: 10; width: 65px; height: 65px;
+      display: grid; place-items: center;
+      font-size: 42px; cursor: grab;
+      border: 3px solid var(--ink); border-radius: 20px;
+      background: #fff8e9dd; box-shadow: 0 7px 0 #765f5a55;
+      animation: pop .25s ease-out;
+    }
+    .item:active, .item.dragging { cursor: grabbing; transform: scale(1.12) rotate(5deg); box-shadow: 0 12px 22px #49374355; }
+    .item.selected { outline: 5px solid #fff4a8; transform: scale(1.12); animation: selectedPulse .65s infinite alternate; }
+    @keyframes selectedPulse { to { outline-color: #eebc62; } }
+    @keyframes pop { from { transform: scale(0); } }
+    .speech {
+      position: absolute; z-index: 20; left: 50%; top: 12%; transform: translateX(-50%) translateY(-8px);
+      max-width: 80%; padding: 10px 17px; border: 3px solid var(--ink); border-radius: 18px;
+      background: #fffdf4; font-weight: 900; opacity: 0; pointer-events: none; transition: .22s;
+    }
+    .speech.show { opacity: 1; transform: translateX(-50%); }
+    .progress {
+      position: absolute; z-index: 6; top: 16px; right: 18px;
+      padding: 8px 13px; border: 3px solid var(--ink); border-radius: 12px; background: #fff8eccc; font-weight: 900;
+    }
+    .star { position: absolute; z-index: 25; border: 0; padding: 0; color: #ffe17d; background: none; font-size: 36px; cursor: pointer; filter: drop-shadow(0 0 7px #fff5a8); animation: twinkle .45s infinite alternate, pop .2s ease-out; }
+    .star.clicked { animation: starPop .16s forwards; }
+    @keyframes twinkle { to { transform: scale(1.28) rotate(18deg); } }
+    @keyframes starPop { to { transform: scale(2); opacity: 0; } }
+    .overlay {
+      position: absolute; z-index: 50; inset: 0; display: grid; place-items: center;
+      padding: 24px; background: #453b4cd9; backdrop-filter: blur(5px);
+    }
+    .overlay.hidden { display: none; }
+    .card { width: min(520px, 94%); padding: 30px; text-align: center; background: #fff8ed; border: 5px solid var(--ink); border-radius: 28px; box-shadow: 0 12px 0 #2a252d55; }
+    .card h2 { margin: 0 0 8px; font-size: clamp(30px, 6vw, 46px); }
+    .card p { line-height: 1.5; }
+    .rules { margin: 20px 0; display: grid; grid-template-columns: repeat(3, 1fr); gap: 9px; }
+    .rule { padding: 12px 7px; border: 2px solid #9a8178; border-radius: 14px; background: #fffdf7; font-size: 13px; line-height: 1.35; }
+    .rule b { display: block; font-size: 29px; }
+    .primary {
+      border: 3px solid var(--ink); border-radius: 99px; padding: 12px 26px;
+      color: #fff; background: var(--rose); box-shadow: 0 5px 0 #814f57; font-weight: 900; cursor: pointer;
+    }
+    .primary:hover { transform: translateY(-2px); }
+    footer { min-height: 46px; display: flex; align-items: center; justify-content: center; padding: 8px 18px; font-size: 13px; text-align: center; background: #fffaf1; border-top: 3px solid var(--ink); }
+    @media (max-width: 700px) {
+      body { padding: 0; background: #fff8ed; }
+      .game-shell { min-height: 100vh; border: 0; border-radius: 0; }
+      header { align-items: stretch; gap: 10px; padding: 10px; flex-direction: column; }
+      .title p { display: none; }
+      .stats { gap: 5px; }
+      .stat { grid-template-columns: auto auto; gap: 3px; font-size: 11px; }
+      .meter { grid-column: 1 / -1; }
+      .room { height: calc(100vh - 164px); min-height: 500px; }
+      .window { transform: scale(.72); transform-origin: top left; }
+      .shelf { right: 3%; transform: scale(.72); transform-origin: top right; }
+      .bed { width: 51%; }
+      .rules { grid-template-columns: 1fr; }
+      .rule { display: flex; align-items: center; gap: 12px; text-align: left; }
+      .rule b { flex: 0 0 auto; }
+    }
+  </style>
+</head>
+<body>
+  <main class="game-shell">
+    <header>
+      <div class="title"><h1>Midnight's Cozy Rescue</h1><p>Keep curious paws away from chocolate.</p></div>
+      <div class="stats" aria-label="Cat status">
+        <div class="stat">❤️ Health <div class="meter"><i id="healthBar"></i></div><span id="healthValue">50%</span></div>
+        <div class="stat">🐟 Hunger <div class="meter"><i id="hungerBar"></i></div><span id="hungerValue">50%</span></div>
+        <div class="stat">💕 Love <div class="meter"><i id="loveBar"></i></div><span id="loveValue">50%</span></div>
+      </div>
+    </header>
+
+    <section class="room" id="room" aria-label="Cozy bedroom game area">
+      <div class="window"></div><div class="bed"></div><div class="rug"></div><div class="shelf"></div><div class="scratcher"></div>
+      <div class="progress">⭐ stars: <span id="stars">0</span>/10</div>
+      <div class="rabbit-cage" id="rabbit" aria-label="Rabbit in its cage">
+        <div class="rabbit-meter">🥕 Bunny hunger <span id="rabbitValue">10%</span><br><i id="rabbitBar"></i></div>
+        <div class="rabbit">🐇</div>
+      </div>
+      <div class="trash" id="trash">TRASH</div>
+      <div class="cat-bed" id="catBed" aria-label="Midnight's cozy cat bed"></div>
+      <div class="cat" id="cat" aria-label="Midnight the black cat">
+        <div class="tail"></div><div class="cat-body"></div><div class="cat-head"><span class="face">•ᴗ•</span></div>
+      </div>
+      <div class="speech" id="speech" role="status"></div>
+      <div class="overlay" id="overlay">
+        <div class="card">
+          <h2>Cozy Cat Rescue</h2>
+          <p>Care for Midnight and the bunny. When Midnight's health and love are both above 90%, catch <strong>10 magic stars</strong> to win.</p>
+          <div class="rules">
+            <div class="rule"><b>🍫 → 🗑️</b> Safe! The trash can sings.</div>
+            <div class="rule"><b>🐟 → 🐈‍⬛</b> +5 hunger, +10 love.</div>
+            <div class="rule"><b>🥕 → 🐇</b> +10 bunny hunger.</div>
+          </div>
+          <p><small>Hold Midnight to pet for +1 love each second. Above 80 love, Midnight sleeps and heals. Chocolate is toxic!</small></p>
+          <button class="primary" id="startBtn">Start caring</button>
+        </div>
+      </div>
+    </section>
+    <footer>Drag or tap snacks • Hold Midnight to pet • Feed carrots to the bunny • Catch 10 stars!</footer>
+  </main>
+
+  <script>
+    (() => {
+      const room = document.querySelector('#room');
+      const cat = document.querySelector('#cat');
+      const trash = document.querySelector('#trash');
+      const rabbit = document.querySelector('#rabbit');
+      const catBed = document.querySelector('#catBed');
+      const overlay = document.querySelector('#overlay');
+      const speech = document.querySelector('#speech');
+      const startBtn = document.querySelector('#startBtn');
+      const starsEl = document.querySelector('#stars');
+      const types = {
+        chocolate: { icon: '🍫', label: 'chocolate' },
+        fish: { icon: '🐟', label: 'fish' },
+        carrot: { icon: '🥕', label: 'carrot' }
+      };
+      let state, spawnTimer, roamTimer, messageTimer, starTimer, restTimer, petTimer, audio, selectedItem;
+
+      function resetState() {
+        clearInterval(spawnTimer); clearInterval(roamTimer); clearInterval(starTimer); clearInterval(restTimer); clearInterval(petTimer); clearTimeout(messageTimer);
+        room.querySelectorAll('.item, .star').forEach(i => i.remove());
+        selectedItem = null;
+        state = { health: 50, hunger: 50, love: 50, rabbitHunger: 10, stars: 0, running: true, sleeping: false };
+        cat.className = 'cat';
+        cat.removeAttribute('style');
+        cat.querySelector('.face').textContent = '•ᴗ•';
+        startBtn.textContent = 'Play again';
+        updateStats();
+      }
+
+      function start() {
+        resetState(); overlay.classList.add('hidden');
+        initAudio();
+        ['chocolate', 'fish', 'carrot'].forEach((t, i) => setTimeout(() => spawn(t), i * 350));
+        spawnTimer = setInterval(() => spawn(), 2600);
+        roamTimer = setInterval(roam, 2300);
+        starTimer = setInterval(spawnStar, 850);
+        restTimer = setInterval(rest, 1800);
+        say('Midnight is hungry. Choose wisely! 🐾');
+      }
+
+      function spawn(forced) {
+        if (!state.running || room.querySelectorAll('.item').length >= 6) return;
+        const choices = ['chocolate', 'fish', 'carrot'];
+        const type = forced || choices[Math.floor(Math.random() * choices.length)];
+        const item = document.createElement('div');
+        item.className = 'item'; item.dataset.type = type;
+        item.textContent = types[type].icon;
+        item.setAttribute('aria-label', `Drag ${types[type].label}`);
+        const rect = room.getBoundingClientRect();
+        item.style.left = `${20 + Math.random() * Math.max(30, rect.width - 130)}px`;
+        item.style.top = `${110 + Math.random() * Math.max(30, rect.height - 270)}px`;
+        room.appendChild(item);
+        enableDrag(item);
+        item.dangerTimer = setTimeout(() => autoEat(item), 9000);
+      }
+
+      function enableDrag(item) {
+        let moved = false, startX = 0, startY = 0;
+        item.addEventListener('pointerdown', e => {
+          if (!state.running) return;
+          moved = false; startX = e.clientX; startY = e.clientY;
+          item.setPointerCapture(e.pointerId); item.classList.add('dragging');
+          moveItem(item, e);
+        });
+        item.addEventListener('pointermove', e => {
+          if (!item.hasPointerCapture(e.pointerId)) return;
+          if (Math.hypot(e.clientX - startX, e.clientY - startY) > 8) moved = true;
+          moveItem(item, e);
+          trash.classList.toggle('hot', overlaps(item, trash));
+        });
+        item.addEventListener('pointerup', e => {
+          item.classList.remove('dragging'); trash.classList.remove('hot');
+          if (overlaps(item, cat)) resolve(item, 'cat');
+          else if (overlaps(item, trash)) resolve(item, 'trash');
+          else if (overlaps(item, rabbit)) resolve(item, 'rabbit');
+        });
+        item.addEventListener('click', () => {
+          if (moved || !item.isConnected || !state.running) return;
+          if (selectedItem) selectedItem.classList.remove('selected');
+          selectedItem = item; item.classList.add('selected');
+          say(`Now tap Midnight, the bunny, or the trash for the ${types[item.dataset.type].label}.`);
+        });
+      }
+
+      cat.addEventListener('click', () => { if (selectedItem?.isConnected) { const item = selectedItem; selectedItem = null; resolve(item, 'cat'); } });
+      trash.addEventListener('click', () => { if (selectedItem?.isConnected) { const item = selectedItem; selectedItem = null; resolve(item, 'trash'); } });
+      rabbit.addEventListener('click', () => { if (selectedItem?.isConnected) { const item = selectedItem; selectedItem = null; resolve(item, 'rabbit'); } });
+
+      function moveItem(item, e) {
+        const r = room.getBoundingClientRect();
+        item.style.left = `${Math.max(0, Math.min(r.width - item.offsetWidth, e.clientX - r.left - item.offsetWidth / 2))}px`;
+        item.style.top = `${Math.max(0, Math.min(r.height - item.offsetHeight, e.clientY - r.top - item.offsetHeight / 2))}px`;
+      }
+
+      function overlaps(a, b) {
+        const x = a.getBoundingClientRect(), y = b.getBoundingClientRect();
+        return x.left < y.right && x.right > y.left && x.top < y.bottom && x.bottom > y.top;
+      }
+
+      function resolve(item, target) {
+        clearTimeout(item.dangerTimer);
+        if (selectedItem === item) selectedItem = null;
+        const type = item.dataset.type; item.remove();
+        if (target === 'rabbit') {
+          if (type === 'carrot') {
+            state.rabbitHunger += 10; say('Crunch! Bunny hunger +10 🐇'); play('happy');
+          } else { say(`The bunny only wants carrots, not ${types[type].label}.`); play('low'); }
+        } else if (target === 'trash') {
+          if (type === 'chocolate') {
+            trash.classList.add('singing'); setTimeout(() => trash.classList.remove('singing'), 1600);
+            say('♪ Choco-late is outta here! ♪ 🗑️🎵'); playTune();
+          } else { say(`${types[type].icon} Tossed away. Midnight gives you a puzzled look.`); play('low'); }
+        } else {
+          if (type === 'chocolate') return end(false, 'Oh no! Chocolate is toxic to cats. Midnight needed you to trash it.');
+          if (type === 'fish') {
+            state.hunger += 5; state.love += 10; react('happy', '•ᴗ•');
+            say('Mrrrp! Delicious fish! +5 hunger, +10 love'); play('happy');
+          } else {
+            state.love -= 20; react('cry', 'ಥ﹏ಥ');
+            say('Midnight does not like carrots… −20 love'); play('sad');
+          }
+        }
+        clamp(); updateStats();
+        if (state.love <= 0) end(false, 'Midnight feels too unloved and hides under the bed.');
+      }
+
+      function autoEat(item) {
+        if (!item.isConnected || !state.running) return;
+        if (selectedItem === item) selectedItem = null;
+        const type = item.dataset.type; item.remove();
+        if (type === 'chocolate') {
+          state.health -= 30; react('cry', '×﹏×'); say('Midnight found the chocolate! −30 health'); play('sad');
+        } else if (type === 'fish') { state.hunger += 5; state.love += 10; react('happy', '•ᴗ•'); say('Midnight snatched a fish!'); play('happy'); }
+        else { state.love -= 20; react('cry', 'ಥ﹏ಥ'); say('Midnight sampled a carrot… −20 love'); play('sad'); }
+        clamp(); updateStats();
+        if (state.health <= 0 || state.love <= 0) end(false, state.health <= 0 ? 'Too much chocolate made Midnight very sick.' : 'Midnight feels too unloved and hides under the bed.');
+      }
+
+      function roam() {
+        if (!state.running || state.sleeping) return;
+        const r = room.getBoundingClientRect();
+        cat.style.left = `${Math.max(30, Math.random() * (r.width - 180))}px`;
+        cat.style.top = `${Math.max(150, 150 + Math.random() * (r.height - 300))}px`;
+        cat.style.bottom = 'auto';
+        cat.style.transform = Math.random() > .5 ? 'scaleX(1)' : 'scaleX(-1)';
+      }
+
+      function rest() {
+        if (!state.running) return;
+        if (state.love > 80) {
+          if (!state.sleeping) {
+            state.sleeping = true; cat.classList.add('sleeping');
+            const bed = catBed.getBoundingClientRect(), area = room.getBoundingClientRect();
+            cat.style.left = `${bed.left - area.left + 30}px`; cat.style.top = `${bed.top - area.top - 18}px`; cat.style.bottom = 'auto'; cat.style.transform = 'scale(.82)';
+            cat.querySelector('.face').textContent = '－ω－ zZ'; say('Midnight feels loved and curls up in bed. Sleeping restores health!');
+          }
+          if (state.health < 100) { state.health += 5; clamp(); updateStats(); }
+        } else if (state.sleeping) { state.sleeping = false; cat.classList.remove('sleeping'); cat.querySelector('.face').textContent = '•ᴗ•'; }
+      }
+
+      function spawnStar() {
+        if (!state.running || state.health <= 90 || state.love <= 90 || room.querySelectorAll('.star').length >= 4) return;
+        const star = document.createElement('button'); star.className = 'star'; star.textContent = '★'; star.setAttribute('aria-label', 'Catch magic star');
+        const r = room.getBoundingClientRect(); star.style.left = `${20 + Math.random() * (r.width - 80)}px`; star.style.top = `${80 + Math.random() * (r.height - 180)}px`;
+        room.appendChild(star);
+        const vanish = setTimeout(() => star.remove(), 3300);
+        star.addEventListener('click', () => {
+          if (!star.isConnected) return; clearTimeout(vanish); state.stars++; starsEl.textContent = state.stars; star.classList.add('clicked'); play('happy');
+          setTimeout(() => star.remove(), 150);
+          if (state.stars >= 10) end(true, 'You caught ten magic stars! Midnight and the bunny are happy, healthy, and cozy.');
+        });
+      }
+
+      function startPet(e) {
+        if (!state.running || selectedItem) return;
+        e.preventDefault();
+        if (!state.sleeping) react('happy', '♥ᴗ♥');
+        say(state.sleeping ? 'Sleepy purrs… keep petting for +1 love each second' : 'Prrrrr… Midnight loves the pets! +1 love each second');
+        clearInterval(petTimer); petTimer = setInterval(() => { if (!state.running) return; state.love += 1; clamp(); updateStats(); play('happy'); }, 1000);
+      }
+      function stopPet() { clearInterval(petTimer); petTimer = null; }
+      cat.addEventListener('pointerdown', startPet);
+      window.addEventListener('pointerup', stopPet);
+      window.addEventListener('pointercancel', stopPet);
+
+      function react(kind, face) {
+        cat.classList.remove('happy', 'cry'); void cat.offsetWidth; cat.classList.add(kind);
+        cat.querySelector('.face').textContent = face;
+        setTimeout(() => { cat.classList.remove(kind); if (state.running) cat.querySelector('.face').textContent = '•ᴗ•'; }, 1500);
+      }
+      function clamp() { ['health','hunger','love','rabbitHunger'].forEach(k => state[k] = Math.max(0, Math.min(100, state[k]))); }
+      function updateStats() {
+        ['health','hunger','love'].forEach(k => {
+          document.querySelector(`#${k}Bar`).style.width = `${state[k]}%`;
+          document.querySelector(`#${k}Value`).textContent = `${state[k]}%`;
+        });
+        starsEl.textContent = state.stars;
+        document.querySelector('#rabbitValue').textContent = `${state.rabbitHunger}%`;
+        document.querySelector('#rabbitBar').style.width = `${state.rabbitHunger}%`;
+      }
+      function say(text) { speech.textContent = text; speech.classList.add('show'); clearTimeout(messageTimer); messageTimer = setTimeout(() => speech.classList.remove('show'), 2300); }
+      function end(win, text) {
+        state.running = false; clearInterval(spawnTimer); clearInterval(roamTimer); clearInterval(starTimer); clearInterval(restTimer); clearInterval(petTimer);
+        room.querySelectorAll('.item').forEach(i => clearTimeout(i.dangerTimer));
+        room.querySelectorAll('.star').forEach(i => i.remove());
+        selectedItem = null;
+        if (!win) { cat.classList.add('dead'); cat.querySelector('.face').textContent = '×﹏×'; }
+        setTimeout(() => {
+          overlay.querySelector('h2').textContent = win ? 'Cozy victory! ✨' : 'Oh no…';
+          overlay.querySelector('.card > p').innerHTML = text;
+          overlay.querySelector('.rules').style.display = 'none';
+          overlay.querySelector('small').parentElement.style.display = 'none';
+          overlay.classList.remove('hidden');
+        }, 650);
+        win ? playTune() : play('sad');
+      }
+
+      function initAudio() {
+        if (!audio) {
+          const AudioEngine = window.AudioContext || window.webkitAudioContext;
+          if (!AudioEngine) return false;
+          audio = new AudioEngine();
+        }
+        if (audio.state === 'suspended') audio.resume();
+        return true;
+      }
+      function tone(freq, at, duration, wave='sine') {
+        if (!audio) return; const o = audio.createOscillator(), g = audio.createGain();
+        o.type = wave; o.frequency.value = freq; g.gain.setValueAtTime(.07, at); g.gain.exponentialRampToValueAtTime(.001, at + duration);
+        o.connect(g).connect(audio.destination); o.start(at); o.stop(at + duration);
+      }
+      function play(kind) { if (!initAudio()) return; const t = audio.currentTime; if (kind === 'happy') { tone(520,t,.12); tone(700,t+.12,.2); } else if (kind === 'sad') { tone(300,t,.18,'triangle'); tone(220,t+.16,.35,'triangle'); } else tone(180,t,.18); }
+      function playTune() { if (!initAudio()) return; const t = audio.currentTime; [392,494,587,784].forEach((n,i) => tone(n,t+i*.12,.2,'triangle')); }
+
+      startBtn.addEventListener('click', start);
+    })();
+  </script>
+</body>
+</html>
