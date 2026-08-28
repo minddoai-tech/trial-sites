@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Last Light</title>
+  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="shop.css" />
+</head>
+<body>
+  <main class="shell">
+    <header>
+      <div class="brand"><span class="brand-mark"></span> LAST LIGHT</div>
+      <div class="level-readout">SECTOR <strong id="levelText">01</strong> / 05</div>
+    </header>
+
+    <section class="game-wrap">
+      <canvas id="game" width="1100" height="620" aria-label="Last Light shooting game"></canvas>
+
+      <div class="hud">
+        <div class="health-panel">
+          <span>VITALS</span><b id="healthText">80</b>
+          <div class="bar"><i id="healthBar"></i></div>
+        </div>
+        <div class="stat"><span>AMMO</span><b id="ammoText">24</b></div>
+        <div class="stat"><span>MAG</span><b id="magText">8 / 8</b></div>
+        <div class="stat"><span>DAMAGE</span><b id="damageText">12.0</b></div>
+        <div class="stat"><span>HOSTILES</span><b id="enemyText">0</b></div>
+      </div>
+
+      <div id="overlay" class="overlay">
+        <div class="card">
+          <p class="eyebrow">TACTICAL 2D COMBAT</p>
+          <h1 id="overlayTitle">LAST<br><em>LIGHT</em></h1>
+          <p id="overlayText">Clear five increasingly dangerous sectors. Collect supplies, upgrade your weapon, and leave no hostile standing.</p>
+          <button id="startButton">DEPLOY <span>→</span></button>
+          <div id="shop" class="shop hidden"><div class="credits">CREDITS <b id="shopCredits">0</b></div><div class="shop-grid"><button data-buy="damage">DAMAGE +4 <small>40 CR</small></button><button data-buy="health">MAX HP +15 <small>45 CR</small></button><button data-buy="mag">MAGAZINE +2 <small>35 CR</small></button><button data-buy="potion">HEAL POTION <small>25 CR</small></button></div></div>
+          <div class="mini-controls"><span>A/D Move</span><span>SPACE Jump</span><span>SHIFT Fire</span><span>V Reload</span><span>E Resources</span><span>H Potion</span></div>
+        </div>
+      </div>
+
+      <div id="message" class="message"></div>
+      <div id="resources" class="resources">CREDITS <b>0</b> · POTIONS <b>0</b></div>
+    </section>
+
+    <footer>
+      <div><kbd>A</kbd><kbd>D</kbd> MOVE</div><div><kbd>SPACE</kbd> JUMP</div><div><kbd>SHIFT</kbd> SHOOT</div><div><kbd>V</kbd> RELOAD</div><div><kbd>E</kbd> RESOURCES</div><div><kbd>H</kbd> HEAL</div>
+      <p>Eliminate all hostiles to advance</p>
+    </footer>
+  </main>
+  <script src="game.js"></script>
+</body>
+</html>
