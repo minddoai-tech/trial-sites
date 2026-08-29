@@ -1,0 +1,478 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: "Microsoft YaHei", "PingFang SC", Arial, sans-serif;
+    background: #11141d;
+    color: #ece7da;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 12px;
+}
+
+.hidden {
+    display: none !important;
+}
+
+.wrap {
+    width: 100%;
+    max-width: 880px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.title {
+    text-align: center;
+    font-size: 1.6rem;
+    letter-spacing: 1px;
+}
+
+.title span {
+    color: #ffd966;
+    font-size: 1rem;
+    font-weight: normal;
+    margin-left: 8px;
+}
+
+/* ---- HUD ---- */
+#hud {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+    background: #1a1f2e;
+    border: 1px solid #2b3247;
+    border-radius: 8px;
+    padding: 10px 14px;
+}
+
+.stat {
+    font-size: 0.95rem;
+}
+
+.stat b {
+    color: #ffd966;
+}
+
+.hud-right {
+    margin-left: auto;
+    display: flex;
+    gap: 8px;
+}
+
+.speed-btn.active {
+    color: #11141d;
+    background: #ffd966;
+    border-color: #ffe89b;
+}
+
+/* ---- 场地 ---- */
+#field {
+    position: relative;
+    height: 400px;
+    background: #1c3a2a;
+    border-radius: 8px;
+    border: 2px solid #2b3247;
+    overflow: hidden;
+    cursor: pointer;
+    user-select: none;
+}
+
+#field::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background:
+        linear-gradient(rgba(0,0,0,0.06) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0,0,0,0.06) 1px, transparent 1px);
+    background-size: 24px 24px;
+    pointer-events: none;
+}
+
+/* ---- 基地（左） ---- */
+#base {
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 150px;
+    background: linear-gradient(135deg, #3a3f4d, #272b38);
+    border-right: 3px solid #4a5064;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    z-index: 3;
+}
+
+.base-label {
+    margin-top: 10px;
+    font-weight: bold;
+    color: #9aa0b8;
+    font-size: 0.9rem;
+}
+
+#base-row {
+    flex: 1;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    padding: 10px;
+    align-content: flex-start;
+    justify-content: center;
+}
+
+/* =====================================================
+ * 士兵（拿枪的小人）
+ * ===================================================== */
+.unit {
+    width: 24px;
+    height: 34px;
+    position: absolute;
+    z-index: 2;
+    filter: drop-shadow(0 2px 1px rgba(0,0,0,0.4));
+}
+
+.unit .head {
+    position: absolute;
+    top: 0;
+    left: 7px;
+    width: 10px;
+    height: 10px;
+    background: #e8c39e;
+    border-radius: 50%;
+    z-index: 2;
+}
+.unit .body {
+    position: absolute;
+    top: 9px;
+    left: 5px;
+    width: 14px;
+    height: 15px;
+    background: #4f7a3a;
+    border-radius: 3px;
+    z-index: 1;
+}
+.unit .legs {
+    position: absolute;
+    top: 23px;
+    left: 6px;
+    width: 5px;
+    height: 8px;
+    background: #3a4a3a;
+    border-radius: 0 0 2px 2px;
+}
+.unit .legs + .legs { left: 13px; }
+.unit .helmet {
+    position: absolute;
+    top: -2px;
+    left: 5px;
+    width: 14px;
+    height: 8px;
+    background: #3f5e33;
+    border-radius: 50% 50% 0 0;
+    z-index: 3;
+}
+.unit .arm {
+    position: absolute;
+    top: 12px;
+    left: 10px;
+    width: 11px;
+    height: 5px;
+    background: #e8c39e;
+    border-radius: 4px;
+    transform: rotate(12deg);
+    z-index: 4;
+}
+.unit .gun {
+    position: absolute;
+    top: 14px;
+    left: 14px;
+    width: 20px;
+    height: 5px;
+    background: #2b2b2b;
+    border-radius: 2px;
+    z-index: 3;
+}
+.unit .gun::before {
+    content: "";
+    position: absolute;
+    left: 2px;
+    top: 4px;
+    width: 5px;
+    height: 8px;
+    background: #3b2a1f;
+    transform: rotate(-18deg);
+    border-radius: 0 0 2px 2px;
+}
+.unit .gun::after {
+    content: "";
+    position: absolute;
+    top: -2px;
+    right: -3px;
+    width: 6px;
+    height: 8px;
+    background: #1f1f1f;
+    border-radius: 1px;
+}
+
+.unit .hp-bar {
+    position: absolute;
+    bottom: -5px;
+    left: -2px;
+    right: -2px;
+    height: 5px;
+    background: #333;
+    border-radius: 3px;
+    overflow: hidden;
+    z-index: 4;
+}
+
+.unit .hp-fill {
+    height: 100%;
+    background: #22c55e;
+    width: 100%;
+    transition: width 0.15s;
+}
+
+/* =====================================================
+ * 僵尸
+ * ===================================================== */
+.zombie {
+    width: 38px;
+    height: 44px;
+    background: #6ab04c;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.4rem;
+    position: absolute;
+    box-shadow: 0 2px 0 #3d6b2a;
+    z-index: 2;
+}
+
+/* Boss 大僵尸 */
+.zombie.boss {
+    width: 74px;
+    height: 84px;
+    font-size: 3rem;
+    background: #3d2a6b;
+    border: 3px solid #241a42;
+    box-shadow: 0 6px 0 #241a42, 0 0 24px rgba(140, 60, 200, 0.6);
+}
+
+.zombie .hp-bar {
+    position: absolute;
+    top: -6px;
+    left: 2px;
+    right: 2px;
+    height: 6px;
+    background: #333;
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+.zombie .hp-fill {
+    height: 100%;
+    background: #ef4444;
+    width: 100%;
+    transition: width 0.15s;
+}
+
+/* 可见子弹 */
+.bullet {
+    position: absolute;
+    width: 9px;
+    height: 4px;
+    border-radius: 3px;
+    background: #ffe66d;
+    box-shadow: 0 0 6px #ffb703;
+    pointer-events: none;
+    z-index: 5;
+}
+
+/* ---- 放置预览 ---- */
+.ghost {
+    position: absolute;
+    width: 24px;
+    height: 34px;
+    border: 2px dashed #fff;
+    border-radius: 3px;
+    display: none;
+    z-index: 4;
+    pointer-events: none;
+    opacity: 0.8;
+}
+
+.message {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(0,0,0,0.75);
+    color: #fff;
+    padding: 14px 24px;
+    border-radius: 8px;
+    font-weight: bold;
+    z-index: 5;
+    pointer-events: none;
+    white-space: nowrap;
+    animation: fadeout 1.8s forwards;
+}
+
+@keyframes fadeout {
+    0% { opacity: 1; }
+    70% { opacity: 1; }
+    100% { opacity: 0; }
+}
+
+/* ---- 工具栏 ---- */
+#toolbar {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    flex-wrap: wrap;
+    background: #1a1f2e;
+    border: 1px solid #2b3247;
+    border-radius: 8px;
+    padding: 10px 14px;
+}
+
+.btn {
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-family: inherit;
+    font-weight: bold;
+    color: #fff;
+}
+
+.btn:hover { filter: brightness(1.1); }
+
+.btn.big {
+    background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+    font-size: 1.2rem;
+    padding: 14px 40px;
+    box-shadow: 0 4px 16px rgba(59,130,246,0.4);
+}
+
+.btn.small {
+    background: #2b3247;
+    padding: 8px 16px;
+    font-size: 0.9rem;
+}
+
+.btn.buy {
+    background: #8a5a2b;
+    padding: 10px 20px;
+    font-size: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    box-shadow: 0 3px 0 #5c3a1c;
+}
+
+.btn.buy:disabled {
+    background: #3a3f4d;
+    box-shadow: none;
+    cursor: not-allowed;
+    filter: none;
+}
+
+.btn.battle {
+    background: #22c55e;
+    padding: 10px 22px;
+    font-size: 1rem;
+    box-shadow: 0 3px 0 #15803d;
+}
+
+.btn.battle:disabled {
+    background: #3a3f4d;
+    box-shadow: none;
+    cursor: not-allowed;
+    filter: none;
+}
+
+.buy-emoji { font-size: 1.4rem; }
+.buy-cost { color: #ffd966; }
+
+.deploy-box {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: #9aa0b8;
+    font-size: 0.95rem;
+}
+
+.deploy-box b { color: #ffd966; }
+
+#toolbar-hint {
+    color: #9aa0b8;
+    font-size: 0.85rem;
+    flex: 1;
+}
+
+/* ---- 弹窗 ---- */
+.overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.72);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 50;
+}
+
+.panel {
+    background: #181d2b;
+    border: 1px solid #2b3247;
+    border-radius: 12px;
+    padding: 34px 42px;
+    max-width: 500px;
+    width: 90%;
+    text-align: center;
+}
+
+.panel h1 { margin-bottom: 6px; color: #ffd966; }
+.panel .sub { color: #9aa0b8; margin-bottom: 18px; }
+
+.rules {
+    text-align: left;
+    background: #11151f;
+    border-radius: 8px;
+    padding: 16px 20px;
+    margin-bottom: 20px;
+}
+
+.rules h3 { margin-bottom: 8px; color: #ffd966; }
+.rules ul { list-style: none; padding: 0; }
+.rules li {
+    padding: 4px 0;
+    font-size: 0.9rem;
+    line-height: 1.5;
+    color: #cfd3dd;
+}
+.rules li b { color: #ffd966; }
+
+.win-title { color: #22c55e !important; font-size: 2.2rem; }
+
+.go-title {
+    color: #ef4444 !important;
+    font-size: 2.6rem;
+    letter-spacing: 4px;
+    text-shadow: 0 0 24px rgba(239,68,68,0.7);
+}
+
+.gameover-panel {
+    border-color: #5c2222;
+    background: #1c1414;
+}
+
+#result-message, #gameover-message { color: #9aa0b8; margin: 4px 0 20px; }

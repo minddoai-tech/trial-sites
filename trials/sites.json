@@ -1,5 +1,14 @@
 [
   {
+    "slug": "alex",
+    "trialId": "c6870978-097c-44ba-84b3-60972329509e",
+    "studentName": "Alex",
+    "title": "保卫王国",
+    "description": "Zombie wave survival game. Place down soldiers to defend your empire!",
+    "submittedAt": "2026-08-29T03:46:15.656Z",
+    "thumbnail": "alex/thumb.png"
+  },
+  {
     "slug": "lucas-du-cellblock-500",
     "trialId": "9e6d3cec-66fa-4030-8a36-0ef4a1b9afae",
     "studentName": "Lucas Du",

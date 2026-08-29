@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>保卫王国 - 僵尸防守</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div id="game" class="wrap">
+        <h1 class="title">🧟 保卫王国 <span>僵尸防守</span></h1>
+
+        <!-- 顶部 HUD -->
+        <div id="hud">
+            <div class="stat">💰 <b id="gold">300</b> 金币</div>
+            <div class="stat">⚔️ 基地士兵 <b id="reserve">0</b></div>
+            <div class="stat">🌊 波次 <b id="wave">0</b>/30</div>
+            <div class="stat">🧟 剩余僵尸 <b id="remaining">0</b></div>
+            <div class="stat">🏆 击杀 <b id="kills">0</b></div>
+            <div class="hud-right">
+                <button id="speed-btn" class="btn small speed-btn" title="切换游戏速度">⏩ 1×</button>
+                <button id="pause-btn" class="btn small">⏸️ 暂停</button>
+            </div>
+        </div>
+
+        <!-- 游戏场地 -->
+        <div id="field">
+            <!-- 基地（左侧） -->
+            <div id="base">
+                <span class="base-label">🏳️ 基地</span>
+                <div id="base-row"></div>
+            </div>
+            <!-- 世界（僵尸从右边来） -->
+            <div id="world"></div>
+        </div>
+
+        <!-- 底部操作栏 -->
+        <div id="toolbar">
+            <button id="buy-btn" class="btn buy" disabled>
+                <span class="buy-emoji">🔫</span>
+                <span>购买士兵</span>
+                <span class="buy-cost">💰 50</span>
+            </button>
+            <div id="deploy-box" class="deploy-box">
+                <span class="deploy-label">部署士兵：</span>
+                <b id="toDeploy">0</b><span>/5</span>
+                <button id="start-battle-btn" class="btn battle" disabled>开始战斗</button>
+            </div>
+            <span id="toolbar-hint">提示：先点击场地部署 5 名士兵，再点击「开始战斗」</span>
+        </div>
+    </div>
+
+    <!-- 开始界面 -->
+    <div id="start-screen" class="overlay">
+        <div class="panel">
+            <h1>🧟 保卫王国</h1>
+            <p class="sub">抵抗僵尸，守住基地！</p>
+            <div class="rules">
+                <h3>游戏规则</h3>
+                <ul>
+                    <li>开局 <b>💰 300</b> 金币，先自行部署 <b>5 名士兵</b>防守</li>
+                    <li>点击「开始战斗」，僵尸从右侧来袭，共 <b>30 波</b></li>
+                    <li><b>第 10 / 20 / 30 波</b> 会出现 <b>大僵尸 Boss</b></li>
+                    <li>每击杀一个僵尸可获得 <b>💰 金币</b>，用于购买更多士兵</li>
+                    <li>前排士兵阵亡后，基地内的士兵会自动顶上（增援）</li>
+                    <li>基地士兵全部阵亡 → <b>💀 GAME OVER</b></li>
+                    <li>扛过 30 波 → <b>🎉 胜利</b></li>
+                </ul>
+            </div>
+            <button id="start-btn" class="btn big">开始游戏</button>
+        </div>
+    </div>
+
+    <!-- 胜利弹窗 -->
+    <div id="result-screen" class="overlay hidden">
+        <div class="panel">
+            <h1 class="win-title">🎉 胜利！</h1>
+            <p id="result-message"></p>
+            <button id="play-again-btn" class="btn big">再来一局</button>
+        </div>
+    </div>
+
+    <!-- GAME OVER 弹窗 -->
+    <div id="gameover-screen" class="overlay hidden">
+        <div class="panel gameover-panel">
+            <h1 class="go-title">💀 GAME OVER</h1>
+            <p id="gameover-message"></p>
+            <button id="gameover-again-btn" class="btn big">再来一局</button>
+        </div>
+    </div>
+
+    <!-- 暂停弹窗 -->
+    <div id="paused-screen" class="overlay hidden">
+        <div class="panel">
+            <h1>⏸️ 已暂停</h1>
+            <button id="resume-btn" class="btn big">继续游戏</button>
+        </div>
+    </div>
+
+    <script src="scripts.js"></script>
+</body>
+</html>
