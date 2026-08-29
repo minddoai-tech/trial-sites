@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Cellblock 500</title>
+  <style>
+    :root { color-scheme: dark; --ink:#ecf4f1; --muted:#91a19c; --lime:#b8f36a; --red:#ff5364; }
+    * { box-sizing:border-box; }
+    html,body { margin:0; min-height:100%; background:#080d0e; color:var(--ink); font-family:Inter,ui-sans-serif,system-ui,sans-serif; }
+    body { display:grid; place-items:center; padding:20px; overflow-x:hidden; }
+    .shell { width:min(1100px,100%); }
+    header { display:flex; justify-content:space-between; align-items:end; gap:18px; margin-bottom:12px; }
+    h1 { margin:0; font-size:clamp(22px,4vw,38px); letter-spacing:.08em; text-transform:uppercase; }
+    .tag { color:var(--muted); font-size:13px; letter-spacing:.08em; text-transform:uppercase; }
+    .game { position:relative; border:1px solid #35423f; border-radius:18px; overflow:hidden; background:#101819; box-shadow:0 24px 80px #0009; }
+    canvas { display:block; width:100%; aspect-ratio:16/9; touch-action:manipulation; }
+    .hud { position:absolute; inset:16px 16px auto; display:flex; gap:10px; pointer-events:none; }
+    .pill { min-width:108px; padding:9px 12px; border:1px solid #ffffff1f; border-radius:999px; background:#07100fba; backdrop-filter:blur(8px); font-size:12px; text-transform:uppercase; letter-spacing:.1em; }
+    .pill b { display:block; color:var(--lime); font-size:18px; letter-spacing:0; }
+    .progress { position:absolute; left:16px; right:16px; bottom:16px; height:8px; border-radius:10px; background:#ffffff18; overflow:hidden; pointer-events:none; }
+    #bar { height:100%; width:0; background:linear-gradient(90deg,var(--lime),#fff59b); transition:width .15s linear; }
+    .panel { position:absolute; inset:0; display:grid; place-items:center; padding:24px; background:#07100fcf; backdrop-filter:blur(5px); text-align:center; }
+    .card { width:min(500px,100%); }
+    .eyebrow { color:var(--lime); text-transform:uppercase; letter-spacing:.18em; font-weight:800; font-size:12px; }
+    h2 { margin:10px 0; font-size:clamp(34px,7vw,68px); line-height:.92; text-transform:uppercase; }
+    .card p { color:#b7c3bf; line-height:1.6; margin:14px auto 22px; max-width:430px; }
+    button { border:0; border-radius:999px; padding:14px 24px; background:var(--lime); color:#10150d; font:800 14px/1 inherit; text-transform:uppercase; letter-spacing:.12em; cursor:pointer; box-shadow:0 8px 28px #b8f36a30; }
+    button:hover { transform:translateY(-1px); filter:brightness(1.08); }
+    footer { display:flex; justify-content:space-between; gap:18px; margin-top:12px; color:var(--muted); font-size:12px; }
+    kbd { color:var(--ink); border:1px solid #50605b; border-bottom-width:3px; border-radius:6px; padding:2px 7px; }
+    [hidden] { display:none !important; }
+    @media(max-width:560px){ body{padding:10px}.hud{inset:8px 8px auto}.pill{min-width:82px;padding:6px 9px}.pill b{font-size:14px}.progress{left:8px;right:8px;bottom:8px}footer{display:block;line-height:1.8} }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <header><div><div class="tag">Prison escape protocol</div><h1>Cellblock 500</h1></div><div class="tag">Run. Jump. Survive.</div></header>
+    <section class="game" aria-label="Cellblock 500 game">
+      <canvas id="game" width="960" height="540"></canvas>
+      <div class="hud" aria-live="polite">
+        <div class="pill">Distance<b><span id="meters">0</span> / 500m</b></div>
+        <div class="pill">Pursuer<b id="phase">The Warden</b></div>
+        <div class="pill" id="boostPill" hidden>Speed boost<b><span id="boostTime">5.0</span>s</b></div>
+      </div>
+      <div class="progress"><div id="bar"></div></div>
+      <div class="panel" id="panel">
+        <div class="card"><div class="eyebrow" id="eyebrow">Your sentence ends tonight</div><h2 id="title">Escape the block</h2><p id="message">You run automatically. Press <b>Space</b>, <b>W</b>, <b>↑</b>, or tap to jump. Clear platforms, crates, and red kill bricks. New monsters take over at 50m and 150m. Reach 500m alive.</p><button id="action">Start escape</button></div>
+      </div>
+    </section>
+    <footer><span><kbd>Space</kbd> / <kbd>W</kbd> / <kbd>↑</kbd> / tap — jump (hold for height)</span><span><kbd>R</kbd> — restart</span></footer>
+  </main>
+  <script>
+  (() => {
+    'use strict';
+    const canvas = document.querySelector('#game'), ctx = canvas.getContext('2d');
+    const ui = { panel:document.querySelector('#panel'), title:document.querySelector('#title'), message:document.querySelector('#message'), eyebrow:document.querySelector('#eyebrow'), action:document.querySelector('#action'), meters:document.querySelector('#meters'), phase:document.querySelector('#phase'), bar:document.querySelector('#bar'), boostPill:document.querySelector('#boostPill'), boostTime:document.querySelector('#boostTime') };
+    const W=960,H=540, ground=455, player={x:245,y:0,w:32,h:48,vy:0,onGround:true};
+    const pursuers=[{name:'The Warden',color:'#e9e2d0',at:0},{name:'The Hound',color:'#ff9b54',at:50},{name:'The Brute',color:'#ef5a68',at:150}];
+    let state='ready',distance=0,speed=265,scroll=0,last=0,holding=false,obstacles=[],nextSpawn=500,phase=0,monsterGap=115,shake=0,flash='',boostTimer=0;
+    const rand=(a,b)=>a+Math.random()*(b-a);
+    function reset(){ state='ready';distance=0;speed=265;scroll=0;last=0;holding=false;obstacles=[];nextSpawn=520;phase=0;monsterGap=115;boostTimer=0;player.y=ground-player.h;player.vy=0;player.onGround=true;updateUI();show('Your sentence ends tonight','Escape the block','You run automatically. Press <b>Space</b>, <b>W</b>, <b>↑</b>, or tap to jump. Clear platforms, crates, and red kill bricks. Collect glowing <b>speed orbs</b> to run faster for 5 seconds. New monsters take over at 50m and 150m. Reach 500m alive.','Start escape');draw(0); }
+    function start(){ if(state==='playing')return; if(state==='lost'||state==='won')reset(); state='playing';ui.panel.hidden=true;last=performance.now();requestAnimationFrame(loop); }
+    function show(eye,title,msg,button){ui.eyebrow.textContent=eye;ui.title.textContent=title;ui.message.innerHTML=msg;ui.action.textContent=button;ui.panel.hidden=false;}
+    function jump(){ if(state==='ready'||state==='lost'||state==='won'){start();return;} if(player.onGround){player.vy=-690;player.onGround=false;holding=true;} }
+    function key(e,down){ if(['Space','ArrowUp','KeyW'].includes(e.code)){e.preventDefault();holding=down;if(down&&!e.repeat)jump();} if(down&&e.code==='KeyR'){reset();start();} }
+    addEventListener('keydown',e=>key(e,true));addEventListener('keyup',e=>key(e,false));canvas.addEventListener('pointerdown',e=>{e.preventDefault();jump()});addEventListener('pointerup',()=>holding=false);ui.action.addEventListener('click',start);
+    function spawn(){
+      const r=Math.random(); let o;
+      if(r<.38)o={type:'crate',x:W+40,y:ground-44,w:42,h:44};
+      else if(r<.64)o={type:'brick',x:W+40,y:ground-22,w:rand(38,68),h:22};
+      else if(r<.84)o={type:'platform',x:W+40,y:ground-rand(72,130),w:rand(105,175),h:18};
+      else o={type:'boost',x:W+40,y:ground-rand(72,112),w:32,h:32};
+      obstacles.push(o);nextSpawn=rand(245,390)+(speed-265)*.25;
+    }
+    const hit=(a,b)=>a.x<b.x+b.w&&a.x+a.w>b.x&&a.y<b.y+b.h&&a.y+a.h>b.y;
+    function update(dt){
+      const baseSpeed=Math.min(355,265+distance*.18), runSpeed=baseSpeed+(boostTimer>0?115:0);
+      if(boostTimer>0)boostTimer=Math.max(0,boostTimer-dt);
+      speed=runSpeed;distance+=speed*dt/34;scroll+=speed*dt;
+      const newPhase=distance>=150?2:distance>=50?1:0;
+      if(newPhase!==phase){phase=newPhase;monsterGap=170;flash=pursuers[phase].name+' enters the chase!';shake=12;setTimeout(()=>flash='',1400);}
+      monsterGap=Math.max(83,monsterGap-dt*(phase===2?8:5));
+      player.vy+=1720*dt;if(holding&&player.vy<0)player.vy-=480*dt;player.y+=player.vy*dt;player.onGround=false;
+      let landing=ground-player.h;
+      for(const o of obstacles){if(o.type==='platform'&&player.vy>=0&&player.x+player.w>o.x&&player.x<o.x+o.w&&player.y+player.h>=o.y&&player.y+player.h-player.vy*dt<=o.y+5)landing=Math.min(landing,o.y-player.h);}
+      if(player.y>=landing){player.y=landing;player.vy=0;player.onGround=true;}
+      for(const o of obstacles)o.x-=speed*dt;obstacles=obstacles.filter(o=>o.x+o.w>-80);
+      nextSpawn-=speed*dt;if(nextSpawn<=0)spawn();
+      for(const o of obstacles){
+        if(!hit(player,o))continue;
+        if(o.type==='boost'){boostTimer=5;monsterGap=Math.min(190,monsterGap+28);o.collected=true;flash='SPEED BOOST — 5 SECONDS!';setTimeout(()=>{if(flash.startsWith('SPEED'))flash=''},1200);continue;}
+        if(o.type!=='platform')return lose(o.type==='brick'?'A kill brick ended the escape.':'You crashed—and the monster caught up.');
+      }
+      obstacles=obstacles.filter(o=>!o.collected);
+      if(player.y>H+30)return lose('You fell into the darkness below the cellblock.');
+      if(distance>=500)return win();updateUI();
+    }
+    function lose(reason){state='lost';shake=18;show('Caught at '+Math.floor(distance)+' meters','Back in chains',reason+' The block resets, but your next escape can begin immediately.','Try again');}
+    function win(){state='won';show('Freedom reached','You escaped!','500 meters. Three monsters. One prisoner still standing. The gates slam shut behind you as you disappear into the night.','Run again');updateUI();}
+    function updateUI(){ui.meters.textContent=Math.min(500,Math.floor(distance));ui.phase.textContent=pursuers[phase].name;ui.phase.style.color=pursuers[phase].color;ui.bar.style.width=Math.min(100,distance/5)+'%';ui.boostPill.hidden=boostTimer<=0;ui.boostTime.textContent=boostTimer.toFixed(1);}
+    function draw(){
+      ctx.save();if(shake)ctx.translate(rand(-shake,shake),rand(-shake,shake)),shake*=.86;
+      const g=ctx.createLinearGradient(0,0,0,H);g.addColorStop(0,'#10191c');g.addColorStop(1,'#192525');ctx.fillStyle=g;ctx.fillRect(-30,-30,W+60,H+60);
+      ctx.fillStyle='#0a1012';for(let x=-(scroll*.2%160);x<W;x+=160){ctx.fillRect(x,80,112,235);ctx.fillStyle='#293535';ctx.fillRect(x+14,105,84,160);ctx.fillStyle='#0a1012';for(let b=0;b<6;b++)ctx.fillRect(x+25+b*12,105,5,160);ctx.fillStyle='#0a1012';}
+      ctx.fillStyle='#263230';ctx.fillRect(0,ground,W,H-ground);ctx.fillStyle='#4a5954';ctx.fillRect(0,ground,W,8);ctx.strokeStyle='#1a2422';ctx.lineWidth=2;for(let x=-(scroll%72);x<W;x+=72){ctx.beginPath();ctx.moveTo(x,ground+8);ctx.lineTo(x-25,H);ctx.stroke();}
+      const mx=player.x-monsterGap;ctx.fillStyle=pursuers[phase].color;ctx.beginPath();ctx.roundRect(mx,ground-62,48,62,13);ctx.fill();ctx.fillStyle='#121616';ctx.fillRect(mx+8,ground-48,10,7);ctx.fillRect(mx+30,ground-48,10,7);ctx.fillStyle='#ff334f';ctx.fillRect(mx+11,ground-46,4,3);ctx.fillRect(mx+33,ground-46,4,3);ctx.fillStyle='#111';ctx.fillRect(mx+13,ground-26,25,5);
+      for(const o of obstacles){if(o.type==='platform'){ctx.fillStyle='#8b9690';ctx.fillRect(o.x,o.y,o.w,o.h);ctx.fillStyle='#505b57';for(let x=o.x+10;x<o.x+o.w;x+=25)ctx.fillRect(x,o.y+4,4,10);}else if(o.type==='crate'){ctx.fillStyle='#80664b';ctx.fillRect(o.x,o.y,o.w,o.h);ctx.strokeStyle='#b28e65';ctx.lineWidth=4;ctx.strokeRect(o.x+3,o.y+3,o.w-6,o.h-6);ctx.beginPath();ctx.moveTo(o.x+5,o.y+5);ctx.lineTo(o.x+o.w-5,o.y+o.h-5);ctx.stroke();}else if(o.type==='boost'){ctx.save();ctx.shadowColor='#6deaff';ctx.shadowBlur=24;ctx.fillStyle='#6deaff';ctx.beginPath();ctx.arc(o.x+16,o.y+16,15+Math.sin(performance.now()/120)*2,0,7);ctx.fill();ctx.fillStyle='#fff';ctx.beginPath();ctx.moveTo(o.x+19,o.y+4);ctx.lineTo(o.x+9,o.y+18);ctx.lineTo(o.x+16,o.y+18);ctx.lineTo(o.x+11,o.y+29);ctx.lineTo(o.x+25,o.y+14);ctx.lineTo(o.x+18,o.y+14);ctx.closePath();ctx.fill();ctx.restore();}else{ctx.fillStyle='#ff4055';ctx.fillRect(o.x,o.y,o.w,o.h);ctx.fillStyle='#ffbd6b';for(let x=o.x+8;x<o.x+o.w;x+=18){ctx.beginPath();ctx.arc(x,o.y+8,3,0,7);ctx.fill();}}}
+      ctx.fillStyle='#c7f576';ctx.beginPath();ctx.roundRect(player.x,player.y,player.w,player.h,8);ctx.fill();ctx.fillStyle='#121818';ctx.fillRect(player.x+18,player.y+11,7,6);ctx.fillStyle='#5f7d3a';ctx.fillRect(player.x+5,player.y+34,22,5);
+      if(flash){ctx.fillStyle='#07100fda';ctx.fillRect(W/2-190,105,380,52);ctx.fillStyle='#fff';ctx.font='800 17px system-ui';ctx.textAlign='center';ctx.fillText(flash,W/2,137);}
+      ctx.restore();
+    }
+    function loop(t){if(state!=='playing')return;const dt=Math.min(.025,(t-last)/1000);last=t;update(dt);draw();if(state==='playing')requestAnimationFrame(loop);}
+    reset();
+  })();
+  </script>
+</body>
+</html>
