@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Deadlock: Ten Duels</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <main id="gameShell">
+    <canvas id="game" width="1280" height="720" aria-label="3D duel arena"></canvas>
+
+    <section id="hud" class="hidden">
+      <div class="hud-top">
+        <div class="stat"><span>YOU</span><div class="bar"><i id="playerBar"></i></div><b id="playerHp">100</b></div>
+        <div class="round"><small>DUEL</small><strong id="roundLabel">1 / 10</strong></div>
+        <div class="stat enemy"><span id="enemyName">ROOKIE</span><div class="bar"><i id="enemyBar"></i></div><b id="enemyHp">100</b></div>
+      </div>
+      <div id="weaponHud"><b id="weaponName">REVOLVER</b><span id="ammoText">6 / 6</span></div>
+      <div id="hitMarker">×</div>
+      <div id="damageFlash"></div>
+    </section>
+
+    <div id="crosshair"><i></i><i></i><i></i><i></i></div>
+    <div id="toast"></div>
+
+    <section id="startScreen" class="panel shown">
+      <p class="eyebrow">TEN ROUNDS. ONE SURVIVOR.</p>
+      <h1>DEADLOCK</h1>
+      <p class="lead">Fight ten increasingly dangerous opponents in a sealed combat arena. Break the pale walls, use cover, and choose your weapon between duels.</p>
+      <div class="instructions">
+        <div><kbd>W A S D</kbd><span>Move</span></div>
+        <div><kbd>MOUSE</kbd><span>Aim</span></div>
+        <div><kbd>SPACE</kbd><span>Fire</span></div>
+        <div><kbd>R</kbd><span>Reload</span></div>
+      </div>
+      <button id="startBtn">ENTER THE ARENA</button>
+    </section>
+
+    <section id="shopScreen" class="panel">
+      <p class="eyebrow">ROUND CLEARED</p>
+      <h2>CHOOSE YOUR LOADOUT</h2>
+      <p>Next duel begins in <strong id="shopTimer">12</strong> seconds</p>
+      <div id="weaponCards"></div>
+    </section>
+
+    <section id="endScreen" class="panel">
+      <p id="endEyebrow" class="eyebrow">RUN ENDED</p>
+      <h2 id="endTitle">DEFEATED</h2>
+      <p id="endCopy"></p>
+      <button id="restartBtn">FIGHT AGAIN</button>
+    </section>
+  </main>
+  <script src="game.js"></script>
+</body>
+</html>
