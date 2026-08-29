@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Block Survival - 2D Minecraft Adventure</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div id="game-container">
+    <header id="hud">
+      <div class="hud-item hud-hearts" id="lives">Health: <span id="livesCount"></span></div>
+      <div class="hud-item">Weapon: <span id="weaponName">Sword</span></div>
+      <div class="hud-item">Kills: <span id="killsCount">0</span></div>
+      <div class="hud-item">Phase: <span id="phaseName">Day 1</span></div>
+      <button id="pauseBtn" title="Pause (P)">&#10074;&#10074;</button>
+    </header>
+
+    <div id="statbars">
+      <div class="bar-wrap" title="Experience / Level">
+        <div class="bar-label">XP</div>
+        <div class="bar-track xp"><div class="bar-fill" id="xpFill"></div></div>
+        <div class="bar-text" id="xpText">Level 1</div>
+      </div>
+      <div class="bar-wrap" title="Hunger">
+        <div class="bar-label">Hunger</div>
+        <div class="bar-track hunger"><div class="bar-fill" id="hungerFill"></div></div>
+        <div class="bar-text" id="hungerText">10 drumsticks</div>
+      </div>
+    </div>
+
+    <div id="hud2">
+      <div id="blockBar"></div>
+      <div id="controls-hint">
+        <b>WASD / Arrows</b> move &nbsp;|&nbsp; <b>Left-click (hold)</b> dig/break &nbsp;|&nbsp; <b>Right-click</b> place block &nbsp;|&nbsp; <b>Ctrl</b> attack &nbsp;|&nbsp; <b>E</b> eat &nbsp;|&nbsp; <b>1-9</b> pick &nbsp;|&nbsp; <b>P</b> pause
+      </div>
+    </div>
+
+    <div id="canvas-wrap">
+      <canvas id="game" width="960" height="540"></canvas>
+      <div id="overlay"></div>
+    </div>
+
+    <div id="startScreen" class="screen">
+      <div class="panel">
+        <h1>&#9884; BLOCK SURVIVAL</h1>
+        <p class="subtitle">A 2D Minecraft survival adventure</p>
+        <div class="howto">
+          <p>Explore a Minecraft world with trees, a village and ore. Survive monster waves and defeat the Ender Dragon to win. You have <b>5 health hearts</b>.</p>
+          <ul>
+            <li><b>WASD / Arrow keys</b> &mdash; move up, down, left, right</li>
+            <li><b>Left-click (hold)</b> &mdash; dig / break blocks (ores give XP!)</li>
+            <li><b>Right-click</b> &mdash; place the selected block</li>
+            <li><b>Ctrl / right-click swarm</b> &mdash; attack monsters with your sword</li>
+            <li><b>E</b> &mdash; eat food to restore hunger</li>
+            <li><b>1-9</b> &mdash; choose block/tool</li>
+            <li><b>P</b> &mdash; pause / resume</li>
+          </ul>
+        </div>
+        <button id="startBtn" class="big-btn">&#9654; PLAY</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="game.js"></script>
+</body>
+</html>
