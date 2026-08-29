@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Longshot Range</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <main class="game-shell">
+    <header>
+      <div class="brand"><span class="brand-mark">◆</span> LONGSHOT RANGE</div>
+      <div class="header-note">CARDBOARD TARGET TRAINING</div>
+    </header>
+
+    <section class="stage-wrap">
+      <canvas id="game" aria-label="Longshot Range game canvas"></canvas>
+
+      <div id="hud" class="hud hidden">
+        <div class="hud-block health-block">
+          <span>HEALTH</span>
+          <div class="health-track"><div id="healthFill"></div></div>
+          <strong id="healthText">10 / 10</strong>
+        </div>
+        <div class="hud-pill">ROUND <strong id="roundText">1 / 3</strong></div>
+        <div class="hud-pill">TARGETS <strong id="targetText">0 / 10</strong></div>
+        <div class="hud-pill diamond-pill">◆ <strong id="diamondText">0</strong></div>
+        <div class="hud-pill gun-pill"><span id="gunText">SIDEARM</span><strong id="ammoText">∞</strong></div>
+      </div>
+
+      <div id="startScreen" class="overlay start-screen">
+        <div class="panel hero-panel">
+          <div class="eyebrow">URBAN TRAINING COURSE</div>
+          <h1>LONGSHOT<br><span>RANGE</span></h1>
+          <p>Clear three blocks of hostile cardboard cutouts. Some targets return fire—keep moving and keep your aim sharp.</p>
+          <div class="controls-grid">
+            <div><kbd>A</kbd><kbd>D</kbd><kbd>W</kbd><span>MOVE + JUMP</span></div>
+            <div><span class="mouse-icon">↖</span><span>AIM + HOLD CLICK TO FIRE</span></div>
+          </div>
+          <button id="startBtn" class="primary-btn">ENTER THE RANGE <span>→</span></button>
+        </div>
+      </div>
+
+      <div id="countdownScreen" class="overlay hidden pointerless">
+        <div class="countdown-card">
+          <div id="countdownLabel">ROUND 1</div>
+          <strong id="countdownNumber">5</strong>
+          <span>GET READY</span>
+        </div>
+      </div>
+
+      <div id="roundScreen" class="overlay hidden">
+        <div class="panel compact-panel">
+          <div class="result-icon">◆</div>
+          <div class="eyebrow">BLOCK SECURED</div>
+          <h2 id="roundResultTitle">ROUND 1 CLEAR</h2>
+          <p id="roundResultText">Targets eliminated. Spend your diamonds or head straight back out.</p>
+          <div class="result-stats"><span>DIAMONDS</span><strong id="resultDiamonds">0 ◆</strong></div>
+          <div class="button-row">
+            <button id="shopBtn" class="secondary-btn">VISIT ARMORY</button>
+            <button id="nextBtn" class="primary-btn">NEXT ROUND →</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="shopScreen" class="overlay hidden">
+        <div class="panel shop-panel">
+          <button id="closeShopBtn" class="close-btn" aria-label="Close shop">×</button>
+          <div class="eyebrow">RANGE ARMORY</div>
+          <h2>CHOOSE YOUR LOADOUT</h2>
+          <div class="shop-balance">BALANCE <strong><span id="shopDiamonds">0</span> ◆</strong></div>
+          <div id="weaponCards" class="weapon-cards"></div>
+          <button id="rangeBtn" class="primary-btn full-btn">RETURN TO RANGE →</button>
+        </div>
+      </div>
+
+      <div id="endScreen" class="overlay hidden">
+        <div class="panel compact-panel">
+          <div id="endIcon" class="result-icon">◆</div>
+          <div id="endEyebrow" class="eyebrow">COURSE COMPLETE</div>
+          <h2 id="endTitle">RANGE MASTERED</h2>
+          <p id="endText">All 45 targets are down. Clean shooting.</p>
+          <div class="result-stats"><span>FINAL SCORE</span><strong id="finalScore">45 ◆</strong></div>
+          <button id="restartBtn" class="primary-btn full-btn">PLAY AGAIN ↻</button>
+        </div>
+      </div>
+    </section>
+
+    <footer><span>TIP: Move sideways while targets are lining up a shot.</span><span>ESC pauses · R restarts after defeat</span></footer>
+  </main>
+  <script src="game.js"></script>
+</body>
+</html>

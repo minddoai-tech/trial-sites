@@ -1,0 +1,65 @@
+:root { --ink:#10222c; --paper:#f3efe5; --orange:#ff6138; --gold:#ffc857; --teal:#20c4b1; }
+* { box-sizing:border-box; }
+html, body { margin:0; min-height:100%; background:#07151c; color:var(--ink); font-family:Arial, Helvetica, sans-serif; overflow:hidden; }
+body { display:grid; place-items:center; }
+.game-shell { width:100vw; height:100vh; display:grid; grid-template-rows:58px 1fr 34px; background:#0d2028; }
+header, footer { display:flex; align-items:center; justify-content:space-between; padding:0 24px; color:#dce9e6; letter-spacing:.13em; }
+header { background:#0b1b23; border-bottom:1px solid #28404a; }
+.brand { font:800 23px 'Arial Narrow', Arial, sans-serif; }
+.brand-mark { color:var(--orange); margin-right:7px; }
+.header-note, footer { font-size:10px; font-weight:700; color:#76919a; }
+footer { border-top:1px solid #28404a; }
+.stage-wrap { position:relative; min-height:0; overflow:hidden; cursor:crosshair; }
+canvas { width:100%; height:100%; display:block; background:#9dd3d4; }
+.hidden { display:none !important; }
+.overlay { position:absolute; inset:0; display:grid; place-items:center; background:rgba(5,18,24,.58); backdrop-filter:blur(3px); z-index:20; padding:20px; cursor:default; }
+.pointerless { pointer-events:none; background:rgba(5,18,24,.18); backdrop-filter:none; }
+.panel { width:min(600px, 92vw); background:var(--paper); padding:40px; border:1px solid #fff; box-shadow:10px 10px 0 rgba(7,21,28,.65); position:relative; }
+.hero-panel { border-top:7px solid var(--orange); }
+.eyebrow { color:var(--orange); font:700 13px 'Arial Narrow', Arial, sans-serif; letter-spacing:.24em; margin-bottom:10px; }
+h1,h2 { font-family:'Arial Narrow', Arial, sans-serif; margin:0; line-height:.85; letter-spacing:-.02em; }
+h1 { font-size:clamp(62px,10vw,106px); font-weight:800; }
+h1 span { color:var(--orange); }
+h2 { font-size:54px; }
+.panel p { color:#53636a; font-size:14px; line-height:1.55; max-width:510px; }
+.controls-grid { display:grid; grid-template-columns:1fr 1.5fr; gap:12px; margin:23px 0; }
+.controls-grid > div { border:1px solid #ccd2ce; background:#e8e6dc; min-height:62px; display:flex; align-items:center; justify-content:center; gap:5px; padding:10px; }
+.controls-grid span { font:700 11px 'Arial Narrow', Arial, sans-serif; letter-spacing:.08em; margin-left:5px; }
+kbd,.mouse-icon { width:25px; height:25px; display:grid; place-items:center; background:#142731; color:white; box-shadow:0 3px 0 #07151c; font:700 12px Arial, sans-serif; }
+.mouse-icon { width:35px; height:35px; font-size:22px; }
+button { border:0; padding:15px 20px; font:800 14px 'Arial Narrow', Arial, sans-serif; letter-spacing:.1em; cursor:pointer; transition:.15s transform,.15s filter; }
+button:hover { transform:translateY(-2px); filter:brightness(1.08); }
+.primary-btn { background:var(--orange); color:white; box-shadow:4px 4px 0 #9c2d15; }
+.secondary-btn { background:#17313b; color:white; box-shadow:4px 4px 0 #07151c; }
+.full-btn { width:100%; margin-top:22px; }
+.hud { position:absolute; z-index:10; top:14px; left:14px; right:14px; display:flex; align-items:center; gap:9px; pointer-events:none; color:white; font:700 13px 'Arial Narrow', Arial, sans-serif; letter-spacing:.08em; }
+.hud-block,.hud-pill { background:rgba(7,21,28,.88); border:1px solid #44606a; padding:10px 13px; box-shadow:3px 3px 0 rgba(0,0,0,.25); }
+.health-block { width:230px; display:grid; grid-template-columns:auto 1fr auto; gap:10px; align-items:center; }
+.health-track { height:8px; background:#452a28; }
+#healthFill { width:100%; height:100%; background:var(--orange); transition:width .2s; }
+.diamond-pill { color:var(--gold); }
+.gun-pill { margin-left:auto; display:flex; min-width:150px; justify-content:space-between; }
+.countdown-card { color:white; text-align:center; text-shadow:3px 4px 0 #07151c; font-family:'Arial Narrow', Arial, sans-serif; }
+.countdown-card div,.countdown-card span { letter-spacing:.25em; font-weight:700; }
+.countdown-card strong { font-size:160px; display:block; line-height:.9; color:var(--gold); }
+.compact-panel { width:min(470px,90vw); text-align:center; border-top:7px solid var(--teal); }
+.compact-panel p { margin:14px auto 20px; }
+.result-icon { font-size:32px; color:var(--gold); margin-bottom:8px; }
+.result-stats { display:flex; justify-content:space-between; padding:16px; background:#e2e0d6; border:1px solid #c6cbc6; font:700 13px 'Arial Narrow', Arial, sans-serif; letter-spacing:.12em; }
+.result-stats strong { color:#c7860a; font-size:18px; }
+.button-row { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:20px; }
+.shop-panel { width:min(780px,94vw); max-height:92%; overflow:auto; border-top:7px solid var(--gold); }
+.close-btn { position:absolute; right:14px; top:11px; background:transparent; font-size:28px; padding:5px 12px; }
+.shop-balance { position:absolute; top:40px; right:60px; font:700 12px 'Arial Narrow', Arial, sans-serif; letter-spacing:.1em; }
+.shop-balance strong { color:#b67500; margin-left:8px; font-size:18px; }
+.weapon-cards { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin-top:25px; }
+.weapon-card { border:2px solid #ccd1ca; padding:18px; background:#e8e6dc; position:relative; }
+.weapon-card.equipped { border-color:var(--teal); box-shadow:inset 0 0 0 2px var(--teal); }
+.weapon-card h3 { font:800 23px 'Arial Narrow', Arial, sans-serif; margin:9px 0 4px; }
+.weapon-art { height:50px; font-size:35px; display:flex; align-items:center; color:#17313b; }
+.weapon-stat { display:flex; justify-content:space-between; font:700 11px 'Arial Narrow', Arial, sans-serif; margin:7px 0; }
+.stat-bar { height:5px; width:54%; background:#c4c7c0; }
+.stat-bar i { display:block; height:100%; background:var(--orange); }
+.weapon-card button { width:100%; padding:11px; margin-top:9px; }
+.weapon-card button:disabled { background:#a9ada7; box-shadow:none; color:#f1f1ed; cursor:not-allowed; transform:none; }
+@media (max-width:700px) { .header-note,footer span:last-child{display:none}.hud{flex-wrap:wrap}.health-block{width:190px}.hud-pill{padding:8px}.gun-pill{margin-left:0}.panel{padding:27px}.weapon-cards{grid-template-columns:1fr}.shop-balance{position:static;margin-top:12px}.controls-grid{grid-template-columns:1fr} }
