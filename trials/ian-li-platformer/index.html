@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Shadow Lotus Platformer</title>
+    <link rel="stylesheet" href="styles.css">
+  </head>
+  <body>
+    <main class="shell">
+      <section class="game-panel" aria-label="Shadow Lotus Platformer">
+        <header class="hud">
+          <div>
+            <p class="eyebrow">Shadow Lotus</p>
+            <h1>Black Ninja Run</h1>
+          </div>
+          <div class="stats" aria-live="polite">
+            <span id="lives">Lives: 3</span>
+            <span id="checkpoint">Checkpoint: 1</span>
+            <span id="status">Find the silver portal</span>
+          </div>
+        </header>
+
+        <canvas id="game" width="1120" height="630" aria-label="Playable 2D platformer game"></canvas>
+
+        <footer class="instructions">
+          <span><strong>Move:</strong> Arrow keys</span>
+          <span><strong>Jump:</strong> Up, then Up again for a half-height double jump</span>
+          <span><strong>Attack:</strong> Down</span>
+          <span><strong>Avoid:</strong> Poison, spikes, and red energy orbs</span>
+          <span><strong>Restart:</strong> R</span>
+        </footer>
+      </section>
+    </main>
+
+    <script src="game.js"></script>
+  </body>
+</html>
