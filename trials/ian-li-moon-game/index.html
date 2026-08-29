@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>月隐山林 · 重生之旅</title>
+  <style>
+    :root{--ink:#173b3a;--paper:#fffaf0;--gold:#ffc857;--leaf:#27785e;--coral:#f56f5d;--sky:#55b8c8;--mist:#dff3df}
+    *{box-sizing:border-box} body{margin:0;background:#143b39;color:var(--paper);font-family:system-ui,"Microsoft YaHei",sans-serif;overflow:hidden}
+    canvas{display:block;width:100vw;height:100vh;background:#48a36f}
+    .hud{position:fixed;inset:0;pointer-events:none;padding:18px;display:flex;justify-content:space-between;align-items:flex-start}
+    .card{background:rgba(255,250,240,.93);color:var(--ink);border:2px solid rgba(255,255,255,.8);border-radius:18px;padding:12px 15px;box-shadow:0 7px 0 #183f3470,0 14px 32px #10251f35;backdrop-filter:blur(8px)}
+    .brand{font-weight:900;letter-spacing:.09em;color:#17644f}.sub{font-size:12px;opacity:.75;margin-top:3px}.count{font-size:24px;font-weight:950;color:#9b5a13;text-align:right;transition:.18s;background:linear-gradient(135deg,#fff0a8,#ffd365);border:2px solid #fff5ca;border-radius:12px;padding:2px 9px;box-shadow:inset 0 -3px 0 #e5a83b55}.count.bump{transform:scale(1.35) rotate(-3deg);color:#c64f30}.timer{font-size:13px;font-weight:900;text-align:center;margin-top:7px;color:#22665a}.timer.danger{color:#d9463c;animation:pulse .65s infinite}.bars{display:grid;gap:6px;margin-top:8px;font-size:11px;font-weight:700}.bar{display:flex;gap:8px;align-items:center}.track{width:100px;height:7px;background:#c6d8cf;border-radius:9px;overflow:hidden;box-shadow:inset 0 1px 2px #173b3a44}.fill{height:100%;background:linear-gradient(90deg,#ffbd4a,#ff755f);transition:.2s;border-radius:9px}
+    .tip{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);text-align:center;max-width:min(92vw,680px)}
+    #prompt{font-weight:700;color:#754710;min-height:20px}.keys{font-size:12px;margin-top:5px;opacity:.78}.key{display:inline-block;border:1px solid #9ba99c;border-bottom-width:3px;border-radius:6px;padding:1px 6px;margin:0 2px;background:#fff9}
+    .overlay{position:fixed;inset:0;background:linear-gradient(#164b4acc,#102d36f2);display:grid;place-items:center;padding:20px}
+    .panel{width:min(560px,94vw);background:var(--paper);color:var(--ink);padding:34px;border:3px solid #fff;border-radius:28px;text-align:center;box-shadow:0 10px 0 #0e2f3070,0 30px 80px #0007}.panel h1{font-size:clamp(30px,7vw,56px);margin:0 0 8px;letter-spacing:.1em;color:#17644f;text-shadow:0 3px 0 #b7e3c7}.moon{font-size:72px;filter:drop-shadow(0 0 18px #ffe09c)}.panel p{line-height:1.75;color:#486a63}.rules{background:#e2f3df;border:2px solid #cae8cb;border-radius:16px;padding:12px;margin:18px 0;font-size:14px}.rules b{color:#c15b35}
+    button{pointer-events:auto;border:2px solid #fff6cf;border-radius:999px;padding:13px 30px;background:linear-gradient(180deg,#ffcf62,#f39a3d);color:#553314;font:900 16px system-ui,"Microsoft YaHei",sans-serif;letter-spacing:.05em;cursor:pointer;box-shadow:0 6px 0 #bd652d,0 10px 24px #7b452944;transition:transform .14s,filter .14s}button:hover{transform:translateY(-2px);filter:saturate(1.15) brightness(1.05)}button:active{transform:translateY(4px);box-shadow:0 2px 0 #bd652d}.hidden{display:none}
+    #toast{position:fixed;left:50%;top:18%;transform:translate(-50%,-12px) scale(.9);background:#fff2c9;color:#664315;border-radius:999px;padding:12px 20px;font-weight:900;opacity:0;transition:.25s;pointer-events:none;box-shadow:0 8px 30px #0004}#toast.show{opacity:1;transform:translate(-50%,0) scale(1)}
+    #flash{position:fixed;inset:0;pointer-events:none;opacity:0;background:radial-gradient(circle,#fff1a900 20%,#ffe17d99);transition:opacity .35s}#flash.score{opacity:1;transition:none}#flash.lose{opacity:1;background:#79251a88;transition:none}
+    @keyframes pulse{50%{transform:scale(1.12)}}
+    @media(max-width:600px){.hud{padding:8px}.card{padding:9px 11px}.keys{display:none}.brand{font-size:13px}.track{width:65px}}
+  </style>
+</head>
+<body>
+  <canvas id="game" aria-label="森林寻宝游戏"></canvas>
+  <div class="hud">
+    <div class="card"><div class="brand">月隐山林</div><div class="sub" id="status">寻找散落的十件宝藏</div><div class="bars"><div class="bar">力量 <span class="track"><i class="fill" id="power"></i></span></div><div class="bar">智慧 <span class="track"><i class="fill" id="wisdom"></i></span></div></div></div>
+    <div class="card"><div class="count" id="count"><span id="found">0</span> / 10</div><div class="sub">已寻获宝藏</div><div class="timer" id="timer">剩余 3:00</div></div>
+  </div>
+  <div class="card tip"><div id="prompt">循着微光探索森林</div><div class="keys"><span class="key">WASD / 方向键</span> 移动　<span class="key">Enter</span> 拾取　<span class="key">Shift</span> 跳跃　<span class="key">Ctrl</span> 飞翔</div></div>
+  <div id="toast"></div>
+  <div id="flash"></div>
+  <div class="overlay" id="start"><div class="panel"><div class="moon">🌕</div><h1>月隐山林</h1><p><b>在 3 分钟内找到全部 10 件发光宝藏，随后抵达地图北方的月亮。</b></p><div class="rules">① 方向键 / WASD 移动　② 靠近宝藏按 <b>Enter</b><br>③ <b>Shift</b> 跳跃　<b>Ctrl</b> 飞翔　④ 收齐后向北登顶</div><button id="begin">开始寻宝</button></div></div>
+  <div class="overlay hidden" id="win"><div class="panel"><div class="moon">🌕</div><h1>重生</h1><p id="summary">你带着十件宝藏穿过森林，月亮照亮了新的道路。</p><button id="restart">再次启程</button></div></div>
+  <div class="overlay hidden" id="lose"><div class="panel"><div class="moon">🌑</div><h1>迷雾降临</h1><p>月光已经隐去。循着小地图上的光点，再试一次吧。</p><button id="retry">重新寻宝</button></div></div>
+<script>
+const c=document.querySelector('#game'),x=c.getContext('2d');let W,H,dpr;
+const ui={found:q('#found'),count:q('#count'),timer:q('#timer'),prompt:q('#prompt'),status:q('#status'),power:q('#power'),wisdom:q('#wisdom'),toast:q('#toast'),flash:q('#flash'),start:q('#start'),win:q('#win'),lose:q('#lose'),summary:q('#summary')};
+function q(s){return document.querySelector(s)}
+const keys={}; let started=false, ended=false, found=0, timeLeft=180, lastTick=0, cam={x:0,y:0};
+const world={w:2200,h:1600};
+const player={x:1100,y:1420,r:17,speed:3.4,z:0,vz:0,flying:false,energy:100};
+const treasures=[
+ {x:810,y:1270,n:'琥珀之力',k:'力量',icon:'◆'}, {x:1430,y:1320,n:'古树年轮',k:'知识',icon:'◎'},
+ {x:610,y:1010,n:'清泉之心',k:'自然',icon:'💧'}, {x:1210,y:1040,n:'星纹金币',k:'财富',icon:'●'},
+ {x:1760,y:950,n:'鹰羽之翼',k:'自然',icon:'❯'}, {x:950,y:790,n:'静思石',k:'智慧',icon:'◇'},
+ {x:1510,y:700,n:'雷鸣之角',k:'力量',icon:'ϟ'}, {x:430,y:620,n:'苔藓秘卷',k:'知识',icon:'▤'},
+ {x:1280,y:450,n:'月露明珠',k:'智慧',icon:'◉'}, {x:1840,y:390,n:'山神种子',k:'自然',icon:'✦'}
+];
+const trees=Array.from({length:90},(_,i)=>({x:70+(i*347)%2050,y:180+(i*593)%1320,r:24+(i*17)%25}));
+const ponds=[{x:610,y:1010,rx:145,ry:85},{x:1670,y:1110,rx:170,ry:100},{x:1280,y:450,rx:100,ry:58}];
+function reset(){found=0;ended=false;timeLeft=180;lastTick=performance.now();Object.keys(keys).forEach(k=>keys[k]=false);Object.assign(player,{x:1100,y:1420,z:0,vz:0,flying:false,energy:100});cam.x=0;cam.y=Math.max(0,world.h-H);treasures.forEach(t=>t.got=false);clearTimeout(toast.t);ui.toast.classList.remove('show');ui.flash.className='';ui.prompt.textContent='目标：寻找 10 件金色宝藏';ui.win.classList.add('hidden');ui.lose.classList.add('hidden');updateUI();started=true}
+q('#begin').onclick=()=>{ui.start.classList.add('hidden');reset()};q('#restart').onclick=reset;q('#retry').onclick=reset;
+addEventListener('keydown',e=>{keys[e.key.toLowerCase()]=true;if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight',' ','Enter'].includes(e.key))e.preventDefault();if(e.key==='Enter')collect();if(e.key==='Shift'&&player.z===0){player.vz=7}if(e.key==='Control')e.preventDefault()});addEventListener('keyup',e=>keys[e.key.toLowerCase()]=false);
+function collect(){if(!started||ended)return;let t=treasures.find(t=>!t.got&&Math.hypot(t.x-player.x,t.y-player.y)<76);if(t){t.got=true;found++;toast(`+1 宝藏　${t.icon}「${t.n}」`);feedback('score');ui.count.classList.add('bump');setTimeout(()=>ui.count.classList.remove('bump'),220);updateUI()}}
+function toast(s){ui.toast.textContent=s;ui.toast.classList.add('show');clearTimeout(toast.t);toast.t=setTimeout(()=>ui.toast.classList.remove('show'),1700)}
+function feedback(type){ui.flash.className=type;setTimeout(()=>ui.flash.className='',180)}
+function updateUI(){ui.found.textContent=found;ui.power.style.width=`${20+found*8}%`;ui.wisdom.style.width=`${10+found*9}%`;ui.status.textContent=found===10?'最终目标：向北抵达月亮！':`当前目标：再找 ${10-found} 件宝藏`;let s=Math.max(0,Math.ceil(timeLeft));ui.timer.textContent=`剩余 ${Math.floor(s/60)}:${String(s%60).padStart(2,'0')}`;ui.timer.classList.toggle('danger',s<=30)}
+function resize(){dpr=Math.min(devicePixelRatio,2);W=innerWidth;H=innerHeight;c.width=W*dpr;c.height=H*dpr;x.setTransform(dpr,0,0,dpr,0,0)}addEventListener('resize',resize);resize();
+function update(now){if(!started||ended){lastTick=now;return}timeLeft-=Math.min((now-lastTick)/1000,.05);lastTick=now;if(timeLeft<=0){defeat();return}let dx=(keys.d||keys.arrowright?1:0)-(keys.a||keys.arrowleft?1:0),dy=(keys.s||keys.arrowdown?1:0)-(keys.w||keys.arrowup?1:0);if(dx||dy){let m=Math.hypot(dx,dy);dx/=m;dy/=m}player.flying=!!keys.control&&player.energy>0;if(player.flying){player.z=Math.min(48,player.z+2);player.energy-=.45}else{player.energy=Math.min(100,player.energy+.18);if(player.z>0&&player.vz===0)player.z=Math.max(0,player.z-2)}if(player.vz!==0||player.z>0&&!player.flying){player.z+=player.vz;player.vz-=.55;if(player.z<=0){player.z=0;player.vz=0}}let speed=player.speed*(player.flying?1.55:1);player.x=Math.max(35,Math.min(world.w-35,player.x+dx*speed));player.y=Math.max(100,Math.min(world.h-35,player.y+dy*speed));cam.x+=(player.x-W/2-cam.x)*.08;cam.y+=(player.y-H/2-cam.y)*.08;cam.x=Math.max(0,Math.min(world.w-W,cam.x));cam.y=Math.max(0,Math.min(world.h-H,cam.y));let near=treasures.find(t=>!t.got&&Math.hypot(t.x-player.x,t.y-player.y)<76);if(near)ui.prompt.textContent=`按 Enter 取得「${near.n}」`;else if(found===10)ui.prompt.textContent='最终目标：继续向北，走入月光！';else ui.prompt.textContent=`还差 ${10-found} 件 · 金色光点就是宝藏`;if(found===10&&Math.hypot(player.x-1100,player.y-130)<75)victory();updateUI()}
+function victory(){ended=true;ui.summary.textContent=`十件宝藏汇聚于心，你还剩 ${Math.ceil(timeLeft)} 秒。明月照亮了全新的自己。`;ui.win.classList.remove('hidden')}
+function defeat(){ended=true;timeLeft=0;updateUI();feedback('lose');ui.prompt.textContent='时间耗尽 · 点击重新寻宝';ui.lose.classList.remove('hidden')}
+function draw(){x.clearRect(0,0,W,H);x.save();x.translate(-cam.x,-cam.y);let g=x.createLinearGradient(0,0,0,world.h);g.addColorStop(0,'#277d69');g.addColorStop(.48,'#3f9b68');g.addColorStop(1,'#75b96d');x.fillStyle=g;x.fillRect(0,0,world.w,world.h);drawPath();ponds.forEach(drawPond);trees.sort((a,b)=>a.y-b.y).forEach(drawTree);treasures.forEach(drawTreasure);drawSummit();drawPlayer();x.restore();drawMap();requestAnimationFrame(loop)}
+function drawPath(){x.strokeStyle='#f1d99b55';x.lineWidth=70;x.lineCap='round';x.beginPath();x.moveTo(1100,1580);x.bezierCurveTo(950,1200,1450,850,1100,130);x.stroke();for(let i=0;i<180;i++){x.fillStyle=i%3?'#d9f2a944':'#fff0a855';x.beginPath();x.arc((i*179)%world.w,(i*283)%world.h,2+(i%4),0,7);x.fill()}}
+function drawPond(p){x.save();x.translate(p.x,p.y);x.fillStyle='#238fa0';x.beginPath();x.ellipse(0,0,p.rx,p.ry,0,0,7);x.fill();x.strokeStyle='#9ce5dc88';x.lineWidth=4;for(let i=0;i<3;i++){x.beginPath();x.ellipse(0,0,p.rx-i*16,p.ry-i*10,0,0,7);x.stroke()}x.restore()}
+function drawTree(t){x.fillStyle='#6b4930';x.fillRect(t.x-6,t.y-5,12,32);x.fillStyle='#176046';x.beginPath();x.arc(t.x,t.y-t.r*.35,t.r,0,7);x.fill();x.fillStyle='#38a15d';x.beginPath();x.arc(t.x-10,t.y-t.r*.65,t.r*.6,0,7);x.fill();x.fillStyle='#78c968';x.beginPath();x.arc(t.x-17,t.y-t.r*.85,t.r*.25,0,7);x.fill()}
+function drawTreasure(t){if(t.got)return;let pulse=1+Math.sin(performance.now()/330+t.x)*.15;x.save();x.translate(t.x,t.y);x.fillStyle='#fff09844';x.beginPath();x.arc(0,0,36*pulse,0,7);x.fill();x.shadowColor='#ffe36c';x.shadowBlur=24;x.fillStyle='#ffe064';x.strokeStyle='#9f5b20';x.lineWidth=2;x.font='bold 25px serif';x.textAlign='center';x.strokeText(t.icon,0,8);x.fillText(t.icon,0,8);x.restore()}
+function drawSummit(){x.fillStyle='#25342f';x.beginPath();x.moveTo(760,220);x.lineTo(930,55);x.lineTo(1100,135);x.lineTo(1270,45);x.lineTo(1450,220);x.closePath();x.fill();x.save();x.translate(1100,125);x.shadowColor='#fff1ad';x.shadowBlur=found===10?45:8;x.fillStyle=found===10?'#fff2b1':'#88918c';x.beginPath();x.arc(0,0,43,0,7);x.fill();x.fillStyle='#254438';x.beginPath();x.arc(-16,-12,43,0,7);x.fill();x.restore()}
+function drawPlayer(){x.save();x.translate(player.x,player.y-player.z);x.fillStyle='#102d2b88';x.beginPath();x.ellipse(0,player.z+20,20,8,0,0,7);x.fill();if(player.flying){x.strokeStyle='#d9ffffcc';x.lineWidth=5;x.beginPath();x.arc(-23,0,23,-1.4,1.4);x.arc(23,0,23,1.7,4.6);x.stroke()}x.lineJoin='round';x.strokeStyle='#173b3a';x.lineWidth=4;x.fillStyle='#ffd2a1';x.beginPath();x.arc(0,-15,9,0,7);x.fill();x.stroke();x.fillStyle='#244b48';x.beginPath();x.arc(0,-19,9,3.2,6.2);x.lineTo(10,-12);x.fill();x.fillStyle='#f45f50';x.beginPath();x.moveTo(0,-6);x.lineTo(-15,21);x.lineTo(15,21);x.closePath();x.fill();x.stroke();x.strokeStyle='#ffd45f';x.lineWidth=4;x.beginPath();x.moveTo(-8,-4);x.lineTo(13,2);x.lineTo(20,8);x.stroke();x.strokeStyle='#173b3a';x.lineWidth=4;x.beginPath();x.moveTo(-7,21);x.lineTo(-7,32);x.moveTo(7,21);x.lineTo(7,32);x.stroke();x.fillStyle='#173b3a';x.beginPath();x.arc(-3,-15,1.4,0,7);x.arc(3,-15,1.4,0,7);x.fill();x.restore()}
+function drawMap(){x.save();x.translate(W-68,H-112);x.fillStyle='#f4f0dfcc';x.fillRect(0,0,48,72);x.fillStyle='#315b48';treasures.forEach(t=>{if(!t.got)x.fillRect(t.x/world.w*44+2,t.y/world.h*68+2,2,2)});x.fillStyle='#a34132';x.beginPath();x.arc(player.x/world.w*44+2,player.y/world.h*68+2,3,0,7);x.fill();x.restore()}
+function loop(now=performance.now()){update(now);draw()}loop();
+</script></body></html>
