@@ -1,5 +1,14 @@
 [
   {
+    "slug": "henry-li-wang-basketball-game",
+    "trialId": "1e92aa19-4e85-46d6-b76d-15ba61fc2af6",
+    "studentName": "Henry Li Wang",
+    "title": "Basketball Game",
+    "description": "After a set amount of time by the player (2, 5, 10 minute games), the player with the highest score wins the game. Choices between 2-player mode and 1 player (playing against AI).  Landscape, left to right, full-court.",
+    "submittedAt": "2026-08-29T18:57:48.187Z",
+    "thumbnail": "henry-li-wang-basketball-game/thumb.png"
+  },
+  {
     "slug": "alex",
     "trialId": "c6870978-097c-44ba-84b3-60972329509e",
     "studentName": "Alex",

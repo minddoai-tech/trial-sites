@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Full Court</title>
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body>
+  <main class="app">
+    <header class="topbar">
+      <a class="brand" href="./index.html" aria-label="Full Court home"><span class="brand-ball">●</span> FULL COURT</a>
+      <button id="helpButton" class="icon-button" type="button" aria-label="How to play">?</button>
+    </header>
+
+    <section id="menu" class="screen menu-screen">
+      <div class="menu-copy">
+        <p class="eyebrow">BROWSER BASKETBALL</p>
+        <h1>Own the<br><em>whole court.</em></h1>
+        <p class="lede">Fast breaks, clutch steals, and buzzer beaters. Pick your matchup and tip off.</p>
+      </div>
+      <div class="setup-card">
+        <div class="step"><span>01</span><div><h2>Game mode</h2><p>Choose your matchup</p></div></div>
+        <div class="segmented" id="modeChoices">
+          <button class="choice active" type="button" data-mode="ai"><b>1 PLAYER</b><small>VS COMPUTER</small></button>
+          <button class="choice" type="button" data-mode="local"><b>2 PLAYERS</b><small>LOCAL VERSUS</small></button>
+        </div>
+        <div class="step"><span>02</span><div><h2>Game length</h2><p>Highest score wins</p></div></div>
+        <div class="duration-row" id="durationChoices">
+          <button class="duration active" type="button" data-minutes="2"><b>2</b><small>MIN</small></button>
+          <button class="duration" type="button" data-minutes="5"><b>5</b><small>MIN</small></button>
+          <button class="duration" type="button" data-minutes="10"><b>10</b><small>MIN</small></button>
+        </div>
+        <button id="startButton" class="primary" type="button">TIP OFF <span>→</span></button>
+        <p class="keyboard-note">Keyboard required · Best in landscape</p>
+      </div>
+    </section>
+
+    <section id="game" class="screen game-screen hidden">
+      <div class="scoreboard">
+        <div class="team-score blue"><span>BLUE</span><strong id="scoreBlue">0</strong></div>
+        <div class="clock"><span id="modeLabel">VS COMPUTER</span><strong id="clock">2:00</strong></div>
+        <div class="team-score red"><strong id="scoreRed">0</strong><span>RED</span></div>
+      </div>
+      <div class="court-wrap">
+        <canvas id="court" width="1280" height="640" aria-label="Basketball court game"></canvas>
+        <div id="announcement" class="announcement hidden">BLUE BALL</div>
+        <button id="pauseButton" class="pause-button" type="button" aria-label="Pause game">Ⅱ</button>
+      </div>
+      <div class="game-hints">
+        <span><i class="dot blue-dot"></i> P1: ARROWS MOVE · L SHOOT / DUNK · X STEAL · Z SPECIAL</span>
+        <span id="redHint"><i class="dot red-dot"></i> RED: COMPUTER</span>
+      </div>
+    </section>
+
+    <div id="helpModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="helpTitle">
+      <div class="modal-card help-card">
+        <button class="close" type="button" data-close-modal aria-label="Close">×</button>
+        <p class="eyebrow">QUICK GUIDE</p>
+        <h2 id="helpTitle">How to play</h2>
+        <p>Score more points before the clock runs out. Grab the loose ball, carry it down court, and shoot. Shots beyond the arc are worth 3.</p>
+        <div class="control-grid">
+          <div><h3>Player 1 · Blue</h3><p><kbd>←</kbd> <kbd>→</kbd> <kbd>↑</kbd> <kbd>↓</kbd> Move / double-tap left or right to dash</p><p><kbd>L</kbd> Shoot / hold to dunk near the basket</p><p><kbd>X</kbd> Steal · <kbd>Z</kbd> Special</p></div>
+          <div><h3>Player 2 · Red</h3><p><kbd>A</kbd> <kbd>D</kbd> <kbd>W</kbd> <kbd>S</kbd> Move / double-tap left or right to dash</p><p><kbd>C</kbd> Shoot / hold to dunk near the basket</p><p><kbd>M</kbd> Steal · <kbd>N</kbd> Special</p></div>
+        </div>
+        <p class="tip"><b>Tip:</b> Fill your special meter by scoring. Trigger it for a burst of speed and perfect shooting.</p>
+      </div>
+    </div>
+
+    <div id="pauseModal" class="modal hidden" role="dialog" aria-modal="true">
+      <div class="modal-card result-card">
+        <p class="eyebrow" id="resultEyebrow">GAME PAUSED</p>
+        <h2 id="resultTitle">Take a breather.</h2>
+        <p id="resultScore"></p>
+        <button id="resumeButton" class="primary" type="button">RESUME</button>
+        <button id="restartButton" class="secondary" type="button">RESTART GAME</button>
+        <button id="menuButton" class="text-button" type="button">BACK TO MENU</button>
+      </div>
+    </div>
+  </main>
+  <script src="./game.js"></script>
+</body>
+</html>
