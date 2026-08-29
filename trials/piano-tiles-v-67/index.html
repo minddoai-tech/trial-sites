@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#101023" />
+  <title>Keyfall — Piano Rhythm</title>
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body>
+  <main class="app">
+    <section id="menu" class="screen active">
+      <div class="menu-copy">
+        <p class="eyebrow">A four-key piano rhythm game</p>
+        <h1>KEY<span>FALL</span></h1>
+        <p class="lede">Choose a song, follow the falling notes, and find the rhythm.</p>
+        <div class="how-to">
+          <h2>How to play</h2>
+          <div class="key-guide">
+            <span><kbd>A</kbd> lane 1</span><span><kbd>S</kbd> lane 2</span>
+            <span><kbd>K</kbd> lane 3</span><span><kbd>L</kbd> lane 4</span>
+          </div>
+          <p>Press a key as its note crosses the glowing line. When two notes fall together, press both keys at once. Perfect timing builds more score and combo. Press <kbd>Esc</kbd> to pause.</p>
+        </div>
+      </div>
+
+      <div class="song-picker">
+        <div class="picker-head">
+          <div><p class="step">01 / SELECT GENRE</p><h2>Choose your set</h2></div>
+          <div class="tabs" role="tablist">
+            <button class="tab active" data-genre="classical">Classical</button>
+            <button class="tab" data-genre="kpop">K-pop covers</button>
+          </div>
+        </div>
+        <div id="songList" class="song-list"></div>
+        <button id="playBtn" class="primary">Play selected song <span>→</span></button>
+      </div>
+    </section>
+
+    <section id="game" class="screen">
+      <header class="game-header">
+        <button id="pauseBtn" class="icon-btn" aria-label="Pause">Ⅱ</button>
+        <div class="now-playing"><small>NOW PLAYING</small><strong id="gameTitle"></strong></div>
+        <div class="score-box"><small>SCORE</small><strong id="score">000000</strong></div>
+      </header>
+      <div class="progress"><div id="progressFill"></div></div>
+      <div class="stage-wrap">
+        <div class="stat combo-stat"><span id="combo">0</span><small>COMBO</small></div>
+        <div id="judgement" class="judgement">PERFECT</div>
+        <canvas id="gameCanvas" aria-label="Four lane rhythm game"></canvas>
+        <div class="key-row" aria-hidden="true">
+          <div data-lane="0"><kbd>A</kbd></div><div data-lane="1"><kbd>S</kbd></div>
+          <div data-lane="2"><kbd>K</kbd></div><div data-lane="3"><kbd>L</kbd></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="results" class="screen result-screen">
+      <div class="result-card">
+        <p class="eyebrow">Performance complete</p>
+        <div id="rank" class="rank">A</div>
+        <h2 id="resultTitle"></h2>
+        <p id="resultScore" class="big-score">000000</p>
+        <div class="result-grid">
+          <div><strong id="perfectCount">0</strong><span>Perfect</span></div>
+          <div><strong id="goodCount">0</strong><span>Good</span></div>
+          <div><strong id="missCount">0</strong><span>Miss</span></div>
+          <div><strong id="maxCombo">0</strong><span>Max combo</span></div>
+        </div>
+        <div class="result-actions">
+          <button id="replayBtn" class="primary">Play again</button>
+          <button id="songsBtn" class="secondary">Song select</button>
+        </div>
+      </div>
+    </section>
+
+    <div id="pauseModal" class="modal" aria-hidden="true">
+      <div class="modal-card"><p class="eyebrow">Game paused</p><h2>Take a breath.</h2>
+        <button id="resumeBtn" class="primary">Resume</button>
+        <button id="restartBtn" class="secondary">Restart song</button>
+        <button id="quitBtn" class="text-btn">Back to song select</button>
+      </div>
+    </div>
+  </main>
+  <script src="./game.js"></script>
+</body>
+</html>

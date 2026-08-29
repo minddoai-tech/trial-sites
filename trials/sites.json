@@ -1,5 +1,14 @@
 [
   {
+    "slug": "piano-tiles-v-67",
+    "trialId": "c11d5126-5651-4528-899d-81f17e9c8af6",
+    "studentName": "咚咚",
+    "title": "Piano Tiles V.67",
+    "description": "This is a piano tile game where you can either play classical piano songs or popular K-pop songs. The aim of the game is to click on the keys A,S,K,L so that when the tile drops from the top of the screen, you press the according key. You can choose level Easy, Medium, or Hard. Try not to skip any keys if you can. (Warning: the hard mode is REALLY hard) Have fun!",
+    "submittedAt": "2026-08-29T19:05:50.893Z",
+    "thumbnail": "piano-tiles-v-67/thumb.png"
+  },
+  {
     "slug": "henry-li-wang-basketball-game",
     "trialId": "1e92aa19-4e85-46d6-b76d-15ba61fc2af6",
     "studentName": "Henry Li Wang",
