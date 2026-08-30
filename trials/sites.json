@@ -1,5 +1,14 @@
 [
   {
+    "slug": "benjamin-python-trial",
+    "trialId": "1ec3c5ab-01be-4334-a38d-71787b4cd910",
+    "studentName": "Benjamin",
+    "title": "Python Trial",
+    "description": "Python Trial",
+    "submittedAt": "2026-08-30T19:09:15.899Z",
+    "thumbnail": "benjamin-python-trial/thumb.png"
+  },
+  {
     "slug": "ryan-cheng-dino-run",
     "trialId": "b257dce6-40fb-4a31-ad93-b4a88395be37",
     "studentName": "Ryan Cheng",

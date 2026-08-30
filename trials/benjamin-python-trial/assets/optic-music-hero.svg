@@ -1,0 +1,96 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 950" role="img" aria-labelledby="title desc">
+  <title id="title">Colorful music studio practice scene</title>
+  <desc id="desc">A bright abstract music studio illustration with a keyboard, guitar, microphone, staff lines, and colorful notes.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#1ad7ff"/>
+      <stop offset=".38" stop-color="#ffe45c"/>
+      <stop offset=".66" stop-color="#ff4fb8"/>
+      <stop offset="1" stop-color="#6dff7d"/>
+    </linearGradient>
+    <radialGradient id="spot" cx=".68" cy=".32" r=".56">
+      <stop offset="0" stop-color="#fff7b0" stop-opacity=".85"/>
+      <stop offset=".62" stop-color="#fff7b0" stop-opacity=".1"/>
+      <stop offset="1" stop-color="#fff7b0" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="22" stdDeviation="20" flood-color="#15152f" flood-opacity=".24"/>
+    </filter>
+  </defs>
+  <rect width="1600" height="950" fill="url(#bg)"/>
+  <rect width="1600" height="950" fill="url(#spot)"/>
+  <g opacity=".35" fill="none" stroke="#fff" stroke-width="8">
+    <path d="M-30 180 C260 80 440 270 715 175 S1260 90 1650 220"/>
+    <path d="M-40 244 C260 144 440 334 715 239 S1260 154 1650 284"/>
+    <path d="M-50 308 C260 208 440 398 715 303 S1260 218 1650 348"/>
+    <path d="M-60 372 C260 272 440 462 715 367 S1260 282 1650 412"/>
+    <path d="M-70 436 C260 336 440 526 715 431 S1260 346 1650 476"/>
+  </g>
+  <g opacity=".22" fill="#101336">
+    <circle cx="143" cy="699" r="24"/>
+    <circle cx="263" cy="128" r="13"/>
+    <circle cx="1278" cy="176" r="27"/>
+    <circle cx="1391" cy="683" r="16"/>
+    <circle cx="1076" cy="787" r="12"/>
+  </g>
+  <g filter="url(#shadow)">
+    <g transform="translate(176 532) rotate(-8)">
+      <rect x="0" y="0" width="580" height="168" rx="38" fill="#11142f"/>
+      <rect x="36" y="34" width="508" height="94" rx="15" fill="#f9fbff"/>
+      <g fill="#11142f">
+        <rect x="70" y="35" width="28" height="68" rx="6"/>
+        <rect x="126" y="35" width="28" height="68" rx="6"/>
+        <rect x="210" y="35" width="28" height="68" rx="6"/>
+        <rect x="266" y="35" width="28" height="68" rx="6"/>
+        <rect x="322" y="35" width="28" height="68" rx="6"/>
+        <rect x="406" y="35" width="28" height="68" rx="6"/>
+        <rect x="462" y="35" width="28" height="68" rx="6"/>
+      </g>
+      <g fill="#ff4fb8">
+        <circle cx="70" cy="136" r="12"/>
+        <circle cx="112" cy="136" r="12"/>
+        <circle cx="154" cy="136" r="12"/>
+      </g>
+      <rect x="407" y="130" width="88" height="18" rx="9" fill="#1ad7ff"/>
+    </g>
+    <g transform="translate(934 300) rotate(16)">
+      <path d="M176 64 C214 26 284 38 316 84 C346 128 328 184 284 204 C236 226 177 196 159 149 C146 116 151 86 176 64Z" fill="#ffe45c"/>
+      <path d="M288 49 L617 212" stroke="#11142f" stroke-width="36" stroke-linecap="round"/>
+      <path d="M589 189 L681 209 L653 264 L560 244Z" fill="#11142f"/>
+      <circle cx="244" cy="128" r="61" fill="#ff7a3d"/>
+      <circle cx="244" cy="128" r="22" fill="#11142f"/>
+      <g stroke="#fff" stroke-width="5" stroke-linecap="round">
+        <path d="M309 73 L623 230"/>
+        <path d="M301 91 L615 248"/>
+        <path d="M293 110 L607 267"/>
+      </g>
+    </g>
+    <g transform="translate(721 178)">
+      <rect x="90" y="110" width="74" height="292" rx="37" fill="#11142f"/>
+      <rect x="106" y="127" width="42" height="170" rx="21" fill="#f9fbff"/>
+      <path d="M62 381 H192 L213 461 H41Z" fill="#11142f"/>
+      <path d="M111 401 H143 V490 H111Z" fill="#11142f"/>
+    </g>
+  </g>
+  <g fill="#11142f">
+    <g transform="translate(1070 138) rotate(-10)">
+      <ellipse cx="0" cy="96" rx="38" ry="27"/>
+      <rect x="28" y="0" width="12" height="97" rx="6"/>
+      <path d="M38 0 C94 18 90 72 39 69Z"/>
+    </g>
+    <g transform="translate(506 182) rotate(16)">
+      <ellipse cx="0" cy="82" rx="32" ry="23"/>
+      <rect x="24" y="0" width="10" height="84" rx="5"/>
+    </g>
+    <g transform="translate(1255 573) rotate(14)">
+      <ellipse cx="0" cy="93" rx="37" ry="25"/>
+      <rect x="28" y="0" width="12" height="95" rx="6"/>
+      <path d="M40 8 C88 32 91 82 41 76Z"/>
+    </g>
+  </g>
+  <g fill="#fff" opacity=".92">
+    <path d="M91 103 L114 148 L164 155 L128 190 L137 240 L91 216 L46 240 L55 190 L19 155 L69 148Z"/>
+    <path d="M1377 382 L1394 415 L1431 420 L1404 446 L1411 483 L1377 466 L1344 483 L1351 446 L1324 420 L1361 415Z"/>
+    <path d="M692 737 L707 767 L740 772 L716 795 L722 828 L692 812 L662 828 L668 795 L644 772 L677 767Z"/>
+  </g>
+</svg>
