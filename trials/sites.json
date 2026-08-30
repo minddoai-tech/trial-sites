@@ -1,5 +1,14 @@
 [
   {
+    "slug": "sean-survive-the-swarm",
+    "trialId": "f30fd5cd-90ea-4cfd-9959-03567541261f",
+    "studentName": "Sean",
+    "title": "Survive the Swarm",
+    "description": "2D survival game",
+    "submittedAt": "2026-08-30T03:17:28.454Z",
+    "thumbnail": "sean-survive-the-swarm/thumb.png"
+  },
+  {
     "slug": "ian-li-platformer",
     "trialId": "d756868e-5d56-46a6-aba0-ae49656c3857",
     "studentName": "Ian Li",
