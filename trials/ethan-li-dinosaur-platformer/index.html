@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Volcano Vault — a fast vertical platforming game." />
+  <title>Volcano Vault</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <main class="shell">
+    <header class="topbar">
+      <a class="brand" href="#" aria-label="Volcano Vault home">
+        <span class="brand-mark">V</span>
+        <span>VOLCANO VAULT</span>
+      </a>
+      <div class="score-card" aria-live="polite">
+        <span class="score-label">ALTITUDE</span>
+        <strong><span id="score">0000</span><small> / 1000</small></strong>
+      </div>
+    </header>
+
+    <section class="game-wrap" aria-label="Volcano Vault game">
+      <canvas id="game" width="960" height="600" tabindex="0" aria-label="Game canvas"></canvas>
+      <div class="scanlines" aria-hidden="true"></div>
+
+      <div class="intro overlay" id="intro">
+        <p class="eyebrow">THE FLOOR IS LAVA</p>
+        <h1>CLIMB.<br><em>DODGE.</em> SURVIVE.</h1>
+        <p class="lede">Leap between falling platforms. Evade the meteor storm. Reach 1000 altitude before the volcano catches you.</p>
+        <button id="startBtn" class="primary">START CLIMBING <span>→</span></button>
+        <p class="key-hint">PRESS SPACE TO START</p>
+      </div>
+
+      <div class="result overlay hidden" id="result">
+        <p class="eyebrow" id="resultEyebrow">RUN OVER</p>
+        <h2 id="resultTitle">INCINERATED.</h2>
+        <p id="resultMessage">The volcano claimed another climber.</p>
+        <div class="final-score"><span>FINAL ALTITUDE</span><strong id="finalScore">0000</strong></div>
+        <button id="restartBtn" class="primary">TRY AGAIN <span>↻</span></button>
+        <p class="key-hint">PRESS R OR SPACE TO RESTART</p>
+      </div>
+    </section>
+
+    <footer class="controls">
+      <div class="control-group"><span>MOVE</span><div><kbd>A</kbd><kbd>D</kbd><i>or</i><kbd>←</kbd><kbd>→</kbd></div></div>
+      <div class="rule"></div>
+      <div class="control-group"><span>JUMP · HOLD FOR HEIGHT</span><div><kbd>W</kbd><i>or</i><kbd>↑</kbd></div></div>
+      <div class="rule"></div>
+      <div class="control-group"><span>DROP</span><div><kbd>S</kbd><i>or</i><kbd>↓</kbd></div></div>
+      <p class="tip"><b>PRO TIP</b> Keep moving up. The lava never stops.</p>
+    </footer>
+  </main>
+  <script src="game.js"></script>
+</body>
+</html>

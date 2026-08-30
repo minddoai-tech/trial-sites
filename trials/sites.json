@@ -1,5 +1,14 @@
 [
   {
+    "slug": "ethan-li-dinosaur-platformer",
+    "trialId": "88954047-9969-4ff2-bffd-ee85930a7e47",
+    "studentName": "Ethan Li",
+    "title": "Dinosaur Platformer",
+    "description": "Jump and ascend the volcano as high as you can, while avoiding falling meteors and rising lava.",
+    "submittedAt": "2026-08-30T20:50:21.385Z",
+    "thumbnail": "ethan-li-dinosaur-platformer/thumb.png"
+  },
+  {
     "slug": "benjamin-python-trial",
     "trialId": "1ec3c5ab-01be-4334-a38d-71787b4cd910",
     "studentName": "Benjamin",
