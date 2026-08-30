@@ -1,5 +1,14 @@
 [
   {
+    "slug": "ryan-cheng-dino-run",
+    "trialId": "b257dce6-40fb-4a31-ad93-b4a88395be37",
+    "studentName": "Ryan Cheng",
+    "title": "Dino run",
+    "description": "2d dino game",
+    "submittedAt": "2026-08-30T18:55:12.598Z",
+    "thumbnail": "ryan-cheng-dino-run/thumb.png"
+  },
+  {
     "slug": "sean-survive-the-swarm",
     "trialId": "f30fd5cd-90ea-4cfd-9959-03567541261f",
     "studentName": "Sean",

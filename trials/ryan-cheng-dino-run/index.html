@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Dino Dash 2D</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <main class="shell">
+    <header>
+      <div>
+        <p class="eyebrow">A tiny survival game</p>
+        <h1>Dino Dash <span>2D</span></h1>
+      </div>
+      <div class="stats" aria-live="polite">
+        <div><span>Score</span><strong id="score">0000</strong></div>
+        <div><span>Best</span><strong id="best">0000</strong></div>
+      </div>
+    </header>
+
+    <section class="game-wrap">
+      <canvas id="game" width="960" height="540" aria-label="Dino Dash game area"></canvas>
+      <div class="overlay" id="overlay">
+        <div class="card">
+          <div class="dino-mark">🦖</div>
+          <h2 id="overlay-title">Ready to run?</h2>
+          <p id="overlay-copy">Dodge every cactus. Move anywhere on the trail, then jump at just the right moment.</p>
+          <fieldset class="difficulty" aria-label="Select difficulty">
+            <legend>Difficulty</legend>
+            <label><input type="radio" name="difficulty" value="easy"><span>Easy</span></label>
+            <label><input type="radio" name="difficulty" value="normal" checked><span>Normal</span></label>
+            <label><input type="radio" name="difficulty" value="hard"><span>Hard</span></label>
+          </fieldset>
+          <label class="name-field" for="player-name">Runner name
+            <input id="player-name" maxlength="8" value="DINO" autocomplete="off" spellcheck="false">
+          </label>
+          <button id="start-button">Start run</button>
+          <p class="key-hint"><kbd>WASD</kbd> move · <kbd>Space</kbd> jump</p>
+          <section class="leaderboard" aria-labelledby="leaderboard-title">
+            <h3 id="leaderboard-title">Local leaderboard</h3>
+            <ol id="leaderboard-list"></ol>
+            <button class="clear-scores" id="clear-scores" type="button">Clear scores</button>
+          </section>
+        </div>
+      </div>
+    </section>
+
+    <footer>
+      <p><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> Move</p>
+      <p><kbd>Space</kbd> Jump over cacti</p>
+      <p>Survive longer to score more</p>
+    </footer>
+  </main>
+  <script src="game.js"></script>
+</body>
+</html>
