@@ -1,0 +1,37 @@
+:root { --ink:#e8eee8; --dim:#849087; --acid:#d8ff3e; --red:#ff5148; --panel:#101512; }
+* { box-sizing:border-box; }
+html,body { margin:0; min-height:100%; background:#070a08; color:var(--ink); font-family:Arial,Helvetica,sans-serif; }
+body { display:grid; place-items:center; overflow-x:hidden; background:radial-gradient(circle at 50% 12%,#c4d9c5 0,#788f7d 48%,#34443a 100%); }
+body::before { content:""; position:fixed; inset:0; opacity:.055; pointer-events:none; background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.8'/%3E%3C/svg%3E"); }
+.shell { width:min(1240px,100%); padding:18px 20px; }
+.topbar,footer { height:42px; display:flex; align-items:center; justify-content:space-between; font:600 11px/1 Arial,sans-serif; letter-spacing:.13em; color:var(--dim); }
+.brand { display:flex; gap:12px; align-items:center; color:var(--ink); font:800 17px "Arial Narrow",Arial,sans-serif; letter-spacing:.16em; }
+.brand-mark { display:grid; place-items:center; width:42px; height:25px; color:#0a0d0b; background:var(--acid); transform:skew(-8deg); letter-spacing:0; }
+.status-pill { border:1px solid #303832; padding:8px 12px; border-radius:20px; }
+.status-pill i { display:inline-block; width:6px; height:6px; margin-right:6px; border-radius:50%; background:var(--acid); box-shadow:0 0 10px var(--acid); }
+.game-frame { position:relative; overflow:hidden; border:1px solid #53685a; background:#9fc5bd; box-shadow:0 22px 80px #17251d80; aspect-ratio:16/9; }
+canvas { display:block; width:100%; height:100%; outline:none; }
+.scanlines { position:absolute; inset:0; pointer-events:none; opacity:.13; background:repeating-linear-gradient(0deg,transparent 0,transparent 3px,#000 4px); mix-blend-mode:multiply; }
+.overlay { position:absolute; z-index:3; inset:0; display:none; flex-direction:column; justify-content:center; align-items:flex-start; padding:7% 9%; background:linear-gradient(90deg,rgba(7,11,8,.97) 0%,rgba(7,11,8,.83) 52%,rgba(7,11,8,.05) 100%); }
+.overlay.visible { display:flex; }
+.eyebrow { color:var(--acid); font:700 12px Arial,sans-serif; letter-spacing:.2em; margin-bottom:15px; }
+h1,h2 { margin:0; font:800 clamp(58px,8vw,105px)/.78 "Arial Narrow",Impact,sans-serif; letter-spacing:-.035em; }
+h1 em { color:transparent; font-style:normal; -webkit-text-stroke:1.5px var(--acid); }
+.lede { max-width:455px; color:#aeb8b0; line-height:1.6; font-size:14px; margin:26px 0 22px; }
+.controls-card { display:flex; gap:24px; padding:13px 16px; margin-bottom:22px; border:1px solid #354038; background:#111813cc; }
+.controls-card div { display:flex; align-items:center; gap:5px; }
+kbd { min-width:28px; padding:6px 7px; color:var(--acid); border:1px solid #52604f; border-bottom-width:3px; border-radius:3px; background:#1a211c; font:700 10px Arial,sans-serif; text-align:center; }
+.controls-card span { color:#869087; margin-left:5px; font-size:9px; letter-spacing:.13em; }
+button { border:0; padding:14px 20px; min-width:220px; background:var(--acid); color:#0b0e0c; font:800 13px Arial,sans-serif; letter-spacing:.12em; cursor:pointer; transition:.15s; }
+button:hover { filter:brightness(1.15); transform:translateY(-2px); box-shadow:0 8px 30px #d8ff3e25; }
+button span { float:right; font-size:17px; }
+.overlay > small { margin-top:13px; color:#68726a; font-size:10px; letter-spacing:.08em; }
+.game-over { align-items:center; text-align:center; background:rgba(6,9,7,.91); }
+.game-over h2 { color:var(--red); font-size:clamp(70px,12vw,140px); }
+.game-over p { color:#aab3ac; }
+.final-score { margin:8px 0 24px; display:flex; flex-direction:column; }
+.final-score span { font:800 58px/1 "Arial Narrow",Impact,sans-serif; color:var(--acid); }
+.final-score small { color:#7b857d; font-size:9px; letter-spacing:.18em; }
+footer .warning { color:#c8d0c9; }
+footer b { color:var(--acid); margin-right:7px; }
+@media (max-width:700px) { .shell{padding:8px}.topbar{height:35px}.status-pill,footer span:last-child{display:none}.overlay{padding:7%}.lede{margin:14px 0}.controls-card{gap:9px;margin-bottom:12px}.controls-card span{display:none}button{padding:11px}.overlay>small,footer{display:none} }

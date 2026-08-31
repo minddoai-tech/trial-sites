@@ -1,5 +1,14 @@
 [
   {
+    "slug": "felicia-fan-zombie-rush",
+    "trialId": "ae288ae0-c533-4044-80bd-94bfc8c95193",
+    "studentName": "Felicia Fan",
+    "title": "ZOMBIE RUSH",
+    "description": "shoot zombies and try not to die.",
+    "submittedAt": "2026-08-31T22:49:10.471Z",
+    "thumbnail": "felicia-fan-zombie-rush/thumb.png"
+  },
+  {
     "slug": "ethan-li-dinosaur-platformer",
     "trialId": "88954047-9969-4ff2-bffd-ee85930a7e47",
     "studentName": "Ethan Li",

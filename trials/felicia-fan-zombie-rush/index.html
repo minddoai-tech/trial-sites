@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Dead Air — Zombie Survival</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <main class="shell">
+    <header class="topbar">
+      <div class="brand"><span class="brand-mark">D//A</span><span>DEAD AIR</span></div>
+      <div class="status-pill"><i></i> SURVIVAL TRANSMISSION</div>
+    </header>
+
+    <section class="game-frame" aria-label="Dead Air zombie survival game">
+      <canvas id="game" width="1200" height="675" tabindex="0" aria-label="Game canvas"></canvas>
+      <div class="scanlines" aria-hidden="true"></div>
+
+      <div id="startScreen" class="overlay visible">
+        <div class="eyebrow">DAY 01 // QUARANTINE ZONE</div>
+        <h1>THEY HEARD<br><em>THE SIGNAL.</em></h1>
+        <p class="lede">Stay moving. Hold the line. Every ten kills, a weapons cache drops somewhere in the zone.</p>
+        <div class="controls-card">
+          <div><kbd>A</kbd><kbd>D</kbd><span>MOVE</span></div>
+          <div><kbd>SPACE</kbd><span>JUMP</span></div>
+          <div><kbd>E</kbd><span>SHOOT</span></div>
+        </div>
+        <button id="startButton">ENTER THE ZONE <span>→</span></button>
+        <small>Survive 10 attacks · Collect weapon drops · Rack up kills</small>
+      </div>
+
+      <div id="gameOverScreen" class="overlay game-over">
+        <div class="eyebrow">TRANSMISSION LOST</div>
+        <h2>OVERRUN.</h2>
+        <p>You held the line for <strong id="finalTime">00:00</strong></p>
+        <div class="final-score"><span id="finalKills">0</span><small>ZOMBIES ELIMINATED</small></div>
+        <button id="restartButton">TRY AGAIN <span>↻</span></button>
+        <small>Press R or Enter to restart</small>
+      </div>
+    </section>
+
+    <footer>
+      <span><b>OBJECTIVE</b> Survive as long as you can</span>
+      <span class="warning">⚠ TEN HITS = GAME OVER</span>
+      <span>v1.0 // SIGNAL ACTIVE</span>
+    </footer>
+  </main>
+  <script src="game.js"></script>
+</body>
+</html>
