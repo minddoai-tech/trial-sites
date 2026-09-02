@@ -1,5 +1,14 @@
 [
   {
+    "slug": "angelo-card-battle",
+    "trialId": "9eb1d723-86b0-4b6f-abbb-ba0d36df2b61",
+    "studentName": "赵炫纬 Angelo",
+    "title": "Card battle",
+    "description": "2 player in, one player out",
+    "submittedAt": "2026-09-02T01:54:47.312Z",
+    "thumbnail": "angelo-card-battle/thumb.png"
+  },
+  {
     "slug": "felicia-fan-zombie-rush",
     "trialId": "ae288ae0-c533-4044-80bd-94bfc8c95193",
     "studentName": "Felicia Fan",
