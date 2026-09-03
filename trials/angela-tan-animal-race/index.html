@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Meadow Dash</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <main class="game-shell">
+    <header>
+      <div>
+        <p class="eyebrow">ANIMAL RACING CLUB</p>
+        <h1>Meadow Dash</h1>
+      </div>
+      <button id="soundButton" class="icon-button" aria-label="Toggle sound">Sound: on</button>
+    </header>
+
+    <section class="hud" aria-label="Race status">
+      <div><span>PLACE</span><strong id="place">—</strong></div>
+      <div><span>SPEED</span><strong id="speed">0</strong></div>
+      <div><span>DISTANCE</span><strong id="distance">0%</strong></div>
+      <div class="boost-meter"><span>BOOST</span><div><i id="boostFill"></i></div></div>
+    </section>
+
+    <section class="stage">
+      <canvas id="game" width="1200" height="620" aria-label="Animal racing game"></canvas>
+      <div id="startPanel" class="overlay">
+        <div class="card">
+          <span class="badge">TOP 3 WINS</span>
+          <h2>Ready to race?</h2>
+          <p>You are the fox. Leap over potholes, duck under branches, and hit blue arrows for a burst of speed.</p>
+          <div class="controls-guide">
+            <div><kbd>SPACE</kbd><span>Jump</span></div>
+            <div><kbd>↓</kbd><span>Duck</span></div>
+            <div><span class="arrow-chip">»</span><span>Speed boost</span></div>
+          </div>
+          <button id="startButton" class="primary">Start race</button>
+        </div>
+      </div>
+      <div id="resultPanel" class="overlay hidden">
+        <div class="card result-card">
+          <div id="resultIcon" class="result-icon">🏆</div>
+          <p id="resultLabel" class="eyebrow">PODIUM FINISH</p>
+          <h2 id="resultTitle">You placed 1st!</h2>
+          <p id="resultText">That was quick.</p>
+          <ol id="results"></ol>
+          <button id="restartButton" class="primary">Race again</button>
+        </div>
+      </div>
+    </section>
+
+    <footer>
+      <p><kbd>SPACE</kbd> jump <span>•</span> <kbd>↓</kbd> duck <span>•</span> Blue arrows boost you</p>
+      <div class="touch-controls" aria-label="Touch controls">
+        <button id="jumpButton">↑ Jump</button>
+        <button id="duckButton">↓ Duck</button>
+      </div>
+    </footer>
+  </main>
+  <script src="game.js"></script>
+</body>
+</html>
