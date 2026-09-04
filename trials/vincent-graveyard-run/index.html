@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Graveyard Run</title>
+  <style>
+    :root { --ink:#f4f7fb; --muted:#9eaabd; --panel:rgba(10,16,27,.86); --line:#29364c; --accent:#ffc857; --danger:#ff647c; }
+    * { box-sizing:border-box; }
+    html,body { margin:0; min-height:100%; background:#07101b; color:var(--ink); font-family:Inter, ui-sans-serif, system-ui, sans-serif; }
+    body { display:grid; place-items:center; overflow:hidden; }
+    #game { width:min(1200px,100vw); height:min(760px,100vh); position:relative; overflow:hidden; background:#0a1422; border:1px solid #1e2c42; box-shadow:0 22px 80px #0009; }
+    canvas { width:100%; height:100%; display:block; cursor:crosshair; }
+    .hud { position:absolute; inset:0; pointer-events:none; }
+    .topbar { display:flex; justify-content:space-between; align-items:flex-start; padding:22px; }
+    .brand { letter-spacing:.13em; text-transform:uppercase; font-size:12px; font-weight:800; color:#c8d2e3; }
+    .brand span { color:var(--accent); }
+    .stats { display:flex; gap:8px; flex-wrap:wrap; justify-content:flex-end; }
+    .chip { background:var(--panel); border:1px solid var(--line); border-radius:9px; padding:9px 12px; font-size:13px; box-shadow:0 8px 20px #0002; }
+    .chip b { color:var(--accent); margin-left:5px; }
+    .bottom { position:absolute; left:22px; right:22px; bottom:20px; display:flex; justify-content:space-between; align-items:end; gap:16px; }
+    .card { background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:12px 14px; font-size:12px; color:var(--muted); line-height:1.55; }
+    .card strong { color:var(--ink); }
+    #message { position:absolute; left:50%; top:78px; transform:translateX(-50%); background:#101b2bdf; border:1px solid #344862; border-radius:999px; padding:10px 17px; color:#dbe5f3; font-size:13px; opacity:0; transition:opacity .2s; }
+    #message.show { opacity:1; }
+    .overlay { position:absolute; inset:0; display:grid; place-items:center; background:#07101bd9; padding:24px; }
+    .modal { width:min(500px,100%); padding:34px; border:1px solid #30425e; border-radius:18px; background:#0d1726; box-shadow:0 20px 80px #0008; text-align:center; }
+    h1 { margin:0 0 8px; font-size:clamp(34px,7vw,64px); letter-spacing:-.06em; line-height:.95; }
+    h1 em { color:var(--accent); font-style:normal; }
+    .modal p { color:var(--muted); line-height:1.6; margin:16px auto 24px; max-width:390px; }
+    button { border:0; border-radius:9px; padding:12px 20px; color:#17130a; font-weight:800; background:var(--accent); cursor:pointer; font-size:14px; }
+    button:hover { filter:brightness(1.08); transform:translateY(-1px); }
+    .hidden { display:none; }
+    @media (max-width:600px) { .topbar{padding:14px}.bottom{left:14px;right:14px;bottom:12px}.card{font-size:10px;padding:8px 10px}.brand{font-size:10px} }
+  </style>
+</head>
+<body>
+  <main id="game">
+    <canvas id="view"></canvas>
+    <section class="hud" aria-live="polite">
+      <div class="topbar"><div class="brand">Graveyard <span>Run</span> // operation 03</div><div class="stats"><div class="chip">LEVEL <b id="level">1</b> / 3</div><div class="chip">HEALTH <b id="health">5 / 5</b></div><div class="chip">GOLD <b id="gold">0</b></div><div class="chip">KEY <b id="key">—</b></div></div></div>
+      <div id="message"></div>
+      <div class="bottom"><div class="card"><strong>WASD</strong> move &nbsp; <strong>Mouse</strong> aim / pan camera &nbsp; <strong>Left click</strong> shoot &nbsp; <strong>E</strong> trade / exit<br><strong>1</strong> upgrade (50g) &nbsp; <strong>2</strong> potion (25g), near Quartermaster</div><div class="card">ZOMBIE HP <strong>4</strong> &nbsp; • &nbsp; bullet damage <strong id="damage">1</strong></div></div>
+    </section>
+    <section id="start" class="overlay"><div class="modal"><h1>Graveyard <em>Run</em></h1><p>Clear each zone, collect the gold dropped by the undead, then find the roaming Quartermaster. Buy the level key when you can afford it.</p><button id="startBtn">START OPERATION</button></div></section>
+    <section id="end" class="overlay hidden"><div class="modal"><h1 id="endTitle">Mission complete</h1><p id="endText"></p><button id="restartBtn">RESTART</button></div></section>
+  </main>
+  <script>
+    const canvas=document.querySelector('#view'), ctx=canvas.getContext('2d'), game=document.querySelector('#game');
+    const ui={level:document.querySelector('#level'),health:document.querySelector('#health'),gold:document.querySelector('#gold'),key:document.querySelector('#key'),damage:document.querySelector('#damage'),msg:document.querySelector('#message'),start:document.querySelector('#start'),end:document.querySelector('#end'),endTitle:document.querySelector('#endTitle'),endText:document.querySelector('#endText')};
+    const keys={}, levels=[{need:150, zombies:8},{need:200,zombies:11},{need:300,zombies:14}];
+    let W,H,dpr,last=0,running=false,level=1,gold=0,health=5,damage=1,hasKey=false,shotCooldown=0,msgTimer=0,flash=0;
+    const aim={x:0,y:0};
+    const player={x:0,y:0,a:0}; let zombies=[],coins=[],npc=null,obstacles=[],stones=[],particles=[];
+    function resize(){dpr=Math.min(devicePixelRatio||1,2);W=game.clientWidth;H=game.clientHeight;canvas.width=W*dpr;canvas.height=H*dpr;ctx.setTransform(dpr,0,0,dpr,0,0)}
+    addEventListener('resize',()=>{resize();if(!aim.x&&!aim.y){aim.x=W/2;aim.y=H/2}}); resize(); aim.x=W/2; aim.y=H/2;
+    addEventListener('keydown',e=>{keys[e.key.toLowerCase()]=true;if([' ','arrowup','arrowdown','arrowleft','arrowright'].includes(e.key.toLowerCase()))e.preventDefault();if(e.key===' ') shoot();if(e.key.toLowerCase()==='e') interact();if(e.key==='1') buyUpgrade();if(e.key==='2') buyPotion()});
+    addEventListener('keyup',e=>keys[e.key.toLowerCase()]=false);
+    canvas.addEventListener('mousemove',e=>{const r=canvas.getBoundingClientRect();aim.x=e.clientX-r.left;aim.y=e.clientY-r.top;player.a=(aim.x/W)*Math.PI*2-Math.PI});
+    canvas.addEventListener('mousedown',e=>{if(e.button===0)shoot()});
+    function reset(){level=1;gold=0;health=5;damage=1;hasKey=false;player.x=0;player.y=0;player.a=0;running=true;ui.start.classList.add('hidden');ui.end.classList.add('hidden');loadLevel()}
+    function loadLevel(){const cfg=levels[level-1];zombies=[];coins=[];npc=null;obstacles=[];stones=[];hasKey=false;for(let i=0;i<55;i++)stones.push({x:(Math.random()-.5)*34,y:(Math.random()-.5)*25,type:'stone',size:.12+Math.random()*.28});for(let i=0;i<5+level*2;i++){let x=(Math.random()-.5)*28,y=(Math.random()-.5)*19;if(Math.hypot(x,y)<4){i--;continue}obstacles.push({x,y,type:i%3===0?'pillar':i%3===1?'crate':'rubble',size:.7+Math.random()*.55})}obstacles.push({x:4,y:0,type:'rubble',size:1.5},{x:6,y:2.5,type:'crate',size:1.1},{x:-4,y:-2.5,type:'pillar',size:1.15},{x:-11,y:-7,type:'pillar',size:1.2},{x:11,y:-7,type:'pillar',size:1.2},{x:-11,y:7,type:'pillar',size:1.2},{x:11,y:7,type:'pillar',size:1.2});for(let i=0;i<cfg.zombies;i++)zombies.push({x:(Math.random()-.5)*34,y:(Math.random()-.5)*25,hp:4,hit:0,phase:Math.random()*9});say(`Zone ${level}: collect ${cfg.need} gold for the key`);updateUI()}
+    function say(t){ui.msg.textContent=t;ui.msg.classList.add('show');msgTimer=3}
+    function updateUI(){ui.level.textContent=level;ui.health.textContent=`${health} / 5`;ui.gold.textContent=gold;ui.key.textContent=hasKey?'READY':'—';ui.damage.textContent=damage}
+    function dist(a,b){return Math.hypot(a.x-b.x,a.y-b.y)}
+    function blocked(x,y,r=.65){return obstacles.some(o=>Math.hypot(x-o.x,y-o.y)<r+o.size*.7)}
+    function shoot(){if(!running||shotCooldown>0)return;shotCooldown=.16;flash=.12;const best=aimTarget();if(best){best.hp-=damage;best.hit=.12;if(best.hp<=0){coins.push({x:best.x,y:best.y});coins.push({x:best.x+.28,y:best.y+.1});coins.push({x:best.x-.25,y:best.y-.1});coins.push({x:best.x+.1,y:best.y+.3});coins.push({x:best.x-.1,y:best.y-.3});zombies=zombies.filter(x=>x!==best);say('+5 gold dropped')}}else{say('Miss — place the crosshair on a zombie')}}
+    function nearNPC(){return npc&&dist(player,npc)<2.2}
+    function buyUpgrade(){if(!running||!nearNPC()){say('Stand near the Quartermaster to trade');return}if(damage>=3){say('Weapon is fully upgraded');return}if(gold<50){say('Need 50 gold for an upgrade');return}gold-=50;damage++;updateUI();say(`Weapon upgraded — ${damage} damage per bullet`)}
+    function buyPotion(){if(!running||!nearNPC()){say('Stand near the Quartermaster to trade');return}if(health>=5){say('Health is already full');return}if(gold<25){say('Need 25 gold for a healing potion');return}gold-=25;health=Math.min(5,health+1);updateUI();say('Potion used — +1 health')}
+    function interact(){if(!running)return;if(npc&&dist(player,npc)<2.2){const need=levels[level-1].need;if(!hasKey&&gold>=need){gold-=need;hasKey=true;say(level===3?'Exit key acquired — press E again to escape':'Key acquired — find the blue gate');updateUI()}else if(hasKey){if(level<3){level++;loadLevel()}else finish(true)}else say(`Need ${need-gold} more gold`)}else if(hasKey&&level<3&&Math.hypot(player.x-0,player.y-14)<2.5){level++;loadLevel()}}
+    function finish(win){running=false;ui.endTitle.textContent=win?'You escaped':'Mission failed';ui.endText.textContent=win?`All three zones cleared. You escaped with ${gold} gold remaining.`:'The graveyard took you. Start again and keep moving.';ui.end.classList.remove('hidden')}
+    function update(dt){if(!running)return;shotCooldown-=dt;flash-=dt;msgTimer-=dt;if(msgTimer<=0)ui.msg.classList.remove('show');const speed=5.2;let strafe=(keys.d?1:0)-(keys.a?1:0),forward=(keys.w?1:0)-(keys.s?1:0),len=Math.hypot(strafe,forward)||1;strafe/=len;forward/=len;const nx=player.x+(forward*Math.cos(player.a)-strafe*Math.sin(player.a))*speed*dt,ny=player.y+(forward*Math.sin(player.a)+strafe*Math.cos(player.a))*speed*dt;if(!blocked(nx,player.y))player.x=nx;if(!blocked(player.x,ny))player.y=ny;player.x=Math.max(-17,Math.min(17,player.x));player.y=Math.max(-12,Math.min(15,player.y));
+      for(const z of zombies){let d=dist(player,z),dx=(player.x-z.x)/d,dy=(player.y-z.y)/d;if(d>1.25){const zx=z.x+dx*dt*.65,zy=z.y+dy*dt*.65;if(!blocked(zx,zy,.45)){z.x=zx;z.y=zy}}else if(Math.random()<dt*.7){health--;updateUI();say('The dead hit you');if(health<=0)finish(false)}}
+      if(!npc&&gold>=levels[level-1].need)npc={x:Math.random()*12-6,y:Math.random()*8-4,t:0};if(npc){npc.t+=dt;npc.x+=Math.cos(npc.t*.8)*dt*.35;npc.y+=Math.sin(npc.t*.65)*dt*.35}
+      for(const c of coins){if(dist(player,c)<1){gold++;c.taken=true;updateUI()}}coins=coins.filter(c=>!c.taken);if(hasKey&&level===3&&dist(player,{x:0,y:14})<2.3)say('Press E at the blue gate to escape');if(zombies.length===0&&!npc)say(`All zombies cleared. ${levels[level-1].need} gold summons the Quartermaster.`);}
+    function project(x,y){const dx=x-player.x,dy=y-player.y,ca=Math.cos(player.a),sa=Math.sin(player.a);return {depth:dx*ca+dy*sa,side:-dx*sa+dy*ca}}
+    function aimTarget(){let best=null,score=Infinity;for(const z of zombies){const p=project(z.x,z.y);if(p.depth<.3||Math.abs(p.side)>p.depth*1.3)continue;const sx=W/2+p.side/p.depth*W*.62,ground=Math.min(H*.98,H*.52+H*.48*(1-1/(1+p.depth*.16))),scale=Math.min(3.5,13/p.depth),left=sx-18*scale,right=sx+18*scale,top=ground-86*scale;if(aim.x>=left&&aim.x<=right&&aim.y>=top&&aim.y<=ground&&p.depth<score){best=z;score=p.depth}}return best}
+    function caveBackdrop(){
+      const wall=ctx.createLinearGradient(0,0,0,H*.62);wall.addColorStop(0,'#070b12');wall.addColorStop(.55,'#171d27');wall.addColorStop(1,'#30313a');ctx.fillStyle=wall;ctx.fillRect(0,0,W,H*.62);
+      ctx.fillStyle='#11151d';ctx.fillRect(0,H*.52,W,H*.48);
+      const glow=ctx.createRadialGradient(W*.17,H*.53,2,W*.17,H*.53,W*.33);glow.addColorStop(0,'#b86d2d44');glow.addColorStop(1,'#b86d2d00');ctx.fillStyle=glow;ctx.fillRect(0,0,W,H);
+      const glow2=ctx.createRadialGradient(W*.84,H*.53,2,W*.84,H*.53,W*.33);glow2.addColorStop(0,'#b86d2d44');glow2.addColorStop(1,'#b86d2d00');ctx.fillStyle=glow2;ctx.fillRect(0,0,W,H);
+      ctx.fillStyle='#252a34';ctx.beginPath();ctx.moveTo(0,0);ctx.lineTo(W,0);ctx.lineTo(W,H*.14);ctx.lineTo(W*.91,H*.12);ctx.lineTo(W*.82,H*.18);ctx.lineTo(W*.7,H*.1);ctx.lineTo(W*.57,H*.16);ctx.lineTo(W*.43,H*.1);ctx.lineTo(W*.3,H*.18);ctx.lineTo(W*.17,H*.11);ctx.lineTo(W*.07,H*.17);ctx.lineTo(0,H*.12);ctx.closePath();ctx.fill();
+      ctx.fillStyle='#080c13';for(let i=0;i<9;i++){const x=(i/8)*W;const h=18+(i%3)*13;ctx.beginPath();ctx.moveTo(x-25,0);ctx.lineTo(x+25,0);ctx.lineTo(x+7,H*.08+h);ctx.lineTo(x-7,H*.08+h);ctx.closePath();ctx.fill()}
+      ctx.strokeStyle='#303744';ctx.lineWidth=1;for(let i=1;i<13;i++){const y=H*.52+(i/13)**2*H*.48;ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke()}for(let x=-12;x<=12;x++){let sx=W/2+x*W/20;ctx.beginPath();ctx.moveTo(W/2+(sx-W/2)*.12,H*.52);ctx.lineTo(sx,H);ctx.stroke()}
+      ctx.fillStyle='#d28a3d';ctx.fillRect(W*.17-3,H*.54,6,13);ctx.fillRect(W*.84-3,H*.54,6,13);ctx.fillStyle='#ffcf67';ctx.beginPath();ctx.arc(W*.17,H*.53,5,0,7);ctx.arc(W*.84,H*.53,5,0,7);ctx.fill();
+    }
+    function drawCameraIndicator(){const cx=W/2,top=62,w=Math.min(280,W*.42);ctx.fillStyle='#070c14c7';ctx.fillRect(cx-w/2,top,w,24);ctx.strokeStyle='#ffc857';ctx.strokeRect(cx-w/2,top,w,24);ctx.fillStyle='#ffc857';ctx.font='10px ui-monospace,monospace';ctx.textAlign='center';ctx.fillText('MOUSE PAN  •  360° VIEW',cx,top+15);ctx.strokeStyle='#728299';ctx.beginPath();ctx.moveTo(cx-w/2+8,top+20);ctx.lineTo(cx+w/2-8,top+20);ctx.stroke();const heading=((player.a%(Math.PI*2))+Math.PI*2)%(Math.PI*2),marker=cx-w/2+8+(heading/(Math.PI*2))*(w-16);ctx.fillStyle='#ff647c';ctx.beginPath();ctx.moveTo(marker,top+18);ctx.lineTo(marker-4,top+24);ctx.lineTo(marker+4,top+24);ctx.closePath();ctx.fill()}
+    function drawStones(){for(const o of stones){const p=project(o.x,o.y);if(p.depth<.3||Math.abs(p.side)>p.depth*1.3)continue;const sx=W/2+p.side/p.depth*W*.62,ground=Math.min(H*.98,H*.52+H*.48*(1-1/(1+p.depth*.16))),s=Math.min(3.5,13/p.depth)*o.size;ctx.fillStyle='#535964';ctx.beginPath();ctx.ellipse(sx,ground,s*2.4,s*.8,-.2,0,7);ctx.fill();ctx.fillStyle='#858995';ctx.beginPath();ctx.ellipse(sx-s*.5,ground-s*.45,s*.8,s*.35,-.3,0,7);ctx.fill()}}
+    function draw(){ctx.clearRect(0,0,W,H);caveBackdrop();drawStones();drawCameraIndicator();
+      const objects=[];zombies.forEach(z=>objects.push({o:z,type:'z'}));coins.forEach(c=>objects.push({o:c,type:'c'}));obstacles.forEach(o=>objects.push({o,type:o.type}));if(npc)objects.push({o:npc,type:'n'});objects.push({o:{x:0,y:14},type:'g'});objects.sort((a,b)=>project(b.o.x,b.o.y).depth-project(a.o.x,a.o.y).depth);for(const item of objects){const p=project(item.o.x,item.o.y);if(p.depth<.3||Math.abs(p.side)>p.depth*1.3)continue;const sx=W/2+p.side/p.depth*W*.62,ground=H*.52+H*.48*(1-1/(1+p.depth*.16)),base=Math.min(H*.98,ground),scale=Math.min(3.5,13/p.depth);if(item.type==='z')drawZombie(sx,base,scale,item.o);if(item.type==='c')drawCoin(sx,base-4*scale,scale);if(item.type==='n')drawNPC(sx,base,scale);if(item.type==='g')drawGate(sx,base,scale);if(['pillar','crate','rubble'].includes(item.type))drawObstacle(sx,base,scale,item.o)}ctx.strokeStyle=aimTarget()?'#ff647c':'#e9f2ff';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(aim.x-10,aim.y);ctx.lineTo(aim.x+10,aim.y);ctx.moveTo(aim.x,aim.y-10);ctx.lineTo(aim.x,aim.y+10);ctx.stroke();if(flash>0){ctx.fillStyle='#fff8';ctx.beginPath();ctx.arc(aim.x,aim.y,35+Math.random()*12,0,7);ctx.fill()} }
+    function drawZombie(x,b,s,z){ctx.save();ctx.translate(x,b);const body=z.hit>0?'#f4f8df':'#779f87';
+      ctx.fillStyle='#05080c88';ctx.beginPath();ctx.ellipse(0,1*s,17*s,4*s,0,0,7);ctx.fill();
+      ctx.fillStyle='#416b5b';ctx.fillRect(-12*s,-22*s,8*s,22*s);ctx.fillRect(4*s,-22*s,8*s,22*s);ctx.fillStyle='#18251f';ctx.fillRect(-13*s,-2*s,10*s,3*s);ctx.fillRect(3*s,-2*s,10*s,3*s);
+      ctx.fillStyle=body;ctx.beginPath();ctx.moveTo(-11*s,-55*s);ctx.lineTo(9*s,-55*s);ctx.lineTo(13*s,-23*s);ctx.lineTo(-13*s,-23*s);ctx.closePath();ctx.fill();
+      ctx.fillStyle='#355344';ctx.fillRect(-17*s,-51*s,6*s,22*s);ctx.fillRect(11*s,-48*s,6*s,20*s);ctx.fillStyle='#24372e';ctx.fillRect(-19*s,-32*s,9*s,4*s);ctx.fillRect(10*s,-31*s,9*s,4*s);
+      ctx.fillStyle='#9fc7a0';ctx.beginPath();ctx.arc(0,-65*s,12*s,0,7);ctx.fill();ctx.fillStyle='#2b3c35';ctx.beginPath();ctx.arc(-5*s,-68*s,3*s,0,7);ctx.arc(5*s,-68*s,3*s,0,7);ctx.fill();ctx.fillStyle='#ffdf7a';ctx.fillRect(-6*s,-68*s,3*s,2*s);ctx.fillRect(4*s,-68*s,3*s,2*s);ctx.fillStyle='#673e45';ctx.fillRect(-5*s,-59*s,10*s,3*s);
+      ctx.fillStyle='#070b10aa';ctx.fillRect(-14*s,-82*s,28*s,3*s);ctx.fillStyle='#e56b74';ctx.fillRect(-14*s,-82*s,28*s*(z.hp/4),3*s);ctx.restore()}
+    function drawCoin(x,b,s){ctx.fillStyle='#ffd467';ctx.beginPath();ctx.arc(x,b,5*s,0,7);ctx.fill();ctx.fillStyle='#9a6417';ctx.font=`${8*s}px sans-serif`;ctx.textAlign='center';ctx.fillText('$',x,b+3*s)}
+    function drawObstacle(x,b,s,o){ctx.save();ctx.translate(x,b);const q=o.size*s;ctx.fillStyle='#05070b99';ctx.beginPath();ctx.ellipse(0,2*q,q*1.5,q*.35,0,0,7);ctx.fill();if(o.type==='pillar'){ctx.fillStyle='#4b4e58';ctx.fillRect(-q*.65,-q*4,q*1.3,q*4);ctx.fillStyle='#6c6a70';ctx.fillRect(-q*.82,-q*4.15,q*1.64,q*.35);ctx.fillStyle='#343740';ctx.fillRect(-q*.85,-q*.2,q*1.7,q*.25)}else if(o.type==='crate'){ctx.fillStyle='#765638';ctx.fillRect(-q,-q*1.7,q*2,q*1.7);ctx.strokeStyle='#c08b4f';ctx.lineWidth=Math.max(1,q*.13);ctx.strokeRect(-q,-q*1.7,q*2,q*1.7);ctx.beginPath();ctx.moveTo(-q,-q*1.7);ctx.lineTo(q,0);ctx.moveTo(q,-q*1.7);ctx.lineTo(-q,0);ctx.stroke()}else{ctx.fillStyle='#5d626d';ctx.beginPath();ctx.moveTo(-q,0);ctx.lineTo(-q*.7,-q*1.2);ctx.lineTo(0,-q*1.7);ctx.lineTo(q*1.1,-q*.7);ctx.lineTo(q,0);ctx.closePath();ctx.fill();ctx.fillStyle='#858895';ctx.beginPath();ctx.moveTo(-q*.7,-q*1.2);ctx.lineTo(0,-q*1.7);ctx.lineTo(q*.3,-q*.9);ctx.lineTo(-q*.1,-q*.7);ctx.closePath();ctx.fill()}ctx.restore()}
+    function drawNPC(x,b,s){ctx.fillStyle='#61b6ff';ctx.fillRect(x-8*s,b-38*s,16*s,32*s);ctx.fillStyle='#d5efff';ctx.beginPath();ctx.arc(x,b-45*s,8*s,0,7);ctx.fill();ctx.fillStyle='#06111e';ctx.font=`bold ${10*s}px sans-serif`;ctx.textAlign='center';ctx.fillText('Q',x,b-42*s)}
+    function drawGate(x,b,s){ctx.strokeStyle=hasKey?'#64d8ff':'#42566b';ctx.lineWidth=3*s;ctx.strokeRect(x-18*s,b-42*s,36*s,42*s);ctx.fillStyle='#ccefff';ctx.font=`${7*s}px sans-serif`;ctx.textAlign='center';ctx.fillText('EXIT',x,b-20*s)}
+    function loop(t){const dt=Math.min(.05,(t-last)/1000||0);last=t;update(dt);draw();requestAnimationFrame(loop)}requestAnimationFrame(loop);
+    document.querySelector('#startBtn').onclick=reset;document.querySelector('#restartBtn').onclick=reset;
+  </script>
+</body>
+</html>

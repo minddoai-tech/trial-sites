@@ -1,5 +1,14 @@
 [
   {
+    "slug": "vincent-graveyard-run",
+    "trialId": "40251263-80e0-46d1-a8f3-1edfa9bec4f9",
+    "studentName": "Vincent",
+    "title": "Graveyard Run",
+    "description": "Shoto down zombies and collect coins to get out the the dungeon.",
+    "submittedAt": "2026-09-04T00:56:45.152Z",
+    "thumbnail": "vincent-graveyard-run/thumb.png"
+  },
+  {
     "slug": "angela-tan-animal-race",
     "trialId": "e2bfcd9d-3302-471d-84ad-d7f02aa26666",
     "studentName": "Angela Tan",
