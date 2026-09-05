@@ -1,0 +1,682 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sky Harvest</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #17324d;
+      --muted: #5c7186;
+      --cream: #fffaf1;
+      --panel: rgba(255, 255, 255, 0.86);
+      --orange: #f47c48;
+      --orange-dark: #d75c2e;
+      --blue: #7bd3e8;
+      --green: #49a77a;
+      --shadow: 0 22px 55px rgba(42, 83, 113, 0.16);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      overflow-x: hidden;
+      font-family: "Trebuchet MS", "Avenir Next", sans-serif;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 12% 14%, rgba(255, 240, 174, 0.85) 0 7%, transparent 24%),
+        linear-gradient(155deg, #c4f0ef 0%, #eff8df 57%, #ffe6bd 100%);
+    }
+
+    .game-shell {
+      width: min(960px, calc(100vw - 28px));
+      padding: 22px;
+      border: 1px solid rgba(255, 255, 255, 0.8);
+      border-radius: 30px;
+      background: var(--panel);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(10px);
+    }
+
+    header {
+      display: flex;
+      align-items: end;
+      justify-content: space-between;
+      gap: 16px;
+      margin: 2px 4px 16px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(2rem, 5vw, 3.35rem);
+      line-height: 0.95;
+      letter-spacing: -0.07em;
+    }
+
+    .tagline {
+      margin: 9px 0 0;
+      color: var(--muted);
+      font-size: 0.98rem;
+    }
+
+    .stats {
+      display: flex;
+      gap: 9px;
+      flex-shrink: 0;
+    }
+
+    .stat {
+      min-width: 84px;
+      padding: 9px 12px 10px;
+      border-radius: 15px;
+      text-align: center;
+      background: #fff;
+      box-shadow: 0 6px 15px rgba(42, 83, 113, 0.08);
+    }
+
+    .stat span {
+      display: block;
+      color: var(--muted);
+      font-size: 0.68rem;
+      font-weight: 700;
+      letter-spacing: 0.09em;
+      text-transform: uppercase;
+    }
+
+    .stat strong {
+      display: block;
+      margin-top: 2px;
+      font-size: 1.35rem;
+    }
+
+    .game-wrap {
+      position: relative;
+      overflow: hidden;
+      border: 4px solid rgba(255, 255, 255, 0.84);
+      border-radius: 23px;
+      background: #bdeef1;
+      box-shadow: inset 0 0 0 1px rgba(28, 87, 105, 0.1), 0 10px 22px rgba(42, 83, 113, 0.12);
+    }
+
+    canvas {
+      display: block;
+      width: 100%;
+      height: auto;
+      aspect-ratio: 3 / 2;
+      cursor: none;
+    }
+
+    .overlay {
+      position: absolute;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      padding: 20px;
+      background: rgba(23, 50, 77, 0.16);
+    }
+
+    .overlay-card {
+      width: min(395px, 100%);
+      padding: 26px 25px 23px;
+      border: 2px solid rgba(255, 255, 255, 0.92);
+      border-radius: 22px;
+      text-align: center;
+      background: rgba(255, 250, 241, 0.96);
+      box-shadow: 0 16px 34px rgba(23, 50, 77, 0.18);
+    }
+
+    .overlay[hidden] {
+      display: none;
+    }
+
+    .overlay-card h2 { margin: 0 0 8px; font-size: 1.85rem; letter-spacing: -0.04em; }
+    .overlay-card p { margin: 0 0 17px; color: var(--muted); line-height: 1.45; }
+
+    button {
+      border: 0;
+      border-radius: 999px;
+      padding: 12px 23px;
+      color: #fff;
+      background: var(--orange);
+      box-shadow: 0 7px 0 var(--orange-dark), 0 12px 19px rgba(215, 92, 46, 0.2);
+      font: inherit;
+      font-weight: 800;
+      cursor: pointer;
+      transition: transform 120ms ease, box-shadow 120ms ease, background 120ms ease;
+    }
+
+    button:hover { background: #fb8954; }
+    button:active { transform: translateY(4px); box-shadow: 0 3px 0 var(--orange-dark); }
+
+    .instructions {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      margin: 14px 4px 0;
+      color: var(--muted);
+      font-size: 0.87rem;
+    }
+
+    .key {
+      display: inline-grid;
+      min-width: 25px;
+      min-height: 25px;
+      place-items: center;
+      margin: 0 2px;
+      padding: 2px 7px;
+      border: 1px solid #cbd8dd;
+      border-bottom-width: 3px;
+      border-radius: 7px;
+      color: var(--ink);
+      background: #fff;
+      font-weight: 800;
+      font-size: 0.74rem;
+    }
+
+    .legend { display: flex; align-items: center; gap: 9px; }
+    .legend-item { display: inline-flex; align-items: center; gap: 5px; }
+    .legend-dot { width: 13px; height: 13px; display: inline-block; border-radius: 50%; }
+    .fruit-dot { background: #ed6a68; }
+    .rock-dot { background: #687487; transform: rotate(25deg); border-radius: 4px; }
+
+    @media (max-width: 620px) {
+      .game-shell { padding: 14px; border-radius: 22px; }
+      header { align-items: start; flex-direction: column; margin-bottom: 12px; }
+      .stats { width: 100%; }
+      .stat { flex: 1; }
+      .instructions { align-items: start; flex-direction: column; }
+      .legend { order: -1; }
+    }
+  </style>
+</head>
+<body>
+  <main class="game-shell">
+    <header>
+      <div>
+        <h1>Sky Harvest</h1>
+        <p class="tagline">Catch the good stuff. Dodge the rough stuff.</p>
+      </div>
+      <div class="stats" aria-label="Game statistics">
+        <div class="stat"><span>Score</span><strong id="score">0</strong></div>
+        <div class="stat"><span>Best</span><strong id="best">0</strong></div>
+        <div class="stat"><span>Time</span><strong id="time">0s</strong></div>
+        <div class="stat"><span>2x Bonus</span><strong id="bonus">—</strong></div>
+        <div class="stat"><span>Shield</span><strong id="shield">—</strong></div>
+      </div>
+    </header>
+
+    <section class="game-wrap" aria-label="Sky Harvest game area">
+      <canvas id="gameCanvas" width="900" height="600"></canvas>
+      <div class="overlay" id="overlay">
+        <div class="overlay-card">
+          <h2 id="overlayTitle">Ready to harvest?</h2>
+          <p id="overlayText">Move with <span class="key">A</span><span class="key">D</span> or the arrow keys. Catch fruit for points and keep away from the rocks.</p>
+          <button id="startButton" type="button">Start game</button>
+        </div>
+      </div>
+    </section>
+
+    <div class="instructions">
+      <div><span class="key">A</span><span class="key">D</span> / <span class="key">←</span><span class="key">→</span> move your catcher</div>
+      <div class="legend" aria-label="Object legend">
+        <span class="legend-item"><i class="legend-dot fruit-dot"></i> fruit +10</span>
+        <span class="legend-item"><i class="legend-dot rock-dot"></i> rock = game over</span>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    (() => {
+      "use strict";
+
+      const canvas = document.getElementById("gameCanvas");
+      const ctx = canvas.getContext("2d");
+      const overlay = document.getElementById("overlay");
+      const overlayTitle = document.getElementById("overlayTitle");
+      const overlayText = document.getElementById("overlayText");
+      const startButton = document.getElementById("startButton");
+      const scoreEl = document.getElementById("score");
+      const bestEl = document.getElementById("best");
+      const timeEl = document.getElementById("time");
+      const bonusEl = document.getElementById("bonus");
+      const shieldEl = document.getElementById("shield");
+
+      const W = canvas.width;
+      const H = canvas.height;
+      const groundY = H - 82;
+      const keys = { left: false, right: false };
+      let bestScore = Number(localStorage.getItem("skyHarvestBest") || 0);
+      let score = 0;
+      let elapsed = 0;
+      let running = false;
+      let lastTime = 0;
+      let fruitTimer = 0;
+      let rockTimer = 0;
+      let orangeTimer = 0;
+      let watermelonTimer = 0;
+      let doublePointsTime = 0;
+      let shieldTime = 0;
+      let objects = [];
+      let particles = [];
+      let animationId = 0;
+
+      const player = {
+        x: W / 2,
+        y: groundY - 50,
+        width: 78,
+        height: 64,
+        speed: 520
+      };
+
+      bestEl.textContent = bestScore;
+
+      function resetGame() {
+        score = 0;
+        elapsed = 0;
+        fruitTimer = 0;
+        rockTimer = 0;
+        orangeTimer = 0;
+        watermelonTimer = 0;
+        doublePointsTime = 0;
+        shieldTime = 0;
+        objects = [];
+        particles = [];
+        player.x = W / 2;
+        scoreEl.textContent = "0";
+        timeEl.textContent = "0s";
+        bonusEl.textContent = "—";
+        shieldEl.textContent = "—";
+      }
+
+      function startGame() {
+        resetGame();
+        running = true;
+        overlay.hidden = true;
+        lastTime = performance.now();
+        cancelAnimationFrame(animationId);
+        animationId = requestAnimationFrame(loop);
+      }
+
+      function endGame() {
+        running = false;
+        if (score > bestScore) {
+          bestScore = score;
+          localStorage.setItem("skyHarvestBest", String(bestScore));
+          bestEl.textContent = bestScore;
+        }
+        overlayTitle.textContent = "The sky got you!";
+        overlayText.innerHTML = `You scored <strong>${score}</strong> point${score === 1 ? "" : "s"} in ${Math.floor(elapsed)} second${Math.floor(elapsed) === 1 ? "" : "s"}. Ready for another run?`;
+        startButton.textContent = "Try again";
+        overlay.hidden = false;
+      }
+
+      function addObject(type) {
+        const size = type === "fruit" ? 25 : type === "orange" ? 29 : type === "watermelon" ? 34 : 21 + Math.random() * 25;
+        const margin = size + 8;
+        objects.push({
+          type,
+          x: margin + Math.random() * (W - margin * 2),
+          y: -size - 10,
+          size,
+          speed: (type === "fruit" || type === "orange" || type === "watermelon" ? 145 : 170) + Math.random() * 70 + elapsed * (type === "fruit" || type === "orange" || type === "watermelon" ? 2.2 : 4.2),
+          rotation: Math.random() * Math.PI,
+          spin: (Math.random() - 0.5) * 2.8,
+          wobble: Math.random() * Math.PI * 2
+        });
+      }
+
+      function burst(x, y, color) {
+        for (let i = 0; i < 10; i++) {
+          particles.push({
+            x, y,
+            dx: (Math.random() - 0.5) * 150,
+            dy: (Math.random() - 0.65) * 150,
+            life: 0.55 + Math.random() * 0.3,
+            maxLife: 0.85,
+            color,
+            size: 3 + Math.random() * 3
+          });
+        }
+      }
+
+      function intersects(object) {
+        const objectHalf = object.type === "rock" ? object.size * 0.58 : object.size * 0.72;
+        const playerLeft = player.x - player.width / 2 + 8;
+        const playerRight = player.x + player.width / 2 - 8;
+        const playerTop = player.y + 13;
+        const playerBottom = player.y + player.height;
+        return object.x + objectHalf > playerLeft && object.x - objectHalf < playerRight && object.y + objectHalf > playerTop && object.y - objectHalf < playerBottom;
+      }
+
+      function update(dt) {
+        elapsed += dt;
+        const difficulty = Math.min(elapsed / 55, 1);
+        const spawnFruitEvery = Math.max(360, 700 - elapsed * 2.8);
+        const spawnRockEvery = Math.max(260, 1060 - elapsed * 10.5);
+        const spawnOrangeEvery = Math.max(6500, 10500 - elapsed * 18);
+        const spawnWatermelonEvery = Math.max(9500, 17000 - elapsed * 20);
+        doublePointsTime = Math.max(0, doublePointsTime - dt);
+        shieldTime = Math.max(0, shieldTime - dt);
+
+        if (keys.left) player.x -= player.speed * dt;
+        if (keys.right) player.x += player.speed * dt;
+        player.x = Math.max(player.width / 2, Math.min(W - player.width / 2, player.x));
+
+        fruitTimer += dt * 1000;
+        rockTimer += dt * 1000;
+        orangeTimer += dt * 1000;
+        watermelonTimer += dt * 1000;
+        if (fruitTimer >= spawnFruitEvery) {
+          fruitTimer = 0;
+          addObject("fruit");
+        }
+        if (rockTimer >= spawnRockEvery) {
+          rockTimer = 0;
+          addObject("rock");
+          if (difficulty > 0.45 && Math.random() < difficulty * 0.55) addObject("rock");
+        }
+        if (orangeTimer >= spawnOrangeEvery) {
+          orangeTimer = 0;
+          addObject("orange");
+        }
+        if (watermelonTimer >= spawnWatermelonEvery) {
+          watermelonTimer = 0;
+          addObject("watermelon");
+        }
+
+        for (let i = objects.length - 1; i >= 0; i--) {
+          const object = objects[i];
+          object.y += object.speed * dt;
+          object.rotation += object.spin * dt;
+          object.wobble += dt * 3;
+
+          if (intersects(object)) {
+            if (object.type === "rock") {
+              if (shieldTime > 0) {
+                burst(object.x, object.y, "#5bc98a");
+                objects.splice(i, 1);
+                continue;
+              }
+              burst(object.x, object.y, "#687487");
+              endGame();
+              return;
+            }
+            if (object.type === "orange") {
+              doublePointsTime = 5;
+              burst(object.x, object.y, "#f59f34");
+            } else if (object.type === "watermelon") {
+              shieldTime = 5;
+              burst(object.x, object.y, "#5bc98a");
+            } else {
+              score += doublePointsTime > 0 ? 20 : 10;
+              burst(object.x, object.y, "#ed6a68");
+            }
+            scoreEl.textContent = score;
+            objects.splice(i, 1);
+            continue;
+          }
+          if (object.y - object.size > H) objects.splice(i, 1);
+        }
+
+        for (let i = particles.length - 1; i >= 0; i--) {
+          const p = particles[i];
+          p.life -= dt;
+          p.x += p.dx * dt;
+          p.y += p.dy * dt;
+          p.dy += 180 * dt;
+          if (p.life <= 0) particles.splice(i, 1);
+        }
+
+        timeEl.textContent = `${Math.floor(elapsed)}s`;
+        bonusEl.textContent = doublePointsTime > 0 ? `${Math.ceil(doublePointsTime)}s` : "—";
+        shieldEl.textContent = shieldTime > 0 ? `${Math.ceil(shieldTime)}s` : "—";
+      }
+
+      function mixColor(dayColor, nightColor, amount) {
+        const day = dayColor.slice(1);
+        const night = nightColor.slice(1);
+        const channels = [0, 2, 4].map(index => {
+          const dayValue = parseInt(day.slice(index, index + 2), 16);
+          const nightValue = parseInt(night.slice(index, index + 2), 16);
+          return Math.round(dayValue + (nightValue - dayValue) * amount);
+        });
+        return `rgb(${channels.join(", ")})`;
+      }
+
+      function drawBackground() {
+        // A full cycle is 60 seconds: midday -> midnight in 30 seconds, then back again.
+        const nightAmount = (1 - Math.cos((elapsed / 60) * Math.PI * 2)) / 2;
+        const sky = ctx.createLinearGradient(0, 0, 0, H);
+        sky.addColorStop(0, mixColor("#8bdcea", "#1b315a", nightAmount));
+        sky.addColorStop(0.68, mixColor("#d7f1dc", "#405c84", nightAmount));
+        sky.addColorStop(1, mixColor("#f6d89e", "#2c4569", nightAmount));
+        ctx.fillStyle = sky;
+        ctx.fillRect(0, 0, W, H);
+
+        ctx.save();
+        ctx.globalAlpha = 1 - nightAmount;
+        ctx.fillStyle = "#fff6b7";
+        ctx.beginPath();
+        ctx.arc(758, 94, 47, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+
+        ctx.save();
+        ctx.globalAlpha = nightAmount;
+        ctx.fillStyle = "#edf3ff";
+        ctx.beginPath();
+        ctx.arc(758, 94, 34, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = "#d7e3f7";
+        ctx.beginPath();
+        ctx.arc(746, 84, 7, 0, Math.PI * 2);
+        ctx.arc(774, 105, 5, 0, Math.PI * 2);
+        ctx.fill();
+        for (let i = 0; i < 24; i++) {
+          const starX = (i * 137) % W;
+          const starY = 28 + ((i * 61) % 215);
+          ctx.fillStyle = "#ffffff";
+          ctx.beginPath(); ctx.arc(starX, starY, 1 + (i % 3) * 0.35, 0, Math.PI * 2); ctx.fill();
+        }
+        ctx.restore();
+
+        ctx.fillStyle = `rgba(255, 255, 255, ${0.48 * (1 - nightAmount * 0.75)})`;
+        cloud(155, 112, 1.1);
+        cloud(525, 172, 0.7);
+
+        ctx.fillStyle = mixColor("#5da985", "#304969", nightAmount);
+        ctx.beginPath();
+        ctx.moveTo(0, groundY + 17);
+        ctx.quadraticCurveTo(120, groundY - 44, 250, groundY + 18);
+        ctx.quadraticCurveTo(385, groundY - 56, 540, groundY + 17);
+        ctx.quadraticCurveTo(710, groundY - 52, W, groundY + 10);
+        ctx.lineTo(W, H); ctx.lineTo(0, H); ctx.closePath(); ctx.fill();
+
+        ctx.fillStyle = mixColor("#86bc76", "#293f62", nightAmount);
+        ctx.fillRect(0, groundY + 22, W, H - groundY - 22);
+        ctx.fillStyle = `rgba(255, 255, 255, ${0.26 * (1 - nightAmount * 0.8)})`;
+        for (let x = 14; x < W; x += 38) {
+          ctx.fillRect(x, groundY + 33 + ((x * 13) % 18), 3, 11);
+          ctx.fillRect(x + 5, groundY + 30 + ((x * 7) % 16), 3, 9);
+        }
+      }
+
+      function cloud(x, y, scale) {
+        ctx.beginPath();
+        ctx.arc(x - 31 * scale, y + 7 * scale, 20 * scale, Math.PI, Math.PI * 2);
+        ctx.arc(x - 4 * scale, y - 4 * scale, 28 * scale, Math.PI, Math.PI * 2);
+        ctx.arc(x + 29 * scale, y + 8 * scale, 18 * scale, Math.PI, Math.PI * 2);
+        ctx.lineTo(x + 48 * scale, y + 26 * scale);
+        ctx.lineTo(x - 51 * scale, y + 26 * scale);
+        ctx.closePath();
+        ctx.fill();
+      }
+
+      function drawPlayer() {
+        const x = player.x;
+        const y = player.y;
+        ctx.save();
+        ctx.translate(x, y);
+
+        if (doublePointsTime > 0) {
+          ctx.save();
+          ctx.rotate(elapsed * 1.8);
+          for (let i = 0; i < 8; i++) {
+            const angle = (i * Math.PI) / 4;
+            const radius = 57 + Math.sin(elapsed * 6 + i) * 5;
+            const sparkleX = Math.cos(angle) * radius;
+            const sparkleY = 26 + Math.sin(angle) * radius;
+            drawSparkle(sparkleX, sparkleY, 4 + (i % 2) * 2, 0.72 + Math.sin(elapsed * 5 + i) * 0.18);
+          }
+          ctx.restore();
+        }
+
+        const shieldVisible = shieldTime > 1.5 || Math.sin((1.5 - shieldTime) * Math.PI * 8) > 0;
+        if (shieldTime > 0 && shieldVisible) {
+          ctx.fillStyle = "rgba(91, 201, 138, .18)";
+          ctx.strokeStyle = "rgba(42, 157, 97, .82)";
+          ctx.lineWidth = 4;
+          ctx.beginPath(); ctx.arc(0, 26, 58, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+        }
+        ctx.fillStyle = "rgba(23, 50, 77, .16)";
+        ctx.beginPath(); ctx.ellipse(0, 62, 47, 8, 0, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = "#f47c48";
+        ctx.beginPath(); ctx.roundRect(-35, 19, 70, 29, 13); ctx.fill();
+        ctx.fillStyle = "#fff2c7";
+        ctx.beginPath(); ctx.arc(0, 10, 23, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = "#17324d";
+        ctx.beginPath(); ctx.arc(-8, 7, 3, 0, Math.PI * 2); ctx.arc(8, 7, 3, 0, Math.PI * 2); ctx.fill();
+        ctx.strokeStyle = "#17324d"; ctx.lineWidth = 3; ctx.lineCap = "round";
+        ctx.beginPath(); ctx.arc(0, 10, 10, 0.18, Math.PI - 0.18); ctx.stroke();
+        ctx.fillStyle = "#f47c48";
+        ctx.beginPath(); ctx.roundRect(-46, 24, 15, 23, 8); ctx.roundRect(31, 24, 15, 23, 8); ctx.fill();
+        ctx.fillStyle = "#f7c76d";
+        ctx.beginPath(); ctx.roundRect(-44, 41, 88, 18, 8); ctx.fill();
+        ctx.strokeStyle = "#d3944c"; ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.moveTo(-37, 46); ctx.lineTo(37, 46); ctx.stroke();
+        ctx.restore();
+      }
+
+      function drawSparkle(x, y, size, alpha) {
+        ctx.save();
+        ctx.translate(x, y);
+        ctx.globalAlpha = Math.max(0.2, Math.min(1, alpha));
+        ctx.fillStyle = "#ffad32";
+        ctx.beginPath();
+        ctx.moveTo(0, -size);
+        ctx.lineTo(size * 0.34, -size * 0.34);
+        ctx.lineTo(size, 0);
+        ctx.lineTo(size * 0.34, size * 0.34);
+        ctx.lineTo(0, size);
+        ctx.lineTo(-size * 0.34, size * 0.34);
+        ctx.lineTo(-size, 0);
+        ctx.lineTo(-size * 0.34, -size * 0.34);
+        ctx.closePath();
+        ctx.fill();
+        ctx.restore();
+      }
+
+      function drawFruit(object) {
+        const isOrange = object.type === "orange";
+        ctx.save();
+        ctx.translate(object.x, object.y);
+        ctx.rotate(object.rotation * 0.2);
+        ctx.fillStyle = isOrange ? "#f59f34" : "#ed6a68";
+        ctx.beginPath(); ctx.arc(0, 3, object.size * 0.76, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = isOrange ? "#ffc15c" : "#f58d70";
+        ctx.beginPath(); ctx.arc(-object.size * 0.27, -object.size * 0.2, object.size * 0.2, 0, Math.PI * 2); ctx.fill();
+        ctx.strokeStyle = "#6b8d48"; ctx.lineWidth = 4; ctx.lineCap = "round";
+        ctx.beginPath(); ctx.moveTo(0, -object.size * 0.65); ctx.quadraticCurveTo(2, -object.size, 8, -object.size * 1.04); ctx.stroke();
+        ctx.fillStyle = "#49a77a";
+        ctx.beginPath(); ctx.ellipse(10, -object.size * 0.8, 9, 4, -0.45, 0, Math.PI * 2); ctx.fill();
+        ctx.restore();
+      }
+
+      function drawWatermelon(object) {
+        ctx.save();
+        ctx.translate(object.x, object.y);
+        ctx.rotate(object.rotation * 0.15);
+        ctx.fillStyle = "#2f9c68";
+        ctx.beginPath(); ctx.arc(0, 0, object.size * 0.76, 0, Math.PI * 2); ctx.fill();
+        ctx.strokeStyle = "#a9d96e";
+        ctx.lineWidth = 5;
+        ctx.beginPath();
+        ctx.arc(-2, 0, object.size * 0.58, -2.35, -0.72);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.arc(4, 0, object.size * 0.58, 0.8, 2.4);
+        ctx.stroke();
+        ctx.fillStyle = "#f7e7a5";
+        for (const seed of [[-9, -5], [7, -9], [-2, 9], [12, 7]]) {
+          ctx.beginPath(); ctx.ellipse(seed[0], seed[1], 2.5, 4.5, 0.35, 0, Math.PI * 2); ctx.fill();
+        }
+        ctx.restore();
+      }
+
+      function drawRock(object) {
+        ctx.save();
+        ctx.translate(object.x, object.y);
+        ctx.rotate(object.rotation);
+        ctx.fillStyle = "#687487";
+        ctx.beginPath();
+        ctx.moveTo(-object.size * 0.83, object.size * 0.32);
+        ctx.lineTo(-object.size * 0.55, -object.size * 0.66);
+        ctx.lineTo(object.size * 0.15, -object.size * 0.9);
+        ctx.lineTo(object.size * 0.82, -object.size * 0.15);
+        ctx.lineTo(object.size * 0.48, object.size * 0.7);
+        ctx.lineTo(-object.size * 0.4, object.size * 0.78);
+        ctx.closePath(); ctx.fill();
+        ctx.fillStyle = "#8591a0";
+        ctx.beginPath(); ctx.moveTo(-object.size * 0.48, -object.size * 0.45); ctx.lineTo(object.size * 0.1, -object.size * 0.72); ctx.lineTo(object.size * 0.45, -object.size * 0.18); ctx.lineTo(-object.size * 0.15, -object.size * 0.05); ctx.closePath(); ctx.fill();
+        ctx.restore();
+      }
+
+      function drawParticles() {
+        for (const p of particles) {
+          ctx.globalAlpha = Math.max(0, p.life / p.maxLife);
+          ctx.fillStyle = p.color;
+          ctx.beginPath(); ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2); ctx.fill();
+        }
+        ctx.globalAlpha = 1;
+      }
+
+      function draw() {
+        drawBackground();
+        objects.forEach(object => object.type === "rock" ? drawRock(object) : object.type === "watermelon" ? drawWatermelon(object) : drawFruit(object));
+        drawPlayer();
+        drawParticles();
+      }
+
+      function loop(now) {
+        if (!running) return;
+        const dt = Math.min((now - lastTime) / 1000, 0.035);
+        lastTime = now;
+        update(dt);
+        draw();
+        if (running) animationId = requestAnimationFrame(loop);
+      }
+
+      function setKey(event, pressed) {
+        if (event.key === "a" || event.key === "A" || event.key === "ArrowLeft") keys.left = pressed;
+        if (event.key === "d" || event.key === "D" || event.key === "ArrowRight") keys.right = pressed;
+        if (["a", "A", "d", "D", "ArrowLeft", "ArrowRight"].includes(event.key)) event.preventDefault();
+      }
+
+      window.addEventListener("keydown", event => {
+        setKey(event, true);
+        if (event.key === "Enter" && !running) startGame();
+      });
+      window.addEventListener("keyup", event => setKey(event, false));
+      startButton.addEventListener("click", startGame);
+
+      draw();
+    })();
+  </script>
+</body>
+</html>
