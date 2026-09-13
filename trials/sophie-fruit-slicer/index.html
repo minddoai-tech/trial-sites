@@ -1,0 +1,17 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>水果切切乐 · Fruit Slice</title><link rel="stylesheet" href="stylesheet.css">
+</head>
+<body>
+<main class="game-shell">
+<header class="topbar"><div><p class="eyebrow">ARCADE / FRUIT SLICE</p><h1>水果<span>切切乐</span></h1></div><div class="best-box"><span>最高分</span><strong id="bestScore">0</strong></div></header>
+<section class="hud" aria-label="游戏数据"><div class="hud-item"><span>得分</span><strong id="score">0</strong></div><div class="hud-item"><span>生命</span><strong id="lives">♥ ♥ ♥</strong></div><div class="hud-item timer"><span>时间</span><strong id="time">60</strong></div><button class="restart" id="restartButton" type="button">重新开始</button></section>
+<section class="play-area"><canvas id="gameCanvas" aria-label="水果切切乐游戏画布"></canvas>
+<div class="screen-card" id="startScreen"><div class="fruit-mark">🍉</div><p class="eyebrow">READY TO SLICE?</p><h2>接住水果，<br><span>小心石头！</span></h2><p>用鼠标或手指划过水果来切开它。水果 +1 分，切到石头 -1 分。漏掉水果不会扣生命，时间结束或生命耗尽时游戏结束。</p><button class="primary" id="startButton" type="button">开始游戏 <span>→</span></button><small>桌面端：鼠标拖动　·　手机端：手指滑动</small></div>
+<div class="screen-card result-card hidden" id="resultScreen"><div class="result-icon" id="resultIcon">🍓</div><p class="eyebrow" id="resultEyebrow">TIME'S UP</p><h2 id="resultTitle">切得漂亮！</h2><p id="resultMessage">你的最终得分</p><div class="final-score"><strong id="finalScore">0</strong><span>分</span></div><button class="primary" id="playAgainButton" type="button">再玩一次 <span>↻</span></button></div>
+</section>
+<footer class="instructions"><span><i class="dot fruit-dot"></i>水果 +1</span><span><i class="dot rock-dot"></i>石头 -1</span><span class="tip">TIP：连续切中可获得 COMBO 加成</span></footer>
+</main><script src="script.js"></script>
+</body></html>

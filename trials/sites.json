@@ -1,5 +1,14 @@
 [
   {
+    "slug": "sophie-fruit-slicer",
+    "trialId": "0af853f5-e4d3-435b-84df-ac379c3a25df",
+    "studentName": "Sophie",
+    "title": "Fruit Slicer",
+    "description": "Slice as many fruit as you can while avoiding the rocks in 60 seconds.",
+    "submittedAt": "2026-09-13T17:58:14.295Z",
+    "thumbnail": "sophie-fruit-slicer/thumb.png"
+  },
+  {
     "slug": "emma-chess-game",
     "trialId": "ed59f920-db96-4fbe-a9a5-19d487c3ca17",
     "studentName": "Emma",
