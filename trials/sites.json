@@ -1,5 +1,14 @@
 [
   {
+    "slug": "emma-chess-game",
+    "trialId": "ed59f920-db96-4fbe-a9a5-19d487c3ca17",
+    "studentName": "Emma",
+    "title": "Chess Game",
+    "description": "Chess game w/ different emojis as pieces, and option to change difficulty for AI bot player.",
+    "submittedAt": "2026-09-13T00:05:17.143Z",
+    "thumbnail": "emma-chess-game/thumb.png"
+  },
+  {
     "slug": "kevin-game",
     "trialId": "dba2f4b4-8313-49d0-9810-7254fc29fb47",
     "studentName": "Kevin",
