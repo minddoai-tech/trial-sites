@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>First to Three — Pocket Football</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="game.js" defer></script>
+</head>
+<body>
+<main>
+  <header><a class="brand" href="./index.html"><span class="brand-icon">✳</span> POCKET FOOTBALL</a><span class="edition">ONE PITCH. TWO PLAYERS.</span></header>
+  <section class="heading"><div><p class="eyebrow">THE SMALL-SIDED SHOWDOWN</p><h1>First to <em>three.</em></h1><p>Find your angle. Take your shot. Own the pitch.</p></div><div class="level-tag"><span class="live-dot"></span><span id="levelLabel">LEVEL 01 · WARM UP</span></div></section>
+  <section id="lobby" class="lobby" aria-label="Lobby">
+    <div class="lobby-heading"><div><p class="eyebrow">YOUR CLUBHOUSE</p><h2>Lobby</h2><p id="careerStatus"></p></div><div class="wallet"><strong id="points">0</strong><span>UPGRADE POINTS</span></div></div>
+    <p id="lobbyNotice" class="lobby-notice" aria-live="polite">Build your player. Win +3 points · Lose +1 point.</p>
+    <div class="upgrade-grid">
+      <article class="upgrade"><div class="upgrade-title"><h3>↗ Movement speed</h3><span id="speedRank">0 / 5</span></div><p>Quicker runs and better defensive recovery.</p><p id="speedStat" class="stat"></p><button id="speedBuy" class="primary">Upgrade · 3 points</button></article>
+      <article class="upgrade"><div class="upgrade-title"><h3>✳ Shot power</h3><span id="powerRank">0 / 5</span></div><p>Faster shots that give your rival less time.</p><p id="powerStat" class="stat"></p><button id="powerBuy" class="primary">Upgrade · 3 points</button></article>
+    </div>
+    <div class="match-select"><div><label for="levelSelect">CHOOSE YOUR MATCH</label><select id="levelSelect"></select></div><button id="playMatch" class="primary">Enter the pitch ↗</button></div>
+    <p class="lobby-help">Win to unlock the next level. Replay unlocked levels to earn points. Each upgrade has 5 tiers, costing 3, 4, 5, 6, and 7 points. Leaving or restarting an unfinished match earns no points.</p>
+    <p id="saveStatus" class="lobby-help"></p>
+  </section>
+  <section id="arena" class="arena" aria-label="Soccer game" hidden>
+    <div class="scoreboard"><div class="team"><i class="dot mint"></i><span>YOU <small>HOME</small></span></div><div class="score"><span id="homeScore">0</span><span class="divider">:</span><span id="awayScore">0</span></div><div class="team away"><span>RIVAL <small>AWAY</small></span><i class="dot orange"></i></div></div>
+    <div class="pitch-wrap"><canvas id="pitch" width="1000" height="540" aria-label="Soccer pitch. Move with WASD or arrow keys. Tap S or press Space to shoot. Score in the right goal." tabindex="0"></canvas><div class="overlay" id="overlay"><div class="modal"><span class="modal-tag" id="modalTag">QUICK MATCH / 01</span><h2 id="modalTitle">Your pitch.<br>Your moment.</h2><p id="modalText">Score in the right goal. Defend the left.<br>First to 3 goals takes the match.</p><button class="primary" id="action">Let's play <span>↗</span></button><p class="modal-hint">WASD TO MOVE · TAP S TO SHOOT</p></div></div><div class="toast" id="toast" aria-live="polite"></div></div>
+    <div class="match-footer"><span><i class="live-dot"></i><span id="status" aria-live="polite">READY FOR KICKOFF</span></span><span>FIRST TO 3 <b>·</b> ATTACK →</span><div><button id="pause" aria-label="Pause game">Pause</button><button id="restart">↻ Restart</button><button id="lobbyButton">Lobby / leave match</button></div></div>
+  </section>
+  <section class="instructions"><div><span class="instruction-number">01</span><div><h3>Make your move</h3><p><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> or arrow keys</p></div></div><div><span class="instruction-number">02</span><div><h3>Take the shot</h3><p>Tap <kbd>S</kbd> or <kbd>Space</kbd> near the ball</p></div></div><div><span class="instruction-number">03</span><div><h3>Raise the stakes</h3><p>Win to unlock a faster, tougher rival</p></div></div></section>
+  <p class="tip">THE PLAYBOOK <span>Hold S to move down. Shots aim toward the right goal; hold W / ↑ to aim high or ↓ to aim low. Get close to the ball to dribble.</span></p>
+  <div id="touchControls" class="touch-controls" aria-label="Touch controls" hidden><div class="dpad"><button data-key="arrowup" aria-label="Move up">↑</button><button data-key="arrowleft" aria-label="Move left">←</button><button data-key="arrowdown" aria-label="Move down">↓</button><button data-key="arrowright" aria-label="Move right">→</button></div><button class="primary" id="touchShoot">SHOOT ↗</button></div>
+  <footer>SMALL GAME. BIG MATCH ENERGY.<span>10 LEVELS · BUILD YOUR PLAYER</span></footer>
+</main>
+</body>
+</html>

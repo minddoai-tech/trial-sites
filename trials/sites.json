@@ -1,5 +1,14 @@
 [
   {
+    "slug": "hanson-football-match",
+    "trialId": "b7f31eed-c5cd-4184-b91d-1be7decad236",
+    "studentName": "Hanson",
+    "title": "Football Match",
+    "description": "This is a game where you can play soccer against an NPC. You get points for scoring and losing, and you can upgrade your stats with those points.",
+    "submittedAt": "2026-09-21T21:46:37.231Z",
+    "thumbnail": "hanson-football-match/thumb.png"
+  },
+  {
     "slug": "ethan-survive-the-scary-zombies",
     "trialId": "99457f81-5875-42d3-b391-af48bf2ffc8f",
     "studentName": "Ethan",
