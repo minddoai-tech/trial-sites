@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Pig Plot</title>
+  <style>
+    :root { --ink:#26352f; --cream:#f6f3e9; --paper:#fffdf7; --green:#83aa71; --red:#d96b5b; --gold:#e3ae4d; }
+    * { box-sizing: border-box; }
+    body { margin:0; min-height:100vh; display:grid; place-items:center; background:var(--cream); color:var(--ink); font-family: ui-rounded, "Avenir Next", system-ui, sans-serif; }
+    .wrap { width:min(100% - 28px, 1100px); }
+    header { display:flex; align-items:end; justify-content:space-between; gap:20px; margin:22px 0 12px; }
+    h1 { margin:0; font-size:clamp(2rem, 5vw, 4rem); letter-spacing:-.06em; line-height:.9; }
+    .tagline { margin:7px 0 0; color:#65716b; font-size:.95rem; }
+    .status { display:flex; gap:10px; flex-wrap:wrap; justify-content:flex-end; }
+    .stat { background:var(--paper); border:1px solid #e4dfd1; border-radius:13px; padding:10px 14px; min-width:94px; box-shadow:0 3px 0 #e6e0d2; }
+    .stat span { display:block; color:#78827d; font-size:.68rem; letter-spacing:.08em; text-transform:uppercase; }
+    .stat strong { display:block; margin-top:1px; font-size:1.25rem; }
+    .arena { position:relative; overflow:hidden; border:8px solid #45614e; border-radius:22px; background:#b8d694; box-shadow:0 10px 0 #d8d1c1; }
+    canvas { display:block; width:100%; height:auto; aspect-ratio: 16 / 9; cursor:crosshair; }
+    .overlay { position:absolute; inset:0; display:grid; place-items:center; background:rgba(33,48,42,.26); backdrop-filter:blur(3px); }
+    .card { width:min(88%, 420px); padding:27px; text-align:center; background:var(--paper); border:2px solid #e8e0ce; border-radius:20px; box-shadow:0 9px 0 rgba(54,71,61,.22); }
+    .card h2 { margin:0 0 8px; font-size:2rem; letter-spacing:-.04em; }
+    .card p { margin:0 auto 18px; color:#65716b; line-height:1.45; }
+    button { border:0; border-radius:11px; padding:12px 20px; color:white; background:#456f52; font:inherit; font-weight:800; cursor:pointer; box-shadow:0 4px 0 #2f513a; transition:transform .12s, box-shadow .12s; }
+    button:hover { transform:translateY(-1px); box-shadow:0 5px 0 #2f513a; }
+    button:active { transform:translateY(2px); box-shadow:0 2px 0 #2f513a; }
+    .instructions { display:flex; justify-content:space-between; gap:16px; margin:17px 3px 0; color:#66746c; font-size:.88rem; }
+    kbd { padding:4px 7px; border:1px solid #d5d0c2; border-bottom-width:3px; border-radius:6px; background:#fffdf7; color:var(--ink); font-weight:800; }
+    @media (max-width:650px) { header { align-items:start; flex-direction:column; } .status { justify-content:flex-start; } .stat { min-width:82px; padding:8px 10px; } .instructions { flex-direction:column; gap:8px; } }
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <header>
+      <div><h1>Pig Plot</h1><p class="tagline">They look cute. They are absolutely not.</p></div>
+      <div class="status" aria-live="polite">
+        <div class="stat"><span>Survival</span><strong id="time">0.0s</strong></div>
+        <div class="stat"><span>Score</span><strong id="score">0</strong></div>
+        <div class="stat"><span>Lives</span><strong id="lives">5</strong></div>
+        <div class="stat"><span>Wave</span><strong id="wave">1</strong></div>
+        <div class="stat"><span>Pig kills</span><strong id="kills">0</strong></div>
+        <div class="stat"><span>Pigs</span><strong>200</strong></div>
+      </div>
+    </header>
+    <section class="arena">
+      <canvas id="game" width="960" height="540" aria-label="Pig Plot game arena"></canvas>
+      <div class="overlay" id="overlay">
+        <div class="card">
+          <h2 id="overlayTitle">The herd is thinking.</h2>
+          <p id="overlayText">Use WASD or the arrow keys to keep your farmer moving. Every second alive earns a point. Survive the pig plot.</p>
+          <button id="start">Start surviving</button>
+        </div>
+      </div>
+    </section>
+    <div class="instructions"><span><kbd>W</kbd> <kbd>A</kbd> <kbd>S</kbd> <kbd>D</kbd> move · <kbd>F</kbd> / <kbd>Space</kbd> / click shoot</span><span>Drop loot by taking down pigs. Keep moving.</span></div>
+    <div style="display:flex;justify-content:center;margin:14px 0 4px"><button id="buyLife" disabled>Shop: extra life · 10 points</button></div>
+    <div id="bossBar" style="display:none;margin:8px auto 0;max-width:460px;background:#eadfd2;border:1px solid #d7c8b8;border-radius:10px;padding:7px 10px;text-align:center;font-weight:800;color:#784843">BIG MAMA PIG <div style="height:8px;margin-top:5px;border-radius:8px;background:#c9b6ab;overflow:hidden"><div id="bossFill" style="height:100%;width:100%;background:#c95654;transition:width .15s"></div></div></div>
+  </main>
+  <script>
+    (() => {
+      const canvas = document.getElementById('game'), ctx = canvas.getContext('2d');
+      const pigSprite = new Image(), pigCutout = document.createElement('canvas'); let pigSpriteReady = false;
+      pigSprite.onload = () => { pigCutout.width=pigSprite.width; pigCutout.height=pigSprite.height; const cutCtx=pigCutout.getContext('2d'); cutCtx.drawImage(pigSprite,0,0); const image=cutCtx.getImageData(0,0,pigCutout.width,pigCutout.height), px=image.data, w=pigCutout.width, h=pigCutout.height, seen=new Uint8Array(w*h), queue=[]; const isBackground=(x,y)=>{const i=(y*w+x)*4, r=px[i],g=px[i+1],b=px[i+2]; return Math.max(r,g,b)-Math.min(r,g,b)<24 && (r+g+b)/3>145;}; for(let x=0;x<w;x++){if(isBackground(x,0))queue.push([x,0]);if(isBackground(x,h-1))queue.push([x,h-1]);} for(let y=1;y<h-1;y++){if(isBackground(0,y))queue.push([0,y]);if(isBackground(w-1,y))queue.push([w-1,y]);} while(queue.length){const [x,y]=queue.pop(), n=y*w+x;if(x<0||y<0||x>=w||y>=h||seen[n]||!isBackground(x,y))continue;seen[n]=1;px[n*4+3]=0;queue.push([x+1,y],[x-1,y],[x,y+1],[x,y-1]);} cutCtx.putImageData(image,0,0); pigSpriteReady=true; };
+      pigSprite.src = 'peppa-pig.jpeg';
+      const joeSprite = new Image(), joeCutout = document.createElement('canvas'); let joeSpriteReady = false;
+      joeSprite.onload = () => { joeCutout.width=joeSprite.width; joeCutout.height=joeSprite.height; const cutCtx=joeCutout.getContext('2d'); cutCtx.drawImage(joeSprite,0,0); const image=cutCtx.getImageData(0,0,joeCutout.width,joeCutout.height), px=image.data, w=joeCutout.width, h=joeCutout.height, seen=new Uint8Array(w*h), queue=[]; const isBackground=(x,y)=>{const i=(y*w+x)*4, r=px[i],g=px[i+1],b=px[i+2]; return Math.max(r,g,b)-Math.min(r,g,b)<20 && (r+g+b)/3>185;}; for(let x=0;x<w;x++){if(isBackground(x,0))queue.push([x,0]);if(isBackground(x,h-1))queue.push([x,h-1]);} for(let y=1;y<h-1;y++){if(isBackground(0,y))queue.push([0,y]);if(isBackground(w-1,y))queue.push([w-1,y]);} while(queue.length){const [x,y]=queue.pop(), n=y*w+x;if(x<0||y<0||x>=w||y>=h||seen[n]||!isBackground(x,y))continue;seen[n]=1;px[n*4+3]=0;queue.push([x+1,y],[x-1,y],[x,y+1],[x,y-1]);} cutCtx.putImageData(image,0,0); joeSpriteReady=true; };
+      joeSprite.src = 'joe.jpeg';
+      const farmerSprite = new Image(); farmerSprite.src = 'farmer.png';
+      const overlay = document.getElementById('overlay'), title = document.getElementById('overlayTitle'), text = document.getElementById('overlayText'), start = document.getElementById('start');
+      const timeEl = document.getElementById('time'), scoreEl = document.getElementById('score'), livesEl = document.getElementById('lives'), waveEl = document.getElementById('wave'), killsEl = document.getElementById('kills'), buyLife = document.getElementById('buyLife'), bossBar = document.getElementById('bossBar'), bossFill = document.getElementById('bossFill');
+      const W = canvas.width, H = canvas.height, pigCount = 200, keys = new Set();
+      let pigs = [], loot = [], bullets = [], boss = null, enraged = false, enragedUntil = 0, farmer, started = false, ended = false, elapsed = 0, last = 0, raf, lootCount = 0, killCount = 0, lives = 5, wave = 1, nextSpawn = 1, audio;
+      const rand = (a,b) => a + Math.random() * (b-a);
+      const reset = () => {
+        farmer = { x:W/2, y:H/2, r:13, speed:235, invuln:0 };
+        pigs = Array.from({length:pigCount}, (_,i) => { const edge = Math.floor(rand(0,4)); return { x:edge===0?rand(0,W):edge===1?W:edge===2?rand(0,W):0, y:edge===0?0:edge===1?rand(0,H):edge===2?H:rand(0,H), r:rand(5.5,8), speed:rand(30,48), phase:rand(0,Math.PI*2), blush:rand(0,1), alive:true }; });
+        loot=[]; bullets=[]; boss=null; enraged=false; enragedUntil=0; bossBar.style.display='none'; lootCount=0; killCount=0; lives=5; wave=1; nextSpawn=1; elapsed=0; ended=false; timeEl.textContent='0.0s'; scoreEl.textContent='0'; livesEl.textContent=lives; waveEl.textContent=wave; killsEl.textContent=killCount;
+      };
+      const drawBackground = () => { ctx.fillStyle='#b8d694'; ctx.fillRect(0,0,W,H); ctx.strokeStyle='rgba(65,105,69,.14)'; ctx.lineWidth=2; for(let x=25;x<W;x+=48){ for(let y=22;y<H;y+=42){ ctx.beginPath(); ctx.moveTo(x,y+5); ctx.lineTo(x+4,y); ctx.lineTo(x+8,y+5); ctx.stroke(); } } ctx.fillStyle='rgba(255,255,255,.18)'; ctx.fillRect(0,0,W,28); };
+      const drawPig = p => { ctx.save(); ctx.translate(p.x,p.y); ctx.rotate(Math.sin(p.phase+elapsed*2)*.06); const size=p.r*4.2; if(pigSpriteReady)ctx.drawImage(pigCutout,-size/2,-size*.62,size,size); else { ctx.fillStyle=enraged?'#c64b4b':'#f3b5a7'; ctx.beginPath(); ctx.ellipse(0,1,p.r*1.3,p.r,.2,0,Math.PI*2); ctx.fill(); } if(enraged){ctx.strokeStyle='#ff3e3e';ctx.lineWidth=2;ctx.beginPath();ctx.arc(0,0,size*.48,0,7);ctx.stroke();} ctx.restore(); };
+      const drawBoss = () => { if(!boss)return; ctx.save(); ctx.translate(boss.x,boss.y); if(joeSpriteReady){ctx.drawImage(joeCutout,-42,-55,84,110);} else {ctx.fillStyle='rgba(43,35,35,.25)';ctx.beginPath();ctx.ellipse(0,30,42,12,0,0,7);ctx.fill();ctx.fillStyle='#c95c63';ctx.beginPath();ctx.ellipse(0,0,38,29,.1,0,7);ctx.fill();} ctx.fillStyle='#f8d58b';ctx.font='bold 11px system-ui';ctx.textAlign='center';ctx.fillText('MAMA',0,-65);ctx.restore(); };
+      const drawFarmer = () => { ctx.save(); ctx.translate(farmer.x,farmer.y); ctx.fillStyle='rgba(43,64,46,.2)'; ctx.beginPath(); ctx.ellipse(0,18,18,6,0,0,7); ctx.fill(); if(farmerSprite.complete)ctx.drawImage(farmerSprite,-20,-31,40,58); else { ctx.fillStyle='#4b7956'; ctx.beginPath(); ctx.arc(0,0,farmer.r,0,7); ctx.fill(); } ctx.fillStyle='#303936'; ctx.fillRect(14,-2,16,5); ctx.fillStyle='#f8dfad'; ctx.fillRect(24,-1,7,3); ctx.restore(); };
+      const drawLoot = l => { ctx.save(); ctx.translate(l.x,l.y); ctx.rotate(elapsed*2); ctx.fillStyle='#e3ae4d'; ctx.beginPath(); ctx.moveTo(0,-7); ctx.lineTo(7,0); ctx.lineTo(0,7); ctx.lineTo(-7,0); ctx.closePath(); ctx.fill(); ctx.fillStyle='#fff1a6'; ctx.beginPath(); ctx.arc(-2,-2,2,0,7); ctx.fill(); ctx.restore(); };
+      const drawBullet = b => { ctx.fillStyle='#fff0b0'; ctx.beginPath(); ctx.arc(b.x,b.y,3,0,7); ctx.fill(); };
+      const draw = () => { drawBackground(); loot.forEach(drawLoot); pigs.filter(p=>p.alive).forEach(drawPig); drawBoss(); bullets.forEach(drawBullet); drawFarmer(); };
+      const gunshot = () => { try { audio ||= new (window.AudioContext||window.webkitAudioContext)(); audio.resume(); const now=audio.currentTime, osc=audio.createOscillator(), gain=audio.createGain(), thump=audio.createOscillator(), thumpGain=audio.createGain(); osc.type='sawtooth'; osc.frequency.setValueAtTime(135,now); osc.frequency.exponentialRampToValueAtTime(42,now+.11); gain.gain.setValueAtTime(.42,now); gain.gain.exponentialRampToValueAtTime(.001,now+.16); thump.type='square'; thump.frequency.setValueAtTime(62,now); thumpGain.gain.setValueAtTime(.33,now); thumpGain.gain.exponentialRampToValueAtTime(.001,now+.2); osc.connect(gain).connect(audio.destination); thump.connect(thumpGain).connect(audio.destination); osc.start(now); thump.start(now); osc.stop(now+.2); thump.stop(now+.22); } catch(e){} };
+      const shoot = () => { if(!started)return; gunshot(); const target=pigs.filter(p=>p.alive).sort((a,b)=>Math.hypot(a.x-farmer.x,a.y-farmer.y)-Math.hypot(b.x-farmer.x,b.y-farmer.y))[0]; if(!target)return; const dx=target.x-farmer.x,dy=target.y-farmer.y,d=Math.hypot(dx,dy)||1; bullets.push({x:farmer.x,y:farmer.y,vx:dx/d*600,vy:dy/d*600}); };
+      const spawnPig = () => { const edge=Math.floor(rand(0,4)); return { x:edge===0?rand(0,W):edge===1?W:edge===2?rand(0,W):0, y:edge===0?0:edge===1?rand(0,H):edge===2?H:rand(0,H), r:rand(5.5,8), speed:(rand(30,48)+wave*2)*(enraged?3:1), phase:rand(0,Math.PI*2), blush:rand(0,1), alive:true }; };
+      const startNextWave = () => { for(let i=0;i<5;i++) pigs.push(spawnPig()); wave++; waveEl.textContent=wave; if(wave===10&&!boss){boss={x:W/2,y:35,r:34,speed:42,hp:1000};bossBar.style.display='block';} nextSpawn=elapsed+1; };
+      const gameOver = () => { lives--; livesEl.textContent=lives; farmer.x=W/2; farmer.y=H/2; if(lives>0)return; ended=true; started=false; cancelAnimationFrame(raf); updateShop(); title.textContent='The pigs got you.'; text.textContent=`You survived ${elapsed.toFixed(1)} seconds and earned ${Math.floor(elapsed)} points. The herd is already planning a celebration.`; start.textContent='Try again'; overlay.style.display='grid'; };
+      const updateShop = () => { buyLife.disabled = !started || Number(scoreEl.textContent) < 10; };
+      const update = dt => { let dx=(keys.has('d')||keys.has('arrowright'))-(keys.has('a')||keys.has('arrowleft')), dy=(keys.has('s')||keys.has('arrowdown'))-(keys.has('w')||keys.has('arrowup')); const mag=Math.hypot(dx,dy)||1; farmer.x=Math.max(18,Math.min(W-18,farmer.x+dx/mag*farmer.speed*dt)); farmer.y=Math.max(24,Math.min(H-18,farmer.y+dy/mag*farmer.speed*dt)); farmer.invuln=Math.max(0,farmer.invuln-dt); bullets.forEach(b=>{b.x+=b.vx*dt;b.y+=b.vy*dt;}); bullets=bullets.filter(b=>b.x>-10&&b.x<W+10&&b.y>-10&&b.y<H+10); bullets.forEach(b=>{if(boss&&Math.hypot(b.x-boss.x,b.y-boss.y)<boss.r+5){boss.hp-=25;b.x=-999;bossFill.style.width=Math.max(0,boss.hp/10)+'%';if(boss.hp<=0){loot.push({x:boss.x,y:boss.y});loot.push({x:boss.x+12,y:boss.y});killCount++;killsEl.textContent=killCount;enraged=true;enragedUntil=elapsed+10;pigs.forEach(p=>{p.speed*=3;});boss=null;bossBar.style.display='none';}return;} pigs.forEach(p=>{if(p.alive&&Math.hypot(b.x-p.x,b.y-p.y)<p.r+5){p.alive=false;loot.push({x:p.x,y:p.y});lootCount++;killCount++;killsEl.textContent=killCount;b.x=-999;}});}); loot=loot.filter(l=>{if(Math.hypot(l.x-farmer.x,l.y-farmer.y)<22){scoreEl.textContent=++lootCount+Math.floor(elapsed);return false;}return true;}); pigs.filter(p=>p.alive).forEach(p=>{ const x=farmer.x-p.x,y=farmer.y-p.y,d=Math.hypot(x,y)||1; p.x+=x/d*p.speed*dt; p.y+=y/d*p.speed*dt; if(farmer.invuln<=0&&d<farmer.r+p.r+3){farmer.invuln=1.2;gameOver();} }); if(boss){const x=farmer.x-boss.x,y=farmer.y-boss.y,d=Math.hypot(x,y)||1;boss.x+=x/d*boss.speed*dt;boss.y+=y/d*boss.speed*dt;if(farmer.invuln<=0&&d<farmer.r+boss.r){farmer.invuln=1.2;gameOver();}} elapsed+=dt; if(enraged&&elapsed>=enragedUntil){enraged=false;pigs.forEach(p=>{p.speed/=3;});} if(elapsed>=nextSpawn) startNextWave(); timeEl.textContent=elapsed.toFixed(1)+'s'; if(!lootCount)scoreEl.textContent=Math.floor(elapsed); updateShop(); };
+      const loop = now => { if(!started)return; const dt=Math.min((now-last)/1000,.05); last=now; update(dt); draw(); if(started) raf=requestAnimationFrame(loop); };
+      start.addEventListener('click', () => { reset(); started=true; overlay.style.display='none'; updateShop(); last=performance.now(); raf=requestAnimationFrame(loop); });
+      buyLife.addEventListener('click', () => { const points=Number(scoreEl.textContent)||0; if(!started||points<10)return; scoreEl.textContent=points-10; lives++; livesEl.textContent=lives; updateShop(); });
+      canvas.addEventListener('click', shoot);
+      addEventListener('keydown', e => { const k=e.key.toLowerCase(); if(['w','a','s','d','arrowup','arrowleft','arrowdown','arrowright'].includes(k)){ keys.add(k); e.preventDefault(); } if(k===' '||k==='spacebar'||k==='f'){ shoot(); e.preventDefault(); } });
+      addEventListener('keyup', e => keys.delete(e.key.toLowerCase()));
+      reset(); draw();
+    })();
+  </script>
+</body>
+</html>
