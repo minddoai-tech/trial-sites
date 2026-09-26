@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Skyline Run</title>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
   <style>
     :root { --ink:#17223b; --muted:#65708a; --cream:#fffaf2; --blue:#2864d7; --blue-dark:#1c46a0; --gold:#f8ba4c; --mint:#6ee0c0; --danger:#ef6b68; }
     * { box-sizing:border-box; }
@@ -58,7 +59,7 @@
     $('fleet').innerHTML=aircraft.map((a,i)=>`<button class="plane-card ${i===0?'selected':''}" data-i="${i}">${planeMarkup(a)}<h3>${a.name}</h3><p>${a.desc}</p></button>`).join('');
     document.querySelectorAll('.plane-card').forEach(c=>c.addEventListener('click',()=>{selected=+c.dataset.i;refreshSelection()})); $('startBtn').onclick=()=>show('menu'); $('aircraftBtn').onclick=()=>show('aircraft'); $('backMenu').onclick=()=>show('menu'); $('playBtn').onclick=()=>show('game'); $('fleetPlay').onclick=()=>show('game'); $('quitBtn').onclick=()=>{if(game)game.stop();show('menu')}; $('restartBtn').onclick=()=>startGame(); $('restartSmall').onclick=()=>startGame();
     const canvas=$('canvas'),ctx=canvas.getContext('2d'); let keys={}; addEventListener('keydown',e=>{if(['ArrowLeft','ArrowRight'].includes(e.key)){e.preventDefault();keys[e.key]=true}}); addEventListener('keyup',e=>{keys[e.key]=false});
-    function startGame(){if(game)game.stop(); $('gameOver').classList.add('hidden'); game=makeGame();}
+    function startGame(){if(game)game.stop(); $('gameOver').classList.add('hidden'); game=window.THREE?makeGame3D():makeGame();}
     function makeGame3D(){
       const THREE=window.THREE, wrap=canvas.parentElement; canvas.style.display='none'; const view=document.createElement('canvas'); view.className='three-canvas'; wrap.insertBefore(view,wrap.firstChild);
       const renderer=new THREE.WebGLRenderer({canvas:view,antialias:true}); renderer.setPixelRatio(Math.min(devicePixelRatio,2)); renderer.setSize(800,560,false); renderer.shadowMap.enabled=true;
