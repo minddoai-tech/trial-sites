@@ -1,5 +1,14 @@
 [
   {
+    "slug": "leo-car-game",
+    "trialId": "619e49d4-b6dd-461c-a504-6eb8cf393b2b",
+    "studentName": "Leo",
+    "title": "car game",
+    "description": "a game that is all about car",
+    "submittedAt": "2026-10-02T22:54:39.311Z",
+    "thumbnail": "leo-car-game/thumb.png"
+  },
+  {
     "slug": "david-qin-dont-crash-your-plane",
     "trialId": "5132323f-6dff-4952-a848-40015be09284",
     "studentName": "David Qin",
