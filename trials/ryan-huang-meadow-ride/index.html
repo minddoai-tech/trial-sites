@@ -1,0 +1,431 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Meadow Ride</title>
+  <style>
+    :root {
+      --ink: #24342f;
+      --muted: #60726c;
+      --cream: #fffaf0;
+      --panel: rgba(255, 250, 240, .93);
+      --green: #427b58;
+      --green-dark: #28533d;
+      --gold: #e8ad3e;
+      --shadow: 0 18px 45px rgba(38, 70, 53, .18);
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      padding: 20px;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 15% 10%, #fef5d6 0 12%, transparent 30%),
+        linear-gradient(145deg, #d6ead0, #b9d8c1 55%, #f2ddae);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    .game-shell {
+      width: min(1120px, 100%);
+      overflow: hidden;
+      border: 1px solid rgba(40, 83, 61, .16);
+      border-radius: 26px;
+      background: var(--panel);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(12px);
+    }
+
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+      padding: 22px 26px 16px;
+    }
+
+    h1 { margin: 0; font-size: clamp(1.5rem, 3vw, 2.2rem); letter-spacing: -.04em; }
+    .subtitle { margin: 5px 0 0; color: var(--muted); font-size: .94rem; }
+    .badge {
+      border-radius: 999px;
+      padding: 8px 13px;
+      color: #704b10;
+      background: #f8dfa0;
+      font-size: .8rem;
+      font-weight: 800;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+
+    .stage-wrap { padding: 0 18px 18px; }
+    .stage {
+      position: relative;
+      overflow: hidden;
+      border: 4px solid #356548;
+      border-radius: 19px;
+      background: #a9d08d;
+      box-shadow: inset 0 0 0 2px rgba(255,255,255,.28);
+    }
+    canvas { display: block; width: 100%; height: auto; aspect-ratio: 16 / 9; cursor: crosshair; }
+
+    .hud {
+      position: absolute;
+      inset: 14px 14px auto;
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      pointer-events: none;
+    }
+    .hud-card {
+      min-width: 125px;
+      padding: 9px 12px;
+      border-radius: 12px;
+      color: #fffdf3;
+      background: rgba(31, 60, 45, .82);
+      box-shadow: 0 5px 15px rgba(25, 55, 38, .18);
+    }
+    .hud-card small { display: block; opacity: .75; font-size: .69rem; text-transform: uppercase; letter-spacing: .12em; }
+    .hud-card strong { display: block; margin-top: 2px; font-size: 1.1rem; }
+
+    .message {
+      position: absolute;
+      inset: 50% auto auto 50%;
+      width: min(430px, calc(100% - 36px));
+      transform: translate(-50%, -50%);
+      padding: 24px;
+      border: 2px solid rgba(255,255,255,.64);
+      border-radius: 18px;
+      color: #fffdf3;
+      background: rgba(31, 60, 45, .9);
+      text-align: center;
+      box-shadow: 0 14px 32px rgba(25, 55, 38, .25);
+      pointer-events: none;
+    }
+    .message.hidden { display: none; }
+    .message h2 { margin: 0 0 8px; font-size: 1.65rem; }
+    .message p { margin: 0; line-height: 1.5; color: #e7f4df; }
+    .message .win-mark { font-size: 2.5rem; line-height: 1; margin-bottom: 9px; }
+
+    .info-row {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 18px;
+      align-items: center;
+      padding: 0 26px 24px;
+    }
+    .instructions { color: var(--muted); font-size: .9rem; line-height: 1.55; }
+    .instructions strong { color: var(--ink); }
+    button {
+      border: 0;
+      border-radius: 11px;
+      padding: 11px 16px;
+      color: #fffdf3;
+      background: var(--green-dark);
+      font: inherit;
+      font-weight: 800;
+      cursor: pointer;
+      transition: transform .15s ease, background .15s ease;
+    }
+    button:hover { transform: translateY(-1px); background: #1e4331; }
+    button:focus-visible { outline: 3px solid var(--gold); outline-offset: 3px; }
+
+    @media (max-width: 640px) {
+      body { padding: 9px; }
+      header { padding: 17px 17px 13px; }
+      .badge { display: none; }
+      .stage-wrap { padding: 0 9px 9px; }
+      .info-row { grid-template-columns: 1fr; padding: 0 17px 18px; }
+      button { width: 100%; }
+      .hud { inset: 8px 8px auto; }
+      .hud-card { min-width: 0; padding: 7px 9px; }
+      .hud-card strong { font-size: .95rem; }
+    }
+  </style>
+</head>
+<body>
+  <main class="game-shell">
+    <header>
+      <div>
+        <h1>Meadow Ride</h1>
+        <p class="subtitle">Saddle up, follow the trail, and complete three peaceful laps.</p>
+      </div>
+      <div class="badge">No loss state · just ride</div>
+    </header>
+
+    <section class="stage-wrap">
+      <div class="stage">
+        <canvas id="game" width="960" height="540" aria-label="A top-down horse riding game"></canvas>
+        <div class="hud">
+          <div class="hud-card"><small>Progress</small><strong id="lapText">Lap 0 / 3</strong></div>
+          <div class="hud-card"><small>Status</small><strong id="statusText">On foot</strong></div>
+        </div>
+        <div id="message" class="message">
+          <div id="messageMark" class="win-mark">🐎</div>
+          <h2 id="messageTitle">Ready to ride?</h2>
+          <p id="messageBody">Walk up to the horse and press <strong>E</strong> to mount.</p>
+        </div>
+      </div>
+    </section>
+
+    <div class="info-row">
+      <div class="instructions">
+        <strong>Controls:</strong> W up · A left · S down · D right · E mount / dismount · R restart<br />
+        Stay on the tan trail. Pass the golden start line once per circuit; completing <strong>3 laps</strong> wins the ride.
+      </div>
+      <button id="restartButton" type="button">Restart ride</button>
+    </div>
+  </main>
+
+  <script>
+    (() => {
+      "use strict";
+
+      const canvas = document.getElementById("game");
+      const ctx = canvas.getContext("2d");
+      const lapText = document.getElementById("lapText");
+      const statusText = document.getElementById("statusText");
+      const message = document.getElementById("message");
+      const messageMark = document.getElementById("messageMark");
+      const messageTitle = document.getElementById("messageTitle");
+      const messageBody = document.getElementById("messageBody");
+      const restartButton = document.getElementById("restartButton");
+
+      const W = canvas.width;
+      const H = canvas.height;
+      const center = { x: W * .5, y: H * .53 };
+      const track = { outerX: 344, outerY: 184, innerX: 218, innerY: 105 };
+      const keys = new Set();
+      const horseStart = { x: center.x + track.outerX - 56, y: center.y, angle: Math.PI };
+      const player = { x: horseStart.x + 10, y: horseStart.y + 54, angle: -Math.PI / 2, mounted: false };
+      const horse = { x: horseStart.x, y: horseStart.y, angle: horseStart.angle };
+      const hazards = [
+        { x: 615, y: 171, r: 17, kind: "rock" },
+        { x: 338, y: 382, r: 18, kind: "puddle" },
+        { x: 690, y: 366, r: 16, kind: "rock" },
+        { x: 262, y: 188, r: 14, kind: "puddle" }
+      ];
+      let lap = 0;
+      let progressArmed = false;
+      let won = false;
+      let lastTime = performance.now();
+      let audioContext = null;
+      let nextStepSound = 0;
+      let nextHoofSound = 0;
+
+      function unlockAudio() {
+        if (!audioContext) audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        if (audioContext.state === "suspended") audioContext.resume();
+      }
+
+      function tone(frequency, duration, type = "sine", volume = .07, slideTo = frequency) {
+        if (!audioContext) return;
+        const oscillator = audioContext.createOscillator();
+        const gain = audioContext.createGain();
+        const now = audioContext.currentTime;
+        oscillator.type = type;
+        oscillator.frequency.setValueAtTime(frequency, now);
+        oscillator.frequency.exponentialRampToValueAtTime(Math.max(30, slideTo), now + duration);
+        gain.gain.setValueAtTime(.001, now);
+        gain.gain.exponentialRampToValueAtTime(volume, now + .012);
+        gain.gain.exponentialRampToValueAtTime(.001, now + duration);
+        oscillator.connect(gain).connect(audioContext.destination);
+        oscillator.start(now);
+        oscillator.stop(now + duration + .02);
+      }
+
+      function footstep() { tone(185, .07, "square", .045, 115); }
+      function hoofbeat() { tone(105, .1, "triangle", .11, 62); tone(230, .045, "sine", .04, 150); }
+      function horseNicker() { tone(270, .2, "sine", .09, 420); tone(190, .28, "triangle", .06, 125); }
+
+      function reset() {
+        horse.x = horseStart.x; horse.y = horseStart.y; horse.angle = horseStart.angle;
+        player.x = horseStart.x + 10; player.y = horseStart.y + 54; player.angle = -Math.PI / 2; player.mounted = false;
+        lap = 0; progressArmed = false; won = false;
+        messageMark.textContent = "🐎";
+        messageTitle.textContent = "Ready to ride?";
+        messageBody.innerHTML = "Walk up to the horse and press <strong>E</strong> to mount.";
+        message.classList.remove("hidden");
+        updateHud();
+      }
+
+      function updateHud() {
+        lapText.textContent = `Lap ${lap} / 3`;
+        statusText.textContent = won ? "Ride complete!" : (player.mounted ? "Mounted" : "On foot");
+      }
+
+      function distance(a, b) { return Math.hypot(a.x - b.x, a.y - b.y); }
+      function pointOnTrack(x, y) {
+        const outer = ((x - center.x) ** 2 / track.outerX ** 2) + ((y - center.y) ** 2 / track.outerY ** 2);
+        const inner = ((x - center.x) ** 2 / track.innerX ** 2) + ((y - center.y) ** 2 / track.innerY ** 2);
+        return outer <= 1.02 && inner >= .96;
+      }
+
+      function nearStartLine(entity) {
+        return entity.x > center.x + track.innerX - 7 && entity.x < center.x + track.outerX + 7 && Math.abs(entity.y - center.y) < 23;
+      }
+
+      function tryMount() {
+        if (won) return;
+        if (player.mounted) {
+          player.mounted = false;
+          player.x = horse.x - Math.cos(horse.angle) * 22 + Math.sin(horse.angle) * 25;
+          player.y = horse.y - Math.sin(horse.angle) * 22 - Math.cos(horse.angle) * 25;
+          message.classList.remove("hidden");
+          messageTitle.textContent = "Back on foot";
+          messageBody.innerHTML = "Press <strong>E</strong> near the horse to mount again.";
+          updateHud();
+          return;
+        }
+        if (distance(player, horse) < 62) {
+          player.mounted = true;
+          player.x = horse.x; player.y = horse.y; player.angle = horse.angle;
+          horseNicker();
+          message.classList.add("hidden");
+          updateHud();
+        }
+      }
+
+      function moveEntity(entity, dt, mounted) {
+        const horizontal = (keys.has("d") ? 1 : 0) - (keys.has("a") ? 1 : 0);
+        const vertical = (keys.has("s") ? 1 : 0) - (keys.has("w") ? 1 : 0);
+        const length = Math.hypot(horizontal, vertical);
+        if (!length) return;
+        const maxSpeed = mounted ? 132 : 104;
+        const speed = maxSpeed * dt;
+        const nx = entity.x + (horizontal / length) * speed;
+        const ny = entity.y + (vertical / length) * speed;
+        if (mounted && !pointOnTrack(nx, ny)) return;
+        entity.x = Math.max(22, Math.min(W - 22, nx));
+        entity.y = Math.max(22, Math.min(H - 22, ny));
+        entity.angle = Math.atan2(vertical, horizontal);
+        return true;
+      }
+
+      function update(dt) {
+        if (won) return;
+        if (player.mounted) {
+          const moved = moveEntity(horse, dt, true);
+          if (moved && performance.now() >= nextHoofSound) {
+            hoofbeat();
+            nextHoofSound = performance.now() + 235;
+          }
+          player.x = horse.x; player.y = horse.y; player.angle = horse.angle;
+          const inStart = nearStartLine(horse);
+          if (!inStart) progressArmed = true;
+          if (inStart && progressArmed) {
+            lap += 1; progressArmed = false;
+            if (lap >= 3) {
+              won = true;
+              messageMark.textContent = "🏆";
+              messageTitle.textContent = "Three laps complete!";
+              messageBody.innerHTML = "You and your horse finished the ride. Press <strong>R</strong> or the button below to go again.";
+              message.classList.remove("hidden");
+            }
+            updateHud();
+          }
+        } else {
+          const moved = moveEntity(player, dt, false);
+          if (moved && performance.now() >= nextStepSound) {
+            footstep();
+            nextStepSound = performance.now() + 330;
+          }
+          if (distance(player, horse) > 90 && !won) {
+            message.classList.add("hidden");
+          } else if (!won && distance(player, horse) <= 90) {
+            message.classList.remove("hidden");
+            messageTitle.textContent = "Ready to ride?";
+            messageBody.innerHTML = "Press <strong>E</strong> beside the horse to mount.";
+          }
+        }
+        updateHud();
+      }
+
+      function ellipsePath(x, y, rx, ry) {
+        ctx.beginPath(); ctx.ellipse(x, y, rx, ry, 0, 0, Math.PI * 2);
+      }
+
+      function drawBackground() {
+        ctx.fillStyle = "#a9d08d"; ctx.fillRect(0, 0, W, H);
+        ctx.fillStyle = "rgba(255,255,255,.14)";
+        for (let i = 0; i < 75; i++) {
+          const x = (i * 137) % W, y = (i * 83) % H;
+          ctx.beginPath(); ctx.arc(x, y, 1.5 + (i % 3), 0, Math.PI * 2); ctx.fill();
+        }
+        ctx.fillStyle = "#8fc177";
+        for (let i = 0; i < 13; i++) {
+          const x = 34 + (i * 79) % (W - 68), y = i % 2 ? 42 : H - 39;
+          ctx.beginPath(); ctx.arc(x, y, 18, 0, Math.PI * 2); ctx.fill();
+          ctx.fillStyle = "#7db16d"; ctx.fillRect(x - 3, y + 8, 6, 19); ctx.fillStyle = "#8fc177";
+        }
+      }
+
+      function drawTrack() {
+        ctx.fillStyle = "rgba(37, 76, 48, .14)"; ellipsePath(center.x + 4, center.y + 6, track.outerX + 8, track.outerY + 8); ctx.fill();
+        ctx.fillStyle = "#e7c883"; ellipsePath(center.x, center.y, track.outerX, track.outerY); ctx.fill();
+        ctx.fillStyle = "#a9d08d"; ellipsePath(center.x, center.y, track.innerX, track.innerY); ctx.fill();
+        ctx.setLineDash([12, 12]); ctx.strokeStyle = "rgba(123, 88, 39, .26)"; ctx.lineWidth = 3;
+        ellipsePath(center.x, center.y, (track.outerX + track.innerX) / 2, (track.outerY + track.innerY) / 2); ctx.stroke(); ctx.setLineDash([]);
+        ctx.fillStyle = "#d39e42"; ctx.fillRect(center.x + track.innerX - 3, center.y - 22, track.outerX - track.innerX + 6, 5);
+        ctx.fillStyle = "#fff4c9"; ctx.font = "700 12px system-ui"; ctx.textAlign = "center"; ctx.fillText("START", center.x + (track.outerX + track.innerX) / 2, center.y - 29);
+      }
+
+      function drawHazards() {
+        hazards.forEach(h => {
+          if (h.kind === "rock") {
+            ctx.fillStyle = "#67756b"; ctx.beginPath(); ctx.ellipse(h.x, h.y, h.r, h.r * .72, -.3, 0, Math.PI * 2); ctx.fill();
+            ctx.fillStyle = "#89988a"; ctx.beginPath(); ctx.arc(h.x - 4, h.y - 4, h.r * .35, 0, Math.PI * 2); ctx.fill();
+          } else {
+            ctx.fillStyle = "rgba(84, 125, 151, .36)"; ctx.beginPath(); ctx.ellipse(h.x, h.y, h.r * 1.45, h.r * .72, -.2, 0, Math.PI * 2); ctx.fill();
+            ctx.strokeStyle = "rgba(255,255,255,.4)"; ctx.lineWidth = 2; ctx.stroke();
+          }
+        });
+      }
+
+      function drawHorse() {
+        ctx.save(); ctx.translate(horse.x, horse.y); ctx.rotate(horse.angle);
+        ctx.fillStyle = "rgba(42, 61, 46, .2)"; ctx.beginPath(); ctx.ellipse(0, 12, 27, 11, 0, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = "#9b5f3d"; ctx.beginPath(); ctx.ellipse(0, 0, 24, 14, 0, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = "#7a422f"; ctx.beginPath(); ctx.ellipse(22, -10, 12, 10, -.25, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = "#5b3327"; ctx.beginPath(); ctx.moveTo(27,-17); ctx.lineTo(35,-24); ctx.lineTo(32,-9); ctx.closePath(); ctx.fill();
+        ctx.fillStyle = "#f2d18e"; ctx.beginPath(); ctx.arc(27, -11, 2, 0, Math.PI * 2); ctx.fill();
+        ctx.strokeStyle = "#5b3327"; ctx.lineWidth = 4;
+        [[-12,-10],[-10,11],[10,-10],[12,11]].forEach(p => { ctx.beginPath(); ctx.moveTo(p[0],p[1]); ctx.lineTo(p[0] - 2,p[1] + 14); ctx.stroke(); });
+        ctx.strokeStyle = "#3b2821"; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(-22,-4); ctx.quadraticCurveTo(-34,-13,-29,-22); ctx.stroke();
+        ctx.fillStyle = "#d89b44"; ctx.fillRect(-3, -14, 13, 5); ctx.restore();
+      }
+
+      function drawPerson() {
+        if (player.mounted) {
+          ctx.save(); ctx.translate(player.x, player.y - 14); ctx.rotate(player.angle);
+          ctx.fillStyle = "#335f6d"; ctx.fillRect(-7, -8, 15, 16); ctx.fillStyle = "#efbd8e"; ctx.beginPath(); ctx.arc(0, -14, 7, 0, Math.PI * 2); ctx.fill();
+          ctx.fillStyle = "#d8a33d"; ctx.beginPath(); ctx.arc(0, -17, 8, Math.PI, Math.PI * 2); ctx.fill(); ctx.restore(); return;
+        }
+        ctx.save(); ctx.translate(player.x, player.y); ctx.rotate(player.angle);
+        ctx.fillStyle = "rgba(42, 61, 46, .2)"; ctx.beginPath(); ctx.ellipse(0, 10, 12, 5, 0, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = "#335f6d"; ctx.fillRect(-7, -4, 14, 17); ctx.fillStyle = "#efbd8e"; ctx.beginPath(); ctx.arc(0, -11, 7, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = "#d8a33d"; ctx.beginPath(); ctx.arc(0, -14, 8, Math.PI, Math.PI * 2); ctx.fill(); ctx.restore();
+      }
+
+      function draw() { drawBackground(); drawTrack(); drawHazards(); drawHorse(); drawPerson(); }
+      function loop(now) { const dt = Math.min((now - lastTime) / 1000, .05); lastTime = now; update(dt); draw(); requestAnimationFrame(loop); }
+
+      window.addEventListener("keydown", event => {
+        const key = event.key.toLowerCase();
+        if (["w", "a", "s", "d", "e", "r", " "].includes(key)) event.preventDefault();
+        if (["w", "a", "s", "d", "e"].includes(key)) unlockAudio();
+        if (key === "e" && !event.repeat) tryMount();
+        if (key === "r" && !event.repeat) reset();
+        keys.add(key);
+      });
+      window.addEventListener("keyup", event => keys.delete(event.key.toLowerCase()));
+      restartButton.addEventListener("click", reset);
+      reset(); requestAnimationFrame(loop);
+    })();
+  </script>
+</body>
+</html>
