@@ -1,5 +1,14 @@
 [
   {
+    "slug": "bobbie-castaway",
+    "trialId": "17e1c1e1-a512-4cf1-800e-662ea5a2b958",
+    "studentName": "Bobbie",
+    "title": "CASTAWAY",
+    "description": "Escape the Island",
+    "submittedAt": "2026-10-06T00:34:48.243Z",
+    "thumbnail": "bobbie-castaway/thumb.png"
+  },
+  {
     "slug": "ryan-huang-meadow-ride",
     "trialId": "62d29088-a036-42ad-89be-ca0a7516737b",
     "studentName": "Ryan Huang",

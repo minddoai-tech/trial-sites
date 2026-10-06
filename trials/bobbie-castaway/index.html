@@ -1,0 +1,57 @@
+﻿<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Castaway: Escape the Island</title>
+  <style>
+    :root { --ink:#f8f1d4; --muted:#b6c39f; --panel:#13282b; --gold:#f4c95d; --danger:#ff6b5f; }
+    * { box-sizing: border-box; }
+    body { margin:0; min-height:100vh; background:#07191d; color:var(--ink); font-family:ui-monospace, SFMono-Regular, Menlo, monospace; display:grid; place-items:center; }
+    .wrap { width:min(1050px, 96vw); padding:20px 0; }
+    header { display:flex; justify-content:space-between; align-items:end; gap:16px; margin-bottom:12px; }
+    h1 { margin:0; color:var(--gold); letter-spacing:2px; font-size:clamp(22px,4vw,38px); text-shadow:3px 3px #603a36; }
+    .subtitle { color:var(--muted); font-size:12px; margin-top:6px; }
+    .stats { display:flex; flex-wrap:wrap; gap:7px; justify-content:flex-end; }
+    .stat { background:var(--panel); border:2px solid #315053; padding:8px 10px; font-size:12px; min-width:88px; }
+    .stat b { color:var(--gold); font-size:15px; }
+    .game-shell { position:relative; border:4px solid #315053; background:#091b1e; box-shadow:0 10px 0 #040d0e; }
+    canvas { display:block; width:100%; height:auto; image-rendering:pixelated; cursor:crosshair; }
+    .help { display:flex; gap:18px; flex-wrap:wrap; background:var(--panel); border:2px solid #315053; border-top:0; padding:11px 14px; color:var(--muted); font-size:12px; }
+    .help strong { color:var(--ink); }
+    .overlay { position:absolute; inset:0; display:grid; place-items:center; background:rgba(5,17,18,.78); }
+    .card { text-align:center; background:#102729; border:3px solid var(--gold); box-shadow:7px 7px 0 #071315; padding:26px; max-width:430px; }
+    .card h2 { margin:0 0 12px; color:var(--gold); font-size:26px; }
+    .card p { color:var(--muted); line-height:1.6; font-size:13px; }
+    button { background:var(--gold); color:#182326; border:0; padding:12px 18px; font:inherit; font-weight:bold; cursor:pointer; box-shadow:4px 4px 0 #6f5630; }
+    button:hover { transform:translate(1px,1px); box-shadow:3px 3px 0 #6f5630; }
+    .hidden { display:none; }
+    @media (max-width:650px) { header { display:block; } .stats { justify-content:flex-start; margin-top:12px; } .help { line-height:1.7; } }
+  </style>
+</head>
+<body>
+<main class="wrap">
+  <header><div><h1>CASTAWAY</h1><div class="subtitle">ESCAPE THE ISLAND // A PIXEL SURVIVAL ADVENTURE</div></div><div class="stats"><div class="stat">HP <b id="hp">100</b></div><div class="stat">WOOD <b id="wood">0 / 8</b></div><div class="stat">SCRAP <b id="scrap">0 / 5</b></div><div class="stat">DMG <b id="damage">1</b></div><div class="stat">ENEMIES <b id="enemies">0</b></div></div></header>
+  <section class="game-shell"><canvas id="game" width="960" height="600"></canvas><div id="overlay" class="overlay"><div class="card"><h2>THE TIDE IS RISING</h2><p>Gather <b>8 wood</b> and <b>5 scrap</b> to build your boat and escape. Fight the island creatures and chop trees to survive.</p><button id="start">START ADVENTURE</button></div></div></section>
+  <div class="help"><span><strong>ARROW KEYS</strong> move</span><span><strong>CLICK</strong> attack / harvest / build</span><span>Stay alive. Find the boat on the shore.</span></div>
+</main>
+<script>
+(() => {
+  const c=document.getElementById('game'),x=c.getContext('2d'),overlay=document.getElementById('overlay'),start=document.getElementById('start'),hp=document.getElementById('hp'),wood=document.getElementById('wood'),scrap=document.getElementById('scrap'),damageEl=document.getElementById('damage'),enemiesEl=document.getElementById('enemies'); x.imageSmoothingEnabled=false;
+  const W=c.width,H=c.height, keys={}, mouse={x:0,y:0}; let state='ready', p, trees, enemies, fruits, drops, boat, boss, bossSpawned, particles, message, msgT, last=0, spawnT=0;
+  const rand=(a,b)=>Math.random()*(b-a)+a, dist=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y), clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+  function reset(){ p={x:W/2,y:H/2,hp:100,wood:0,scrap:0,damage:1,attack:0,hit:0,face:'down'}; trees=[]; enemies=[]; fruits=[]; drops=[]; boss=null; bossSpawned=false; particles=[]; boat={x:820,y:490,built:false}; for(let i=0;i<13;i++){let q=spot(80,760,100,500);trees.push({x:q.x,y:q.y,alive:true});} for(let i=0;i<7;i++){let q=spot(80,760,100,500);fruits.push({x:q.x,y:q.y,alive:true});} for(let i=0;i<4;i++) spawnEnemy(); state='playing'; overlay.classList.add('hidden'); say('Find supplies. The shore is dangerous.'); }
+  function spot(a,b,c1,d){let q; do q={x:rand(a,b),y:rand(c1,d)};while(Math.hypot(q.x-W/2,q.y-H/2)<110);return q;}
+  function spawnEnemy(){let q=spot(70,790,75,525), r=Math.random(), type=r<.34?'crawler':r<.67?'brute':'runner'; enemies.push({x:q.x,y:q.y,type,hp:type==='brute'?6:type==='runner'?2:3,hit:0});}
+  function say(t){message=t;msgT=2.5;}
+  function update(dt){if(state!=='playing')return; let dx=(keys.ArrowRight?1:0)-(keys.ArrowLeft?1:0),dy=(keys.ArrowDown?1:0)-(keys.ArrowUp?1:0);if(dx||dy){let n=Math.hypot(dx,dy);p.x=clamp(p.x+dx/n*170*dt,45,W-45);p.y=clamp(p.y+dy/n*170*dt,55,H-45);p.face=Math.abs(dx)>Math.abs(dy)?(dx>0?'right':'left'):(dy>0?'down':'up');}p.attack-=dt;p.hit-=dt;spawnT-=dt;if(spawnT<0&&enemies.length<8&&!boss){spawnEnemy();spawnT=4.5;} enemies.forEach(e=>{let d=dist(p,e),speed=e.type==='runner'?48:e.type==='brute'?17:28;if(d<300){e.x+=(p.x-e.x)/d*speed*dt;e.y+=(p.y-e.y)/d*speed*dt;}if(d<25&&p.hit<=0){p.hp-=e.type==='brute'?14:8;p.hit=.55;burst(p.x,p.y,'#ff6b5f');}e.hit-=dt;});if(boss){let d=dist(p,boss);if(d<330){boss.x+=(p.x-boss.x)/d*19*dt;boss.y+=(p.y-boss.y)/d*19*dt;}if(d<33&&p.hit<=0){p.hp-=18;p.hit=.65;}} fruits.forEach(f=>{if(f.alive&&dist(p,f)<22){f.alive=false;p.hp=clamp(p.hp+20,0,100);say('+20 HP');burst(f.x,f.y,'#ff9b4a');}});drops.forEach(d=>{if(d.alive&&dist(p,d)<22){d.alive=false;p.damage++;say('+1 DAMAGE');burst(d.x,d.y,'#f4c95d');}});enemies=enemies.filter(e=>e.hp>0);if(p.wood>=8&&p.scrap>=5&&!boss&&!bossSpawned){boss={x:W/2,y:90,hp:18,max:18};bossSpawned=true;say('THE ISLAND GUARDIAN HAS AWAKENED!');}particles.forEach(a=>{a.x+=a.vx*dt;a.y+=a.vy*dt;a.life-=dt;});particles=particles.filter(a=>a.life>0);if(msgT>0)msgT-=dt;if(p.hp<=0)end(false);if(boss&&boss.hp<=0){boss=null;say('GUARDIAN DEFEATED! Build the boat.');}if(boat.built&&dist(p,boat)<35)end(true); updateUI();}
+  function click(){if(state!=='playing')return;let world={x:mouse.x,y:mouse.y};if(dist(p,world)>78){say('Move closer to interact.');return;}let e=enemies.find(a=>dist(a,world)<24), target=boss&&dist(boss,world)<35?boss:e;if(target){if(p.attack<=0){target.hp-=p.damage;p.attack=.34;burst(target.x,target.y,'#f4c95d');if(target!==boss&&target.hp<=0){p.scrap++;drops.push({x:target.x,y:target.y,alive:true});say('+1 scrap — strength pack dropped');}else say('HIT!');}return;}let t=trees.find(a=>a.alive&&dist(a,world)<25);if(t){t.alive=false;p.wood++;burst(t.x,t.y,'#86c65b');say('+1 wood');return;}if(dist(boat,world)<45){if(p.wood>=8&&p.scrap>=5){boat.built=true;say('BOAT BUILT! Reach it to escape!');}else say('Need 8 wood and 5 scrap.');}}
+  function burst(a,b,col){for(let i=0;i<6;i++)particles.push({x:a,y:b,vx:rand(-45,45),vy:rand(-45,45),life:.5,col});}
+  function end(win){state=win?'won':'lost';overlay.classList.remove('hidden');overlay.querySelector('h2').textContent=win?'YOU ESCAPED!':'THE ISLAND CLAIMED YOU';overlay.querySelector('p').innerHTML=win?'You built your boat and made it home. The horizon is yours.':`You gathered ${p.wood} wood and ${p.scrap} scrap before the waves went quiet.`;overlay.querySelector('button').textContent='PLAY AGAIN';}
+  function draw(){x.fillStyle='#1b7770';x.fillRect(0,0,W,H);x.fillStyle='#e7c96e';x.fillRect(0,0,W,24);x.fillRect(0,H-24,W,24);x.fillStyle='#2b9a88';for(let i=0;i<18;i++){x.fillRect((i*73)%W,8+(i%3)*5,30,3);x.fillRect((i*113)%W,H-15-(i%3)*4,25,3);}x.fillStyle='#7fbd65';x.fillRect(30,45,W-60,H-90);x.fillStyle='#6ca95d';for(let i=0;i<45;i++)x.fillRect((i*83)%900+30,(i*47)%500+50,3,3);trees.forEach(t=>{if(!t.alive)return;x.fillStyle='#674431';x.fillRect(t.x-4,t.y+5,8,17);x.fillStyle='#1d6747';x.fillRect(t.x-14,t.y-9,28,22);x.fillStyle='#328359';x.fillRect(t.x-9,t.y-16,18,10);});fruits.forEach(f=>{if(f.alive){x.fillStyle='#e95b5e';x.fillRect(f.x-7,f.y-7,14,14);x.fillStyle='#4f9b4b';x.fillRect(f.x+2,f.y-11,6,5);}});drops.forEach(d=>{if(d.alive){x.fillStyle='#f4c95d';x.fillRect(d.x-9,d.y-6,18,12);x.fillStyle='#fff1aa';x.fillRect(d.x-5,d.y-3,10,3);}});x.fillStyle=boat.built?'#d39150':'#6b7070';x.fillRect(boat.x-27,boat.y-10,54,20);x.fillStyle=boat.built?'#8d573d':'#464b4c';x.fillRect(boat.x-14,boat.y-20,28,8);x.fillStyle='#e5dbb1';x.fillRect(boat.x+2,boat.y-40,4,20);x.fillRect(boat.x+6,boat.y-38,20,12);enemies.forEach(e=>{x.fillStyle=e.type==='brute'?'#633d83':e.type==='runner'?'#b96b38':'#863f4c';x.fillRect(e.x-13,e.y-11,26,22);x.fillStyle=e.type==='brute'?'#b18bd5':e.type==='runner'?'#f1a34b':'#e95b5e';x.fillRect(e.x-9,e.y-15,18,7);x.fillStyle='#f8f1d4';x.fillRect(e.x-7,e.y-5,4,4);x.fillRect(e.x+4,e.y-5,4,4);});if(boss){x.fillStyle='#442c52';x.fillRect(boss.x-25,boss.y-25,50,50);x.fillStyle='#d45f75';x.fillRect(boss.x-17,boss.y-30,34,9);x.fillStyle='#f8f1d4';x.fillRect(boss.x-13,boss.y-8,7,7);x.fillRect(boss.x+6,boss.y-8,7,7);x.fillStyle='#25172d';x.fillRect(380,32,200,10);x.fillStyle='#d45f75';x.fillRect(380,32,200*(boss.hp/boss.max),10);}x.fillStyle=p.hit>0?'#f8f1d4':'#e39a5a';x.fillRect(p.x-11,p.y-14,22,28);x.fillStyle='#3a4150';if(p.face==='up')x.fillRect(p.x-9,p.y-19,18,7);else if(p.face==='down')x.fillRect(p.x-9,p.y+12,18,7);else x.fillRect(p.x+(p.face==='right'?4:-22),p.y-8,18,7);x.fillStyle='#f4c95d';x.fillRect(p.x+(p.face==='left'?-21:9),p.y-3,12,5);particles.forEach(a=>{x.fillStyle=a.col;x.fillRect(a.x,a.y,5,5);});if(msgT>0){x.fillStyle='rgba(7,25,29,.8)';x.fillRect(W/2-210,34,420,30);x.fillStyle='#f8f1d4';x.font='14px monospace';x.textAlign='center';x.fillText(message,W/2,54);x.textAlign='left';}requestAnimationFrame(draw);}
+  function updateUI(){hp.textContent=Math.max(0,Math.ceil(p.hp));wood.textContent=`${p.wood} / 8`;scrap.textContent=`${p.scrap} / 5`;damageEl.textContent=p.damage;enemiesEl.textContent=enemies.length+(boss?1:0);}
+  c.addEventListener('mousemove',e=>{let r=c.getBoundingClientRect();mouse.x=(e.clientX-r.left)*W/r.width;mouse.y=(e.clientY-r.top)*H/r.height;});c.addEventListener('click',click);addEventListener('keydown',e=>{keys[e.key]=true;if(e.key.startsWith('Arrow'))e.preventDefault();});addEventListener('keyup',e=>keys[e.key]=false);start.onclick=reset;function loop(t){update(Math.min(.04,(t-last)/1000||0));last=t;requestAnimationFrame(loop);}reset();state='ready';overlay.classList.remove('hidden');draw();requestAnimationFrame(loop);
+})();
+</script>
+</body></html>
+
