@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Robo Run — Neon Circuit</title>
+  <style>
+    :root { --ink:#f4f7ff; --muted:#94a4c4; --panel:rgba(13,20,40,.78); --line:rgba(166,190,255,.18); --cyan:#55e8ff; --pink:#ff5c91; }
+    * { box-sizing:border-box; }
+    body { margin:0; min-height:100vh; display:grid; place-items:center; overflow:hidden; color:var(--ink); background:#080d1d; font-family:Inter,ui-sans-serif,system-ui,-apple-system,Segoe UI,sans-serif; }
+    .shell { width:min(1180px,100vw); height:min(760px,100vh); padding:18px; display:flex; flex-direction:column; gap:12px; }
+    .topbar { display:flex; align-items:center; justify-content:space-between; gap:16px; }
+    .brand { display:flex; align-items:center; gap:11px; letter-spacing:.08em; font-size:12px; font-weight:800; text-transform:uppercase; }
+    .brand-mark { width:30px; height:30px; display:grid; place-items:center; border:1px solid rgba(85,232,255,.8); border-radius:9px; color:var(--cyan); box-shadow:0 0 20px rgba(85,232,255,.18); }
+    .hud { display:flex; align-items:center; gap:14px; color:var(--muted); font-size:12px; }
+    .hud strong { color:var(--ink); font-size:19px; letter-spacing:-.02em; }
+    .progress { width:190px; height:6px; overflow:hidden; border-radius:20px; background:#1b2644; }
+    .progress > span { display:block; height:100%; width:0%; border-radius:inherit; background:linear-gradient(90deg,var(--cyan),#8c8cff); box-shadow:0 0 13px var(--cyan); transition:width .1s linear; }
+    .game-frame { position:relative; flex:1; min-height:0; overflow:hidden; border:1px solid var(--line); border-radius:22px; background:#0d1730; box-shadow:0 25px 70px rgba(0,0,0,.35), inset 0 0 80px rgba(58,84,156,.06); }
+    canvas { width:100%; height:100%; display:block; }
+    .overlay { position:absolute; inset:0; display:grid; place-items:center; padding:20px; background:linear-gradient(180deg,rgba(8,13,29,.12),rgba(8,13,29,.68)); pointer-events:none; }
+    .card { width:min(420px,100%); padding:28px; border:1px solid rgba(166,190,255,.22); border-radius:18px; background:var(--panel); box-shadow:0 18px 50px rgba(0,0,0,.3); text-align:center; backdrop-filter:blur(8px); pointer-events:auto; }
+    .eyebrow { color:var(--cyan); font-size:11px; font-weight:800; letter-spacing:.18em; text-transform:uppercase; }
+    h1 { margin:9px 0 10px; font-size:clamp(30px,5vw,48px); line-height:.95; letter-spacing:-.05em; }
+    .card p { margin:0 auto 22px; max-width:320px; color:var(--muted); line-height:1.55; font-size:14px; }
+    button { border:0; border-radius:10px; padding:12px 22px; cursor:pointer; color:#07101e; background:var(--cyan); font:inherit; font-size:13px; font-weight:800; box-shadow:0 8px 22px rgba(85,232,255,.23); transition:transform .15s,filter .15s; }
+    button:hover { transform:translateY(-2px); filter:brightness(1.08); }
+    .tip { position:absolute; left:18px; bottom:15px; color:#8d9cbd; font-size:11px; letter-spacing:.02em; pointer-events:none; }
+    kbd { display:inline-block; padding:3px 6px; border:1px solid rgba(166,190,255,.25); border-radius:5px; color:#dce6ff; background:rgba(166,190,255,.1); font-size:10px; }
+    .hidden { display:none; }
+    @media (max-width:620px) { .shell { padding:10px; height:100vh; } .topbar { align-items:flex-start; flex-direction:column; gap:8px; } .hud { width:100%; justify-content:space-between; } .progress { flex:1; max-width:none; } .game-frame { border-radius:16px; } }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <header class="topbar">
+      <div class="brand"><span class="brand-mark">✦</span> Robo Run <span style="color:#637397">/</span> Neon Circuit</div>
+      <div class="hud"><span>RUN <strong id="percent">0%</strong></span><div class="progress"><span id="progressFill"></span></div><span id="distance">READY</span></div>
+    </header>
+    <section class="game-frame" aria-label="Robo Run game">
+      <canvas id="game" aria-label="Side-scrolling robot platform game"></canvas>
+      <div class="overlay" id="startOverlay">
+        <div class="card">
+          <div class="eyebrow">Sector 07 · Speed trial</div>
+          <h1>Robo Run</h1>
+          <p>Keep the little machine moving. Hold <b>left click</b> to charge a higher jump, then release to clear the circuit.</p>
+          <button id="startBtn">Start run</button>
+        </div>
+      </div>
+      <div class="overlay hidden" id="endOverlay">
+        <div class="card">
+          <div class="eyebrow" id="endEyebrow">Circuit complete</div>
+          <h1 id="endTitle">You made it.</h1>
+          <p id="endText">Clean run. The neon core is yours.</p>
+          <button id="restartBtn">Run it again</button>
+        </div>
+      </div>
+      <div class="tip"><kbd>LEFT CLICK</kbd> hold to jump · release to descend · <kbd>R</kbd> restart</div>
+    </section>
+  </main>
+  <script>
+    (() => {
+      const canvas = document.querySelector('#game'), ctx = canvas.getContext('2d');
+      const startOverlay = document.querySelector('#startOverlay'), endOverlay = document.querySelector('#endOverlay');
+      const startBtn = document.querySelector('#startBtn'), restartBtn = document.querySelector('#restartBtn');
+      const percentEl = document.querySelector('#percent'), fill = document.querySelector('#progressFill'), distanceEl = document.querySelector('#distance');
+      const endEyebrow = document.querySelector('#endEyebrow'), endTitle = document.querySelector('#endTitle'), endText = document.querySelector('#endText');
+      let W=0,H=0, dpr=1, last=0, raf=0, state='ready', elapsed=0, scroll=0, progress=0, holding=false, jumpQueued=0;
+      const world = { length: 11600, speed: 340, ground: 0.78 };
+      const player = { x: 150, y:0, w:34, h:46, vy:0, grounded:false, coyote:0, jumpT:0 };
+      const obstacles = [
+        {x:740,w:90,h:0,type:'gap'}, {x:1120,w:44,h:43,type:'spike'}, {x:1380,w:125,h:46,type:'block'}, {x:1780,w:52,h:42,type:'spike'},
+        {x:2040,w:115,h:0,type:'gap'}, {x:2480,w:44,h:43,type:'spike'}, {x:2770,w:150,h:40,type:'block'}, {x:3190,w:45,h:44,type:'spike'},
+        {x:3500,w:135,h:0,type:'gap'}, {x:3960,w:140,h:49,type:'block'}, {x:4360,w:48,h:45,type:'spike'}, {x:4700,w:110,h:0,type:'gap'},
+        {x:5120,w:130,h:47,type:'block'}, {x:5550,w:44,h:43,type:'spike'}, {x:5850,w:120,h:0,type:'gap'}, {x:6280,w:145,h:44,type:'block'},
+        {x:6750,w:50,h:45,type:'spike'}, {x:7100,w:160,h:0,type:'gap'}, {x:7540,w:130,h:48,type:'block'}, {x:7970,w:45,h:43,type:'spike'},
+        {x:8330,w:120,h:0,type:'gap'}, {x:8750,w:135,h:43,type:'block'}, {x:9180,w:50,h:45,type:'spike'}, {x:9550,w:150,h:0,type:'gap'},
+        {x:10020,w:145,h:47,type:'block'}, {x:10420,w:44,h:44,type:'spike'}, {x:10800,w:115,h:0,type:'gap'}
+      ];
+      function resize(){ const r=canvas.getBoundingClientRect(); dpr=Math.min(devicePixelRatio||1,2); W=r.width; H=r.height; canvas.width=W*dpr; canvas.height=H*dpr; ctx.setTransform(dpr,0,0,dpr,0,0); }
+      function groundY(){ return H*world.ground; }
+      function reset(){ state='running'; elapsed=0; scroll=0; progress=0; holding=false; jumpQueued=0; player.y=groundY()-player.h; player.vy=0; player.grounded=true; player.coyote=0; startOverlay.classList.add('hidden'); endOverlay.classList.add('hidden'); }
+      function jump(){ if(state!=='running') return; if(player.grounded){ player.vy=-680; player.grounded=false; player.coyote=0; player.jumpT=0; jumpQueued=0; } else jumpQueued=.12; }
+      function end(won){ state=won?'won':'lost'; holding=false; endOverlay.classList.remove('hidden'); endEyebrow.textContent=won?'Circuit complete':'System reboot'; endTitle.textContent=won?'You made it.':'Run interrupted.'; endText.textContent=won?'Perfect timing. Neon core secured at '+Math.round(progress*100)+'%.':'You reached '+Math.round(progress*100)+'%. Reset your timing and try again.'; }
+      function update(dt){ if(state!=='running') return; elapsed+=dt; const speed=world.speed*(1+Math.min(progress*.13,.13)); scroll+=speed*dt; progress=Math.min(scroll/world.length,1); player.coyote=Math.max(0,player.coyote-dt); const g=groundY();
+        jumpQueued=Math.max(0,jumpQueued-dt); const previousBottom=player.y+player.h; if(holding && player.vy<120 && player.jumpT<.3) player.vy-=300*dt; player.jumpT+=dt; player.vy+=1750*dt; player.y+=player.vy*dt;
+        const floor= g-player.h; if(player.y>=floor){ player.y=floor; player.vy=0; player.grounded=true; } else player.grounded=false;
+        const px=scroll+player.x, py=player.y, pw=player.w, ph=player.h; for(const o of obstacles){ const ox=o.x, oy=g-(o.type==='block'?o.h:0); if(o.type==='gap'){ if(px+pw>ox && px<ox+o.w && py+ph>=g-6){ end(false); return; } } else if(o.type==='spike'){ if(px+pw-5>ox && px+6<ox+o.w && py+ph>g-o.h+9){ end(false); return; } } else if(o.type==='block'){
+            const overlapsX=px+pw>ox && px<ox+o.w;
+            const landing=overlapsX && player.vy>=0 && previousBottom<=oy+5 && py+ph>=oy;
+            if(landing){ player.y=oy-ph; player.vy=0; player.grounded=true; }
+            else if(overlapsX && py+ph>oy+5 && py<oy+o.h){ end(false); return; }
+          } } if(player.grounded && jumpQueued>0) jump(); if(progress>=1) end(true);
+        percentEl.textContent=Math.round(progress*100)+'%'; fill.style.width=(progress*100)+'%'; distanceEl.textContent=Math.round(progress*world.length)+' / '+world.length;
+      }
+      function draw(){ ctx.clearRect(0,0,W,H); const g=groundY(); const grad=ctx.createLinearGradient(0,0,0,H); grad.addColorStop(0,'#121d42'); grad.addColorStop(1,'#080e20'); ctx.fillStyle=grad; ctx.fillRect(0,0,W,H);
+        ctx.save(); ctx.globalAlpha=.33; for(let i=0;i<12;i++){ const x=(i*170-(scroll*.17)%170), y=45+(i%4)*50; ctx.strokeStyle=i%2?'#48659a':'#5976ad'; ctx.lineWidth=1; ctx.beginPath(); ctx.moveTo(x,y); ctx.lineTo(x+90,y); ctx.lineTo(x+112,y+18); ctx.stroke(); } ctx.restore();
+        ctx.fillStyle='#0e1832'; ctx.fillRect(0,g,W,H-g); ctx.fillStyle='#263c69'; ctx.fillRect(0,g,W,2); ctx.fillStyle='rgba(85,232,255,.18)'; ctx.fillRect(0,g+4,W,1);
+        for(let x=(-scroll%80);x<W;x+=80){ ctx.strokeStyle='rgba(112,143,212,.12)'; ctx.beginPath(); ctx.moveTo(x,g+5); ctx.lineTo(x-34,g+H*.4); ctx.stroke(); }
+        for(const o of obstacles){ const x=o.x-scroll; if(x<-180||x>W+180) continue; if(o.type==='gap'){ ctx.fillStyle='#080d1d'; ctx.fillRect(x,g-2,o.w, H-g+3); ctx.strokeStyle='#ff5c91'; ctx.lineWidth=2; ctx.beginPath(); ctx.moveTo(x,g); ctx.lineTo(x+o.w,g); ctx.stroke(); } else if(o.type==='spike'){ ctx.save(); ctx.shadowBlur=15; ctx.shadowColor='#ff5c91'; ctx.fillStyle='#ff5c91'; ctx.beginPath(); ctx.moveTo(x,g); ctx.lineTo(x+o.w/2,g-o.h); ctx.lineTo(x+o.w,g); ctx.closePath(); ctx.fill(); ctx.restore(); } else { ctx.save(); const bg=ctx.createLinearGradient(x,g-o.h,x+o.w,g); bg.addColorStop(0,'#6e79ff'); bg.addColorStop(1,'#26366f'); ctx.fillStyle=bg; ctx.fillRect(x,g-o.h,o.w,o.h); ctx.strokeStyle='rgba(133,231,255,.7)'; ctx.strokeRect(x+.5,g-o.h+.5,o.w-1,o.h-1); ctx.strokeStyle='rgba(255,255,255,.16)'; ctx.beginPath(); ctx.moveTo(x,g-o.h); ctx.lineTo(x+22,g-o.h-16); ctx.lineTo(x+o.w+22,g-o.h-16); ctx.lineTo(x+o.w,g-o.h); ctx.stroke(); ctx.restore(); } }
+        drawRobot(player.x,player.y); if(state==='running'){ ctx.fillStyle='rgba(85,232,255,.5)'; ctx.fillRect(W-34, g-18, 18, 2); }
+      }
+      function drawRobot(x,y){ ctx.save(); ctx.translate(x,y); ctx.shadowBlur=20; ctx.shadowColor='#55e8ff'; ctx.fillStyle='#55e8ff'; ctx.fillRect(3,10,28,29); ctx.shadowBlur=0; ctx.fillStyle='#18254e'; ctx.fillRect(7,14,20,17); ctx.fillStyle='#f4f7ff'; ctx.fillRect(11,19,4,4); ctx.fillRect(20,19,4,4); ctx.fillStyle='#55e8ff'; ctx.fillRect(8,39,7,7); ctx.fillRect(21,39,7,7); ctx.fillStyle='#ff5c91'; ctx.fillRect(14,4,6,7); ctx.restore(); }
+      function loop(t){ const dt=Math.min((t-last)/1000||0,.034); last=t; update(dt); draw(); raf=requestAnimationFrame(loop); }
+      function press(e){ if(e.button!==0) return; e.preventDefault(); if(state==='ready'){ reset(); jump(); } else if(state==='running'){ holding=true; jump(); } }
+      function release(e){ if(e.button===0) holding=false; }
+      startBtn.addEventListener('click',()=>{reset();}); restartBtn.addEventListener('click',reset); canvas.addEventListener('pointerdown',press); window.addEventListener('pointerup',release); window.addEventListener('keydown',e=>{ if(e.key.toLowerCase()==='r') reset(); }); window.addEventListener('resize',resize);
+      resize(); player.y=groundY()-player.h; requestAnimationFrame(loop);
+    })();
+  </script>
+</body>
+</html>
