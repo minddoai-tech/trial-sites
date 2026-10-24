@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Honeybound Meadow</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <main class="game-shell">
+      <header class="topbar">
+        <div>
+          <p class="eyebrow">A tiny pollen-gathering adventure</p>
+          <h1>Honeybound Meadow</h1>
+        </div>
+        <button id="restartButton" class="button button-light">Restart run</button>
+      </header>
+
+      <section class="game-layout">
+        <div class="canvas-wrap">
+          <canvas id="gameCanvas" width="960" height="600" aria-label="Honeybound Meadow game"></canvas>
+          <div id="gameOver" class="game-over hidden">
+            <div class="game-over-card">
+              <span class="bee-mark">✦</span>
+              <h2>Meadow time!</h2>
+              <p>You made <strong id="finalHoney">0</strong> honey this run.</p>
+              <button id="playAgainButton" class="button button-primary">Play again</button>
+            </div>
+          </div>
+        </div>
+
+        <aside class="sidebar">
+          <div class="stats-card">
+            <div class="stat-row"><span>Honey</span><strong><span id="honey">0</span> 🍯</strong></div>
+            <div class="stat-row"><span>Best run</span><strong><span id="bestHoney">0</span> 🍯</strong></div>
+            <div class="stat-row"><span>Pollen</span><strong><span id="pollen">0</span> / <span id="capacity">40</span></strong></div>
+            <div class="meter"><div id="pollenMeter" class="meter-fill"></div></div>
+            <div class="stat-row small"><span>Time left</span><strong id="timer">3:00</strong></div>
+          </div>
+
+          <div class="panel">
+            <h2>Bee crew</h2>
+            <p class="muted">Your bees follow you and help convert pollen at the hive.</p>
+            <div id="beeList" class="bee-list"></div>
+          </div>
+
+          <div class="panel shop-panel">
+            <div class="panel-heading"><h2>Hive shop</h2><span class="shop-tag">spend honey</span></div>
+            <button id="toolButton" class="shop-item">
+              <span><b>Better scooper</b><small>Gather more pollen each pulse</small></span><strong id="toolCost">35 🍯</strong>
+            </button>
+            <button id="bagButton" class="shop-item">
+              <span><b>Bigger backpack</b><small>Carry 25 more pollen</small></span><strong id="bagCost">50 🍯</strong>
+            </button>
+            <p id="shopMessage" class="shop-message" aria-live="polite"></p>
+          </div>
+
+          <div class="help-card">
+            <h2>How to play</h2>
+            <p><kbd>W A S D</kbd> or <kbd>↑ ↓ ← →</kbd> to move</p>
+            <p><kbd>Space</kbd> to gather while standing in a flower patch</p>
+            <p>Bring full pollen back to the <b>hive</b> to make honey.</p>
+          </div>
+        </aside>
+      </section>
+      <p class="footer-note">Tip: the blue flowers are rich, but every patch can refill. Watch your backpack!</p>
+    </main>
+    <script src="game.js"></script>
+  </body>
+</html>
