@@ -1,0 +1,48 @@
+:root { --ink:#15253a; --muted:#71829a; --cream:#f6f2e9; --blue:#2563eb; --red:#ef5b5b; --gold:#f5b83d; --panel:rgba(255,255,255,.94); }
+    * { box-sizing:border-box; }
+    body { margin:0; min-height:100vh; display:flex; justify-content:center; align-items:center; font-family:Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; color:var(--ink); background:radial-gradient(circle at 20% 10%,#e8f5ff 0 18%,transparent 40%), linear-gradient(135deg,#dbeafe,#fdf2f8 65%,#fff7da); }
+    .shell { width:min(1180px,100vw); padding:18px; }
+    .topbar { display:flex; justify-content:space-between; align-items:flex-end; gap:18px; padding:0 4px 14px; }
+    .eyebrow { color:#55708e; font-size:11px; font-weight:800; letter-spacing:.16em; text-transform:uppercase; }
+    h1 { margin:2px 0 0; font-size:clamp(25px,3vw,38px); letter-spacing:-.05em; }
+    .tagline { color:var(--muted); font-size:13px; text-align:right; }
+    .game-frame { position:relative; overflow:hidden; border:1px solid rgba(21,37,58,.12); border-radius:24px; background:#7ec9de; box-shadow:0 24px 70px rgba(31,68,100,.2); }
+    canvas { display:block; width:100%; height:auto; aspect-ratio:1100/700; cursor:crosshair; }
+    .hud { position:absolute; inset:0; pointer-events:none; }
+    .hud-card { position:absolute; top:16px; padding:11px 13px; border-radius:14px; background:rgba(255,255,255,.86); box-shadow:0 8px 22px rgba(21,37,58,.1); backdrop-filter:blur(7px); }
+    .shop-toggle { position:absolute; left:16px; top:116px; pointer-events:auto; padding:9px 12px; color:#fff; background:#1d4ed8; font-size:12px; box-shadow:0 7px 14px rgba(29,78,216,.25); }
+    .player-card { left:16px; border-left:4px solid var(--blue); }
+    .enemy-card { right:16px; border-right:4px solid var(--red); text-align:right; }
+    .hud-name { font-size:12px; font-weight:800; text-transform:uppercase; letter-spacing:.08em; }
+    .bar { width:150px; height:7px; margin-top:8px; border-radius:8px; overflow:hidden; background:#e5eaf0; }
+    .fill { width:100%; height:100%; transition:width .2s; }
+    .blue { background:var(--blue); } .red { background:var(--red); }
+    .stat { margin-top:6px; color:#60728b; font-size:12px; }
+    .top-center { position:absolute; left:50%; top:16px; transform:translateX(-50%); padding:8px 12px; color:#486178; background:rgba(255,255,255,.74); border-radius:999px; font-size:12px; font-weight:700; white-space:nowrap; }
+    .toast { position:absolute; left:50%; bottom:18px; transform:translateX(-50%); padding:10px 15px; background:rgba(21,37,58,.9); color:#fff; border-radius:999px; font-size:12px; font-weight:700; opacity:0; transition:opacity .2s; }
+    .toast.show { opacity:1; }
+    .overlay { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; padding:28px; background:rgba(21,37,58,.36); backdrop-filter:blur(5px); }
+    .modal { width:min(460px,100%); padding:28px; text-align:center; border:1px solid rgba(255,255,255,.7); border-radius:22px; background:var(--panel); box-shadow:0 20px 60px rgba(21,37,58,.26); }
+    .modal h2 { margin:0 0 8px; font-size:30px; letter-spacing:-.04em; }
+    .modal p { margin:0 0 20px; line-height:1.55; color:var(--muted); font-size:14px; }
+    button { border:0; border-radius:11px; padding:11px 15px; color:#fff; background:var(--blue); font:inherit; font-weight:800; cursor:pointer; box-shadow:0 5px 12px rgba(37,99,235,.2); }
+    button:hover { filter:brightness(1.06); transform:translateY(-1px); }
+    .shop { position:absolute; left:50%; top:50%; width:min(540px,calc(100% - 36px)); transform:translate(-50%,-50%); padding:20px; border-radius:18px; background:var(--panel); box-shadow:0 18px 55px rgba(21,37,58,.28); pointer-events:auto; }
+    .shop-head { display:flex; justify-content:space-between; align-items:start; gap:10px; margin-bottom:12px; }
+    .shop h3 { margin:0; font-size:20px; } .shop small { color:var(--muted); }
+    .shop-close { padding:7px 10px; color:var(--ink); background:#edf2f7; box-shadow:none; }
+    .shop-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:9px; }
+    .buy { padding:12px; text-align:left; color:var(--ink); background:#f4f7fb; border:1px solid #e4ebf2; box-shadow:none; }
+    .buy strong { display:block; font-size:13px; } .buy span { display:block; margin-top:5px; color:var(--muted); font-size:11px; } .buy em { display:block; margin-top:9px; color:#ac7200; font-style:normal; font-size:12px; font-weight:800; }
+    .legend { display:flex; flex-wrap:wrap; justify-content:space-between; gap:10px; margin-top:12px; padding:0 4px; color:#567087; font-size:12px; }
+    kbd { padding:2px 6px; border:1px solid #cdd8e3; border-bottom-width:2px; border-radius:5px; background:#fff; color:#39516b; font-size:11px; font-weight:800; }
+    .hidden { display:none; }
+    .announcement { position:absolute; left:50%; top:76px; transform:translateX(-50%); padding:10px 18px; border-radius:999px; color:#fff; background:rgba(21,37,58,.9); font-size:13px; font-weight:900; letter-spacing:.02em; opacity:0; transition:opacity .2s; white-space:nowrap; }
+    .announcement.show { opacity:1; }
+    .inventory { position:absolute; left:50%; top:50%; width:min(380px,calc(100% - 36px)); transform:translate(-50%,-50%); padding:20px; border-radius:18px; background:var(--panel); box-shadow:0 18px 55px rgba(21,37,58,.28); pointer-events:auto; }
+    .inventory h3 { margin:0; font-size:20px; } .inventory p { margin:4px 0 14px; color:var(--muted); font-size:12px; }
+    .inventory-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+    .slot { padding:16px 12px; color:var(--ink); text-align:left; background:#f4f7fb; border:2px solid #e4ebf2; box-shadow:none; }
+    .slot.active { border-color:var(--blue); background:#eaf1ff; }
+    .slot strong { display:block; } .slot span { display:block; margin-top:5px; color:var(--muted); font-size:11px; }
+    @media (max-width:700px) { .topbar { align-items:start; flex-direction:column; gap:4px; } .tagline { text-align:left; } .hud-card { padding:8px 10px; } .bar { width:100px; } .shop-grid { grid-template-columns:1fr 1fr; } }

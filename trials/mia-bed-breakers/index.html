@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Bedbreakers — Island Duel</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <main class="shell">
+    <header class="topbar"><div><div class="eyebrow">Tiny arcade / island duel</div><h1>Bedbreakers</h1></div><div class="tagline">Break their bed. Protect yours.<br>First knockout wins the island.</div></header>
+    <section class="game-frame">
+      <canvas id="game" width="1100" height="700" aria-label="Bedbreakers game canvas"></canvas>
+      <div class="hud">
+        <div class="hud-card player-card"><div class="hud-name">◆ You</div><div class="bar"><div id="hp" class="fill blue"></div></div><div class="stat">HP <b id="hpText">100</b> · ◉ <b id="coins">0</b> coins</div><div class="stat" id="gearText">Wooden sword · No armor</div></div>
+        <div class="hud-card enemy-card"><div class="hud-name">Opponent ◇</div><div class="bar"><div id="enemyHp" class="fill red"></div></div><div class="stat">HP <b id="enemyHpText">100</b> · Bed <b id="enemyBedText">100</b></div></div>
+        <button class="shop-toggle" id="shopButton">SHOP <kbd>E</kbd></button><div class="top-center" id="phase">DROP IN 3</div><div class="toast" id="toast"></div><div class="announcement" id="announcement"></div>
+      </div>
+      <div id="shop" class="shop hidden"><div class="shop-head"><div><h3>Island shop</h3><small>Combat continues while this is open.</small></div><button class="shop-close" id="closeShop">Close <kbd>E</kbd></button></div><div class="shop-grid"><button class="buy" data-buy="armor"><strong>Armor: <span id="armorOffer">Wooden</span></strong><span>Tiered protection</span><em id="armorCost">◉ 10</em></button><button class="buy" data-buy="sword"><strong>Sword: <span id="swordOffer">Stone</span></strong><span>Tiered sword cosmetic</span><em id="swordCost">◉ 10</em></button><button class="buy" data-buy="blocks"><strong>Blocks</strong><span>+8 blocks to place</span><em>◉ 4</em></button><button class="buy" data-buy="tnt"><strong>TNT</strong><span>Explosive attack item</span><em>◉ 8</em></button><button class="buy" data-buy="axe"><strong>Axe</strong><span>Break beds and blocks</span><em>◉ 6</em></button><button class="buy" data-buy="arrows"><strong>Arrows</strong><span>+3 arrows · 2 HP each</span><em>◉ 4</em></button><button class="buy" data-buy="bow"><strong>Regular bow</strong><span>Equip with arrows</span><em>◉ 4</em></button><button class="buy" data-buy="crossbow"><strong>Crossbow</strong><span>Equip with arrows</span><em>◉ 4</em></button><button class="buy" data-buy="fireball"><strong>Fireball</strong><span>Ranged attack item</span><em>◉ 8</em></button></div></div>
+      <div id="inventory" class="inventory hidden"><div class="shop-head"><div><h3>Inventory</h3><p>Press F again to close. Carry one tool at a time.</p></div><button class="shop-close" id="closeInventory">Close <kbd>F</kbd></button></div><div class="inventory-grid"><button class="slot active" data-tool="sword"><strong>🗡 <span id="inventorySword">Wooden sword</span></strong><span>Click nearby fighter · 5 HP</span></button><button class="slot" data-tool="axe"><strong>🪓 Battle axe</strong><span>Click bed or block · 1 hit</span></button><button class="slot" data-tool="bow"><strong>🏹 Regular bow</strong><span>Click nearby target · 2 HP · <b id="arrowCount">0</b> arrows</span></button><button class="slot" data-tool="crossbow"><strong>🏹 Crossbow</strong><span>Click nearby target · 2 HP · <b id="arrowCount2">0</b> arrows</span></button></div></div>
+      <div id="result" class="overlay hidden"><div class="modal"><div class="eyebrow">Match complete</div><h2 id="resultTitle">Victory!</h2><p id="resultText"></p><button id="restart">Play again</button></div></div>
+    </section>
+    <div class="legend"><span><kbd>W A S D</kbd> move</span><span><kbd>Click</kbd> attack</span><span><kbd>Right click</kbd> place block</span><span><kbd>E</kbd> open shop</span><span><kbd>R</kbd> restart</span></div>
+  </main>
+  <script src="game.js"></script>
+</body>
+</html>
