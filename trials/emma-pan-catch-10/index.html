@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Catch 10!</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <main class="game-shell">
+      <header class="topbar">
+        <div>
+          <p class="eyebrow">A quick reflex challenge</p>
+          <h1>Catch 10!</h1>
+          <p class="subtitle">Move the basket. Catch the blue balls. Avoid the red ones.</p>
+        </div>
+        <button id="restartButton" class="button button-light" type="button">Restart game</button>
+      </header>
+
+      <section class="game-layout">
+        <div class="canvas-wrap">
+          <canvas id="gameCanvas" width="800" height="560" aria-label="Catch 10 game area"></canvas>
+          <div id="gameOverlay" class="overlay hidden" aria-live="polite">
+            <div class="overlay-card">
+              <div id="resultIcon" class="result-icon">★</div>
+              <h2 id="resultTitle">You win!</h2>
+              <p id="resultText">Nice catching.</p>
+              <button id="playAgainButton" class="button button-primary" type="button">Play again</button>
+            </div>
+          </div>
+        </div>
+
+        <aside class="sidebar">
+          <div class="score-card">
+            <div class="score-row"><span>Level</span><strong><span id="level">1</span> / 3</strong></div>
+            <div class="score-row"><span>Level goal</span><strong><span id="goal">10</span></strong></div>
+            <div class="score-row"><span>Good catches</span><strong><span id="caught">0</span> / <span id="caughtGoal">10</span></strong></div>
+            <div class="progress"><div id="progressFill" class="progress-fill"></div></div>
+            <div class="score-row danger"><span>Mistakes left</span><strong id="lives">3</strong></div>
+            <div class="progress lives-progress"><div id="livesFill" class="lives-fill"></div></div>
+          </div>
+
+          <section class="panel">
+            <h2>How to play</h2>
+            <p>Catch the <span class="blue-dot"></span> blue balls with your basket.</p>
+            <p>Avoid the <span class="red-dot"></span> red items. Missing a blue ball is okay, but catching a red one costs a life.</p>
+            <p class="controls"><kbd>←</kbd> <kbd>→</kbd> or <kbd>A</kbd> <kbd>D</kbd> to move</p>
+            <p class="mobile-hint">On touch screens, drag your basket left and right.</p>
+          </section>
+
+          <section class="panel legend">
+            <h2>Goal</h2>
+            <p>Clear all 3 levels: catch 10, then 15, then 20 blue balls.</p>
+            <div class="legend-item"><span class="legend-ball good"></span> Good ball</div>
+            <div class="legend-item"><span class="legend-ball bad"></span> Don't catch</div>
+          </section>
+        </aside>
+      </section>
+
+      <p class="footer-note">Tip: Keep moving — the items get faster as your score climbs.</p>
+    </main>
+    <script src="game.js"></script>
+  </body>
+</html>
