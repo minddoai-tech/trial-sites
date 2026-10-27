@@ -1,0 +1,219 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Bat the Good Stuff</title>
+  <style>
+    :root {
+      --ink: #152238;
+      --muted: #69758a;
+      --cream: #f7f4ee;
+      --panel: rgba(255, 255, 255, .86);
+      --line: #e6e0d5;
+      --blue: #4f83ff;
+      --green: #3cc58a;
+      --yellow: #ffbd45;
+      --red: #ed5c68;
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      background: radial-gradient(circle at 15% 10%, #fffdf8 0, transparent 35%),
+                  linear-gradient(135deg, #f7f4ee 0%, #eef2f8 100%);
+      color: var(--ink);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    .shell { width: min(960px, calc(100% - 28px)); padding: 28px 0; }
+    .topbar { display: flex; justify-content: space-between; align-items: end; gap: 18px; margin-bottom: 16px; }
+    .eyebrow { margin: 0 0 5px; color: var(--muted); font-size: 12px; font-weight: 800; letter-spacing: .15em; text-transform: uppercase; }
+    h1 { margin: 0; font-size: clamp(29px, 5vw, 48px); line-height: .95; letter-spacing: -.055em; }
+    .topbar p { max-width: 285px; margin: 0; color: var(--muted); font-size: 14px; line-height: 1.45; text-align: right; }
+
+    .game-card { overflow: hidden; border: 1px solid rgba(255,255,255,.85); border-radius: 24px; background: var(--panel); box-shadow: 0 22px 60px rgba(52, 65, 84, .14); backdrop-filter: blur(12px); }
+    .stats { display: grid; grid-template-columns: repeat(3, 1fr); border-bottom: 1px solid var(--line); }
+    .stat { padding: 15px 20px; }
+    .stat + .stat { border-left: 1px solid var(--line); }
+    .stat-label { color: var(--muted); font-size: 11px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; }
+    .stat-value { margin-top: 2px; font-size: 25px; font-weight: 800; letter-spacing: -.04em; }
+    .stat-value span { color: var(--muted); font-size: 13px; font-weight: 600; letter-spacing: 0; }
+
+    .arena-wrap { padding: 18px; }
+    #arena { display: block; width: 100%; height: min(66vh, 540px); min-height: 390px; border-radius: 16px; background: #16243a; box-shadow: inset 0 0 0 1px rgba(255,255,255,.08); touch-action: none; }
+    .bottom { display: flex; justify-content: space-between; align-items: center; gap: 18px; padding: 0 20px 20px; }
+    .instructions { color: var(--muted); font-size: 13px; line-height: 1.45; }
+    .instructions strong { color: var(--ink); }
+    button { border: 0; border-radius: 10px; padding: 11px 17px; background: var(--ink); color: white; font: inherit; font-size: 13px; font-weight: 800; cursor: pointer; transition: transform .15s, background .15s; }
+    button:hover { background: #243754; transform: translateY(-1px); }
+    button:active { transform: translateY(0); }
+    .legend { display: flex; flex-wrap: wrap; gap: 10px 15px; margin-top: 13px; color: var(--muted); font-size: 12px; }
+    .legend-item { display: inline-flex; align-items: center; gap: 6px; }
+    .dot { width: 9px; height: 9px; border-radius: 50%; }
+    .blue { background: var(--blue); } .green { background: var(--green); } .yellow { background: var(--yellow); } .red { background: var(--red); }
+
+    @media (max-width: 600px) {
+      .topbar { align-items: start; flex-direction: column; }
+      .topbar p { text-align: left; }
+      .stats { grid-template-columns: repeat(3, 1fr); }
+      .stat { padding: 12px 11px; }
+      .stat-value { font-size: 20px; }
+      .arena-wrap { padding: 10px; }
+      #arena { min-height: 390px; height: 62vh; }
+      .bottom { align-items: stretch; flex-direction: column; padding: 0 12px 14px; }
+      button { width: 100%; }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <div class="topbar">
+      <div><p class="eyebrow">Reflex game · one screen</p><h1>Bat the good stuff.</h1></div>
+      <p>Move the bat into the falling shapes. Good hits build your score; glitchy red ones drain it.</p>
+    </div>
+
+    <section class="game-card">
+      <div class="stats" aria-live="polite">
+        <div class="stat"><div class="stat-label">Score</div><div id="score" class="stat-value">0</div></div>
+        <div class="stat"><div class="stat-label">Level <span id="level">1</span></div><div id="target" class="stat-value">30 <span>points</span></div></div>
+        <div class="stat"><div class="stat-label">Best</div><div id="best" class="stat-value">0</div></div>
+      </div>
+      <div class="arena-wrap"><canvas id="arena" aria-label="Game arena"></canvas></div>
+      <div class="bottom">
+        <div class="instructions"><strong>W A S D</strong> or <strong>Arrow Keys</strong> to move · <strong>Space</strong> to pause · Clear all 10 levels to win
+          <div class="legend"><span class="legend-item"><i class="dot blue"></i>Blue +2</span><span class="legend-item"><i class="dot green"></i>Green +2</span><span class="legend-item"><i class="dot yellow"></i>Yellow +3</span><span class="legend-item"><i class="dot red"></i>Glitch −4</span></div>
+        </div>
+        <button id="restart" type="button">Restart game</button>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    (() => {
+      const canvas = document.querySelector('#arena');
+      const ctx = canvas.getContext('2d');
+      const scoreEl = document.querySelector('#score');
+      const levelEl = document.querySelector('#level');
+      const targetEl = document.querySelector('#target');
+      const bestEl = document.querySelector('#best');
+      const restartBtn = document.querySelector('#restart');
+      const goals = [30, 50, 70, 95, 110, 145, 165, 180, 200, 235];
+      const keys = new Set();
+      const colors = { blue: '#4f83ff', green: '#3cc58a', yellow: '#ffbd45', red: '#ed5c68' };
+      let width = 0, height = 0, dpr = 1, lastTime = 0, spawnClock = 0, gameState;
+      let best = Number(localStorage.getItem('bat-game-best') || 0);
+      bestEl.textContent = best;
+
+      function resize() {
+        const rect = canvas.getBoundingClientRect();
+        dpr = Math.min(window.devicePixelRatio || 1, 2);
+        width = rect.width; height = rect.height;
+        canvas.width = Math.floor(width * dpr); canvas.height = Math.floor(height * dpr);
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        if (gameState) gameState.bat.x = Math.min(gameState.bat.x, width - gameState.bat.w);
+      }
+
+      function reset() {
+        gameState = { score: 0, level: 1, elapsed: 0, paused: false, ended: false, won: false, shake: 0,
+          bat: { x: width / 2 - 49, y: height * .63, w: 98, h: 18, speed: 330 }, objects: [] };
+        scoreEl.textContent = '0';
+        levelEl.textContent = '1';
+        targetEl.innerHTML = goals[0] + ' <span>points</span>';
+        spawnClock = 0; lastTime = performance.now();
+        requestAnimationFrame(loop);
+      }
+
+      function spawn() {
+        const roll = Math.random();
+        const type = roll < .19 ? 'red' : roll < .49 ? 'green' : roll < .79 ? 'blue' : 'yellow';
+        const size = 15 + Math.random() * 9;
+        gameState.objects.push({ x: size + Math.random() * (width - size * 2), y: -30, size, type,
+          speed: 118 + Math.random() * 45 + (gameState.level - 1) * 9 + Math.min(gameState.elapsed * 2, 85), drift: (Math.random() - .5) * 30, spin: Math.random() * 6.2, hit: false });
+      }
+
+      function collide(o, b) {
+        return o.x + o.size > b.x && o.x - o.size < b.x + b.w && o.y + o.size > b.y && o.y - o.size < b.y + b.h;
+      }
+
+      function hitObject(o) {
+        o.hit = true;
+        const delta = o.type === 'red' ? -4 : o.type === 'yellow' ? 3 : 2;
+        gameState.score = Math.max(-10, gameState.score + delta);
+        gameState.shake = o.type === 'red' ? 12 : 5;
+        if (o.type !== 'red' && gameState.score >= goals[gameState.level - 1]) {
+          if (gameState.level === goals.length) { gameState.score = goals[goals.length - 1]; gameState.ended = true; gameState.won = true; }
+          else { gameState.level += 1; levelEl.textContent = gameState.level; targetEl.innerHTML = goals[gameState.level - 1] + ' <span>points</span>'; }
+        }
+        if (gameState.score <= -10) { gameState.ended = true; gameState.won = false; }
+        if (gameState.score > best) { best = gameState.score; bestEl.textContent = best; localStorage.setItem('bat-game-best', best); }
+        scoreEl.textContent = gameState.score;
+      }
+
+      function update(dt) {
+        if (gameState.paused || gameState.ended) return;
+        gameState.elapsed += dt;
+        const b = gameState.bat;
+        let dx = 0, dy = 0;
+        if (keys.has('a')) dx--; if (keys.has('d')) dx++; if (keys.has('w')) dy--; if (keys.has('s')) dy++;
+        const length = Math.hypot(dx, dy) || 1;
+        b.x = Math.max(8, Math.min(width - b.w - 8, b.x + dx / length * b.speed * dt));
+        b.y = Math.max(height * .12, Math.min(height - 34, b.y + dy / length * b.speed * dt));
+        spawnClock -= dt;
+        if (spawnClock <= 0) { spawn(); spawnClock = Math.max(.38, .78 - gameState.elapsed * .006); }
+        gameState.objects.forEach(o => { o.y += o.speed * dt; o.x += o.drift * dt; o.spin += dt * 2; if (!o.hit && collide(o, b)) hitObject(o); });
+        gameState.objects = gameState.objects.filter(o => o.y < height + 38 && !o.hit);
+        gameState.shake = Math.max(0, gameState.shake - dt * 40);
+      }
+
+      function drawObject(o) {
+        ctx.save(); ctx.translate(o.x, o.y); ctx.rotate(o.spin);
+        ctx.fillStyle = colors[o.type]; ctx.shadowColor = colors[o.type]; ctx.shadowBlur = o.type === 'red' ? 18 : 10;
+        if (o.type === 'red') {
+          ctx.fillRect(-o.size, -o.size, o.size * 2, o.size * 2);
+          ctx.globalAlpha = .75; ctx.fillStyle = '#ffb0b5';
+          for (let i = -o.size; i < o.size; i += 7) ctx.fillRect(i, -o.size, 3, o.size * 2);
+          ctx.globalAlpha = 1; ctx.strokeStyle = '#fff'; ctx.lineWidth = 2; ctx.strokeRect(-o.size, -o.size, o.size * 2, o.size * 2);
+        } else {
+          ctx.beginPath(); ctx.arc(0, 0, o.size, 0, Math.PI * 2); ctx.fill();
+          ctx.fillStyle = 'rgba(255,255,255,.62)'; ctx.beginPath(); ctx.arc(-o.size * .32, -o.size * .32, o.size * .22, 0, Math.PI * 2); ctx.fill();
+        }
+        ctx.restore();
+      }
+
+      function draw() {
+        const shakeX = gameState.shake ? (Math.random() - .5) * gameState.shake : 0;
+        ctx.save(); ctx.translate(shakeX, 0);
+        const gradient = ctx.createLinearGradient(0, 0, 0, height); gradient.addColorStop(0, '#1c2f4a'); gradient.addColorStop(1, '#101b2d');
+        ctx.fillStyle = gradient; ctx.fillRect(-20, 0, width + 40, height);
+        ctx.strokeStyle = 'rgba(255,255,255,.06)'; ctx.lineWidth = 1;
+        for (let y = 35; y < height; y += 45) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(width, y); ctx.stroke(); }
+        gameState.objects.forEach(drawObject);
+        const b = gameState.bat; ctx.save(); ctx.translate(b.x + b.w / 2, b.y + b.h / 2);
+        ctx.fillStyle = '#f5f0e8'; ctx.shadowColor = 'rgba(0,0,0,.4)'; ctx.shadowBlur = 10; ctx.fillRect(-b.w / 2, -b.h / 2, b.w, b.h);
+        ctx.fillStyle = '#d8cdbc'; ctx.fillRect(-b.w / 2 + 10, -b.h / 2 + 4, b.w - 20, 3); ctx.restore(); ctx.restore();
+        if (gameState.paused || gameState.ended) overlay();
+      }
+
+      function overlay() {
+        ctx.fillStyle = 'rgba(10, 18, 31, .68)'; ctx.fillRect(0, 0, width, height);
+        ctx.textAlign = 'center'; ctx.fillStyle = '#fff'; ctx.font = '800 30px Inter, system-ui';
+        const title = gameState.ended ? (gameState.won ? 'You nailed it!' : 'Too glitchy!') : 'Paused'; ctx.fillText(title, width / 2, height / 2 - 13);
+        ctx.font = '500 14px Inter, system-ui'; ctx.fillStyle = '#d9e2ef';
+        ctx.fillText(gameState.ended ? (gameState.won ? 'Target score reached.' : 'Your score hit −10.') : 'Press Space to keep playing', width / 2, height / 2 + 17);
+      }
+
+      function loop(now) { const dt = Math.min((now - lastTime) / 1000, .035); lastTime = now; update(dt); draw(); if (!gameState.ended) requestAnimationFrame(loop); }
+      window.addEventListener('resize', resize);
+      const controlKeys = { arrowup: 'w', arrowleft: 'a', arrowdown: 's', arrowright: 'd' };
+      window.addEventListener('keydown', e => { const rawKey = e.key.toLowerCase(); const key = controlKeys[rawKey] || rawKey; if (['w','a','s','d',' '].includes(key)) e.preventDefault(); if (key === ' ') { if (!gameState.ended) gameState.paused = !gameState.paused; return; } if (['w','a','s','d'].includes(key)) keys.add(key); });
+      window.addEventListener('keyup', e => { const rawKey = e.key.toLowerCase(); keys.delete(controlKeys[rawKey] || rawKey); });
+      restartBtn.addEventListener('click', reset);
+      resize(); reset();
+    })();
+  </script>
+</body>
+</html>

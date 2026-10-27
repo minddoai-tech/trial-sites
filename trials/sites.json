@@ -1,5 +1,14 @@
 [
   {
+    "slug": "micah-bat-the-good-stuff",
+    "trialId": "7773a82e-6bca-4d0a-b0b8-8ca16325b6d8",
+    "studentName": "Micah",
+    "title": "Bat the Good Stuff",
+    "description": "Use the keyboard to control the bat and hit all of the objects except the glitchy red squares. The game ends when the player reaches level 10.",
+    "submittedAt": "2026-10-27T02:34:38.432Z",
+    "thumbnail": "micah-bat-the-good-stuff/thumb.png"
+  },
+  {
     "slug": "ezra-night-shift",
     "trialId": "37d5b890-bd46-44f3-97c8-fe0d87d2cfc2",
     "studentName": "Ezra",
