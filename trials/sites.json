@@ -1,5 +1,14 @@
 [
   {
+    "slug": "ezra-night-shift",
+    "trialId": "37d5b890-bd46-44f3-97c8-fe0d87d2cfc2",
+    "studentName": "Ezra",
+    "title": "night shift",
+    "description": "A mix between a restaurant management game and a horror game. The player can upgrade their restaurant to make more money, but they also need to watch out for anomolous customers and survive the night.",
+    "submittedAt": "2026-10-27T02:29:44.658Z",
+    "thumbnail": "ezra-night-shift/thumb.png"
+  },
+  {
     "slug": "emma-pan-catch-10",
     "trialId": "74987195-ff89-4245-afd7-cde7c217ea9d",
     "studentName": "Emma Pan",

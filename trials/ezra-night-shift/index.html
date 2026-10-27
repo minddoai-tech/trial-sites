@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Night Shift: The Last Table</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="first-person.css" />
+</head>
+<body>
+  <main class="app-shell">
+    <button class="side-toggle" id="sideToggle" aria-expanded="false">☰ <span>OPEN SHIFT PANEL</span></button>
+    <header class="topbar">
+      <div class="brand-lockup">
+        <div class="brand-mark">☾</div>
+        <div>
+          <p class="eyebrow">AFTER HOURS SIMULATOR</p>
+          <h1 id="brandName">The Last Table</h1>
+        </div>
+      </div>
+      <div class="topbar-actions">
+        <button class="ghost-btn" id="howToBtn">How to survive</button>
+        <button class="danger-btn" id="restartBtn">Restart shift</button>
+      </div>
+    </header>
+
+    <section class="intro-row">
+      <div>
+        <p class="eyebrow">NIGHT SHIFT <span id="shiftNumber">01</span></p>
+        <h2>Keep the doors open.<br><span>Trust nobody.</span></h2>
+      </div>
+      <div class="shift-status">
+        <div class="clock-wrap"><span class="clock-icon">◷</span><span id="clock">12:00 AM</span><small>until dawn</small></div>
+        <div class="survival-meter"><div class="meter-label"><span>survival</span><b id="survivalText">100%</b></div><div class="meter"><span id="survivalBar"></span></div></div>
+      </div>
+    </section>
+
+    <section class="stats-strip">
+      <div class="stat"><span class="stat-icon gold">$</span><div><small>cash on hand</small><strong id="money">$48</strong></div></div>
+      <div class="stat"><span class="stat-icon blue">▦</span><div><small>tables</small><strong id="tableCount">2 / 2</strong></div></div>
+      <div class="stat"><span class="stat-icon purple">✦</span><div><small>menu reputation</small><strong id="rep">New blood</strong></div></div>
+      <div class="stat"><span class="stat-icon red">!</span><div><small>anomalies survived</small><strong id="anomalies">0</strong></div></div>
+    </section>
+
+    <section class="game-grid">
+      <div class="panel restaurant-panel">
+        <div class="panel-heading"><div><p class="eyebrow">YOUR RESTAURANT</p><h3>Floor plan</h3></div><span class="open-pill"><i></i> OPEN</span></div>
+        <div class="restaurant-floor first-person-view" id="restaurantFloor">
+          <canvas id="gameCanvas" width="900" height="500" aria-label="First person restaurant view"></canvas>
+          <div class="game-hud"><div><span>cash</span><b id="gameMoney">$48</b></div><div><span>night</span><b id="gameDay">01</b></div><div><span>time</span><b id="gameTime">12:00 AM</b></div></div>
+          <div class="crosshair">+</div><div class="scene-caption" id="floorNoise">the fridge hums</div>
+          <div class="controls-hint"><kbd>WASD</kbd> move <kbd>← →</kbd> turn <kbd>E</kbd> interact <kbd>P</kbd> place table</div>
+        </div>
+        <div class="floor-footer"><span><i class="legend-dot player-dot"></i> your view</span><span><i class="legend-dot customer-dot"></i> customer</span><span><i class="legend-dot anomaly-dot"></i> anomaly</span><span class="view-note">Walk the floor. Face the door when the bell rings.</span></div>
+      </div>
+
+      <aside class="side-stack">
+        <div class="panel customer-panel" id="customerPanel">
+          <div class="panel-heading compact"><div><p class="eyebrow">AT THE DOOR</p><h3 id="customerTitle">No one is waiting</h3></div><span class="signal" id="signal">—</span></div>
+          <div class="customer-card idle" id="customerCard"><div class="customer-portrait" id="customerPortrait">?</div><div class="customer-copy"><strong id="customerName">The bell is silent.</strong><p id="customerDesc">A new customer will arrive soon. Watch for details that do not belong.</p></div></div>
+          <div class="decision-actions"><button class="accept-btn" id="acceptBtn" disabled>Seat customer <span>↵</span></button><button class="decline-btn" id="declineBtn" disabled>Turn away <span>ESC</span></button></div>
+          <div class="tip"><span>◉</span><p><b>Listen closely.</b> Anomalies have one detail that breaks the room. Seating one drains your survival.</p></div>
+        </div>
+        <div class="panel log-panel"><div class="panel-heading compact"><div><p class="eyebrow">SHIFT LOG</p><h3>What you notice</h3></div><span class="live-dot">● LIVE</span></div><div class="log" id="log"><div class="log-item"><span>12:00</span><p>Doors unlocked. The night is listening.</p></div></div></div>
+      </aside>
+    </section>
+
+    <div class="utility-drawer" id="utilityDrawer">
+    <section class="lower-grid">
+      <div class="panel menu-panel"><div class="panel-heading compact"><div><p class="eyebrow">MENU TREE</p><h3>Discover dishes</h3></div><span class="cost-tag">earn to unlock</span></div><div class="menu-tree" id="menuTree"></div></div>
+      <div class="panel upgrade-panel"><div class="panel-heading compact"><div><p class="eyebrow">RESTAURANT KIT</p><h3>Spend your cash</h3></div><span class="eyebrow">keep improving</span></div><div class="upgrade-list" id="upgradeList"></div></div>
+      <div class="panel identity-panel"><div class="panel-heading compact"><div><p class="eyebrow">YOUR SIGN</p><h3>Make it yours</h3></div><span class="eyebrow">optional</span></div><label class="name-input"><span>restaurant name</span><input id="nameInput" maxlength="26" value="The Last Table" /></label><div class="logo-tools"><button class="tool active" data-tool="draw">✎ draw</button><button class="tool" data-tool="erase">⌫ erase</button><button class="clear-logo" id="clearLogo">clear</button></div><canvas id="logoCanvas" width="320" height="100"></canvas><p class="fine-print">Draw a mark guests will remember.</p></div>
+    </section>
+    </div>
+  </main>
+
+  <div class="modal hidden" id="modal"><div class="modal-card"><button class="modal-close" id="modalClose">×</button><p class="eyebrow">FIELD GUIDE</p><h2>Make it to dawn.</h2><p>Customers arrive one at a time. Seat ordinary customers for cash. Decline anomalies before they enter. Each accepted anomaly damages your survival. Upgrade tables and supplies, then unlock dishes in the menu tree to raise your reputation.</p><div class="guide-row"><span>SPACE / ENTER</span><b>seat a customer</b></div><div class="guide-row"><span>ESC</span><b>turn one away</b></div><button class="accept-btn full" id="gotItBtn">I understand</button></div></div>
+  <div class="modal hidden" id="endModal"><div class="modal-card end-card"><p class="eyebrow" id="endEyebrow">SHIFT COMPLETE</p><h2 id="endTitle">You saw the sunrise.</h2><p id="endMessage"></p><div class="end-stats" id="endStats"></div><button class="accept-btn full" id="endRestart">Start a new shift</button></div></div>
+  <script src="script.js"></script>
+  <script src="first-person.js"></script>
+</body>
+</html>
