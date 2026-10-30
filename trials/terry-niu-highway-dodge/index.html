@@ -1,0 +1,264 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Highway Dodge</title>
+  <style>
+    :root {
+      --ink: #f6f7fb;
+      --muted: #aeb7c8;
+      --panel: rgba(10, 15, 28, .78);
+      --road: #303844;
+      --road-edge: #e5bd55;
+      --accent: #65e6ac;
+      --danger: #ff667d;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      padding: 20px;
+      color: var(--ink);
+      background: #101827;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    .game-shell { width: min(100%, 720px); }
+
+    .topbar {
+      display: flex;
+      align-items: end;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 12px;
+    }
+
+    h1 { margin: 0; font-size: clamp(1.45rem, 4vw, 2rem); letter-spacing: -.04em; }
+    .tagline { margin: 4px 0 0; color: var(--muted); font-size: .87rem; }
+    .score-card { text-align: right; font-variant-numeric: tabular-nums; }
+    .score-label { color: var(--muted); font-size: .7rem; text-transform: uppercase; letter-spacing: .15em; }
+    #score { color: var(--accent); font-size: 1.75rem; font-weight: 800; }
+
+    .game-frame {
+      position: relative;
+      aspect-ratio: 16 / 10;
+      overflow: hidden;
+      border: 1px solid rgba(255,255,255,.13);
+      border-radius: 22px;
+      background: linear-gradient(#86b9d8 0 29%, #75a760 29% 100%);
+      box-shadow: 0 24px 70px rgba(0,0,0,.34), inset 0 1px rgba(255,255,255,.12);
+      user-select: none;
+    }
+
+    .skyline { position: absolute; inset: 0 0 auto; height: 29%; opacity: .38; background: linear-gradient(90deg, transparent 0 5%, #5d839d 5% 9%, transparent 9% 13%, #5d839d 13% 20%, transparent 20% 25%, #5d839d 25% 28%, transparent 28% 35%, #5d839d 35% 42%, transparent 42% 49%, #5d839d 49% 53%, transparent 53% 59%, #5d839d 59% 66%, transparent 66% 72%, #5d839d 72% 78%, transparent 78% 84%, #5d839d 84% 91%, transparent 91%); }
+    .horizon { position: absolute; inset: 27% 0 auto; height: 6%; background: linear-gradient(#b5d2db, transparent); opacity: .7; }
+
+    .road {
+      position: absolute;
+      inset: 29% 15% 0;
+      background: var(--road);
+      box-shadow: inset 0 0 0 5px rgba(255,255,255,.04);
+    }
+
+    .road::before, .road::after { content: ""; position: absolute; top: 0; bottom: 0; width: 7px; background: repeating-linear-gradient(to bottom, var(--road-edge) 0 48px, transparent 48px 88px); opacity: .85; }
+    .road::before { left: 0; }
+    .road::after { right: 0; }
+    .lane-markers { position: absolute; inset: 0; overflow: hidden; }
+    .lane-marker { position: absolute; width: 5px; height: 62px; top: -72px; border-radius: 4px; background: rgba(239,244,241,.58); transform: translateX(-50%); }
+
+    .car { position: absolute; z-index: 2; width: 42px; height: 70px; border-radius: 12px 12px 8px 8px; transform: translate(-50%, -50%); box-shadow: 0 8px 8px rgba(0,0,0,.25), inset 0 -8px rgba(0,0,0,.1); }
+    .car::before { content: ""; position: absolute; inset: 11px 7px auto; height: 20px; border-radius: 5px 5px 8px 8px; background: rgba(140, 218, 230, .72); box-shadow: inset 0 -6px rgba(15,36,53,.28); }
+    .car::after { content: ""; position: absolute; left: -4px; right: -4px; top: 19px; height: 6px; border-radius: 3px; background: rgba(255,255,255,.2); }
+    .player { width: 48px; height: 80px; z-index: 4; background: #65e6ac; border: 2px solid #dbfff0; }
+    .player::before { background: #203e51; height: 23px; }
+    .enemy-sedan { background: #ee5a61; }
+    .enemy-truck { width: 54px; height: 82px; border-radius: 7px 7px 4px 4px; background: #f29a47; }
+    .enemy-truck::before { inset: 10px 7px auto; height: 27px; border-radius: 4px; background: #8dc8d2; }
+    .enemy-truck::after { top: 43px; height: 9px; background: #d96b2f; }
+    .enemy-sport { width: 38px; height: 62px; border-radius: 15px 15px 7px 7px; background: #a880ee; }
+    .enemy-sport::before { inset: 9px 6px auto; height: 18px; border-radius: 10px 10px 5px 5px; }
+    .blinker { position: absolute; z-index: 2; top: 27px; width: 6px; height: 7px; border-radius: 2px; background: #ffd86b; opacity: 0; }
+    .blinker.left { left: 2px; }
+    .blinker.right { right: 2px; }
+    .changing-left .blinker.left, .changing-right .blinker.right { animation: blink 0.55s steps(2, end) infinite; }
+    @keyframes blink { 50% { opacity: 1; box-shadow: 0 0 9px 3px rgba(255, 216, 107, .75); } }
+
+    .hud {
+      position: absolute; z-index: 10; inset: 14px 14px auto;
+      display: flex; justify-content: space-between; gap: 10px; pointer-events: none;
+    }
+    .pill { padding: 8px 11px; border: 1px solid rgba(255,255,255,.16); border-radius: 999px; background: rgba(12,18,31,.58); color: #e8edf8; font-size: .76rem; font-weight: 700; backdrop-filter: blur(7px); }
+    #speed { color: #ffdc75; }
+
+    .overlay { position: absolute; z-index: 20; inset: 0; display: grid; place-items: center; padding: 24px; background: rgba(8,12,23,.63); backdrop-filter: blur(5px); transition: opacity .2s ease; }
+    .overlay.hidden { opacity: 0; pointer-events: none; }
+    .modal { width: min(100%, 380px); padding: 28px; border: 1px solid rgba(255,255,255,.16); border-radius: 18px; text-align: center; background: var(--panel); box-shadow: 0 18px 50px rgba(0,0,0,.3); }
+    .modal h2 { margin: 0 0 9px; font-size: 1.65rem; letter-spacing: -.035em; }
+    .modal p { margin: 0 auto 20px; max-width: 290px; color: var(--muted); line-height: 1.5; font-size: .92rem; }
+    button { cursor: pointer; border: 0; border-radius: 10px; padding: 12px 20px; color: #092018; background: var(--accent); font: inherit; font-weight: 800; transition: transform .15s ease, filter .15s ease; }
+    button:hover { filter: brightness(1.08); transform: translateY(-1px); }
+    button:active { transform: translateY(1px); }
+    .help { margin: 12px 0 0; color: var(--muted); text-align: center; font-size: .78rem; }
+    kbd { padding: 2px 6px; border: 1px solid rgba(255,255,255,.18); border-bottom-width: 2px; border-radius: 5px; color: #eef3ff; background: rgba(255,255,255,.08); font-size: .72rem; }
+
+    @media (max-width: 500px) { body { padding: 12px; } .game-frame { border-radius: 16px; } .topbar { align-items: center; } .tagline { font-size: .78rem; } }
+  </style>
+</head>
+<body>
+  <main class="game-shell">
+    <header class="topbar">
+      <div><h1>Highway Dodge</h1><p class="tagline">Keep moving. Stay sharp. Reach 1,000.</p></div>
+      <div class="score-card"><div class="score-label">Score</div><div id="score">0 / 1000</div></div>
+    </header>
+
+    <section class="game-frame" id="game" aria-label="Highway Dodge game">
+      <div class="skyline"></div><div class="horizon"></div>
+      <div class="road" id="road"><div class="lane-markers" id="markers"></div></div>
+      <div class="hud"><div class="pill" id="status">READY</div><div class="pill">Speed <span id="speed">1.0x</span></div></div>
+      <div class="car player" id="player" aria-label="your car"></div>
+      <div class="overlay" id="overlay">
+        <div class="modal"><h2 id="message-title">Ready to drive?</h2><p id="message">Hold <kbd>A</kbd> / <kbd>D</kbd> or <kbd>←</kbd> / <kbd>→</kbd> to steer. You earn 1 point every second. Dodge the traffic and make it to 1,000.</p><button id="start-button">Start game</button></div>
+      </div>
+    </section>
+    <p class="help">Hold A / D or arrow keys to steer · Avoid every car · <span id="best-text">Best: 0</span></p>
+  </main>
+
+  <script>
+    (() => {
+      const road = document.querySelector('#road');
+      const player = document.querySelector('#player');
+      const overlay = document.querySelector('#overlay');
+      const title = document.querySelector('#message-title');
+      const message = document.querySelector('#message');
+      const startButton = document.querySelector('#start-button');
+      const scoreEl = document.querySelector('#score');
+      const speedEl = document.querySelector('#speed');
+      const statusEl = document.querySelector('#status');
+      const bestEl = document.querySelector('#best-text');
+      const markers = document.querySelector('#markers');
+      const laneCount = 3;
+      const lanes = [0.2, 0.5, 0.8];
+      const laneDividers = [1 / 3, 2 / 3];
+      const keys = { left: false, right: false };
+      let playerX = 0.5, enemies = [], markerEls = [], score = 0, best = loadBestScore();
+      let running = false, lastTime = 0, spawnTimer = 0, markerOffset = 0, animationId;
+      let speed = 1;
+
+      function loadBestScore() {
+        try { return Math.max(0, Math.floor(Number(localStorage.getItem('highwayDodgeBest') || 0))); }
+        catch { return 0; }
+      }
+
+      function saveBestScore(value) {
+        try { localStorage.setItem('highwayDodgeBest', String(value)); }
+        catch { /* Best score persistence is optional in restricted browser contexts. */ }
+      }
+
+      bestEl.textContent = `Best: ${best}`;
+
+      function placePlayer() { player.style.left = `${road.offsetLeft + playerX * road.clientWidth}px`; player.style.top = `${road.offsetTop + road.clientHeight - 65}px`; }
+
+      function makeMarkers() {
+        markerEls.forEach(el => el.remove()); markerEls = [];
+        for (let i = 0; i < 8; i++) for (const divider of laneDividers) {
+          const el = document.createElement('div'); el.className = 'lane-marker'; el.style.left = `${divider * 100}%`; el.style.top = `${i * 105 - 70}px`; markers.appendChild(el); markerEls.push(el);
+        }
+      }
+
+      function reset() {
+        enemies.forEach(enemy => enemy.el.remove()); enemies = [];
+        score = 0; speed = 1; playerX = 0.5; spawnTimer = 0; markerOffset = 0;
+        scoreEl.textContent = '0 / 1000'; speedEl.textContent = '1.0x'; statusEl.textContent = 'READY';
+        makeMarkers(); placePlayer();
+      }
+
+      function start() {
+        reset(); running = true; overlay.classList.add('hidden'); statusEl.textContent = 'DRIVING'; lastTime = performance.now(); animationId = requestAnimationFrame(loop);
+      }
+
+      function finish(won, hit = false) {
+        running = false; cancelAnimationFrame(animationId); statusEl.textContent = won ? 'YOU WIN' : 'CRASHED';
+        const finalScore = Math.floor(score);
+        if (finalScore > best) { best = finalScore; saveBestScore(best); bestEl.textContent = `Best: ${best}`; }
+        title.textContent = won ? 'You made it!' : 'Wrecked!';
+        message.innerHTML = won ? `You reached 1,000 points and owned the highway. Great driving.` : `A car clipped you. Final score: <strong>${finalScore}</strong>.`;
+        startButton.textContent = 'Drive again'; overlay.classList.remove('hidden');
+      }
+
+      function spawnEnemy() {
+        const type = ['sedan', 'truck', 'sport'][Math.floor(Math.random() * 3)];
+        const el = document.createElement('div'); el.className = `car enemy-${type}`;
+        const blinkers = document.createElement('span');
+        blinkers.innerHTML = '<i class="blinker left"></i><i class="blinker right"></i>';
+        el.appendChild(blinkers);
+        const enemy = { el, lane: Math.floor(Math.random() * laneCount), x: 0, y: -65, targetLane: null, direction: null };
+        enemy.x = lanes[enemy.lane];
+        el.style.left = `${enemy.x * road.clientWidth}px`; road.appendChild(el); enemies.push(enemy);
+      }
+
+      function update(dt) {
+        // Speed increases in clear 0.1 steps at each 20-point milestone.
+        speed = Math.min(3.5, 1 + Math.floor(score / 20) * 0.1);
+        speedEl.textContent = `${speed.toFixed(1)}x`;
+        const steering = (keys.right ? 1 : 0) - (keys.left ? 1 : 0);
+        playerX = Math.max(0.08, Math.min(0.92, playerX + steering * dt * 0.72));
+        placePlayer();
+        markerOffset = (markerOffset + dt * 260 * speed) % 105;
+        markerEls.forEach((el, index) => el.style.top = `${(index % 8) * 105 - 70 + markerOffset}px`);
+        spawnTimer += dt;
+        // Traffic starts dense and gets more frequent as the run continues.
+        const spawnEvery = Math.max(.32, .86 - score / 2000);
+        if (spawnTimer > spawnEvery) { spawnTimer = 0; spawnEnemy(); }
+        score += dt; scoreEl.textContent = `${Math.floor(score)} / 1000`;
+        if (score >= 1000) { score = 1000; scoreEl.textContent = '1000 / 1000'; finish(true); return; }
+
+        const roadHeight = road.clientHeight;
+        enemies.forEach(enemy => {
+          enemy.y += dt * (190 + speed * 70);
+          // Lane changes happen near the top of the road, while there is room to signal and turn.
+          const isNearTop = enemy.y < roadHeight * .28;
+          if (score > 60 && isNearTop && enemy.targetLane === null && Math.random() < dt * .3 * speed) {
+            enemy.targetLane = Math.floor(Math.random() * laneCount);
+            enemy.direction = enemy.targetLane > Math.round(enemy.lane) ? 'right' : 'left';
+            if (enemy.targetLane !== Math.round(enemy.lane)) enemy.el.classList.add(`changing-${enemy.direction}`);
+          }
+          if (enemy.targetLane !== null) {
+            enemy.lane += (enemy.targetLane - enemy.lane) * Math.min(1, dt * .9);
+            enemy.x = lanes[Math.round(enemy.lane)];
+            if (Math.abs(enemy.targetLane - enemy.lane) < .04) {
+              enemy.lane = enemy.targetLane;
+              enemy.targetLane = null;
+              enemy.el.classList.remove('changing-left', 'changing-right');
+            }
+          }
+          enemy.el.style.left = `${enemy.x * road.clientWidth}px`; enemy.el.style.top = `${enemy.y}px`;
+          const playerY = roadHeight - 65;
+          if (Math.abs(enemy.y - playerY) < 55 && Math.abs(enemy.x - playerX) * road.clientWidth < 38) finish(false, true);
+        });
+        enemies = enemies.filter(enemy => { if (enemy.y > roadHeight + 85) { enemy.el.remove(); return false; } return true; });
+      }
+
+      function loop(now) { if (!running) return; const dt = Math.min(.05, (now - lastTime) / 1000); lastTime = now; update(dt); if (running) animationId = requestAnimationFrame(loop); }
+
+      window.addEventListener('keydown', event => {
+        if (['ArrowLeft','ArrowRight','a','d','A','D'].includes(event.key)) event.preventDefault();
+        if (event.key === 'ArrowLeft' || event.key.toLowerCase() === 'a') keys.left = true;
+        if (event.key === 'ArrowRight' || event.key.toLowerCase() === 'd') keys.right = true;
+      });
+      window.addEventListener('keyup', event => {
+        if (event.key === 'ArrowLeft' || event.key.toLowerCase() === 'a') keys.left = false;
+        if (event.key === 'ArrowRight' || event.key.toLowerCase() === 'd') keys.right = false;
+      });
+      window.addEventListener('blur', () => { keys.left = false; keys.right = false; });
+      startButton.addEventListener('click', start);
+      window.addEventListener('resize', () => { makeMarkers(); placePlayer(); enemies.forEach(enemy => enemy.el.style.left = `${enemy.x * road.clientWidth}px`); });
+      reset();
+    })();
+  </script>
+</body>
+</html>

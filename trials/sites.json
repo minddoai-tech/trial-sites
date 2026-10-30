@@ -1,5 +1,14 @@
 [
   {
+    "slug": "terry-niu-highway-dodge",
+    "trialId": "0f5fc1ee-9932-4a4d-b5c0-c907fc453898",
+    "studentName": "Terry Niu",
+    "title": "Highway Dodge",
+    "description": "A car driving game where you dodge incoming cars while steering left to right. Reach 1000 points to win and the speed gets faster as you go. There will also be cars that change lanes and you have to dodge them.",
+    "submittedAt": "2026-10-30T00:27:17.631Z",
+    "thumbnail": "terry-niu-highway-dodge/thumb.png"
+  },
+  {
     "slug": "micah-bat-the-good-stuff",
     "trialId": "7773a82e-6bca-4d0a-b0b8-8ca16325b6d8",
     "studentName": "Micah",
