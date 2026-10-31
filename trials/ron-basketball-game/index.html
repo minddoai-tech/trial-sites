@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#09111f" />
+  <title>Court 21 — One-on-One</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <main class="app-shell">
+    <header class="topbar">
+      <div class="brand-lockup">
+        <span class="brand-mark">C21</span>
+        <div>
+          <p class="eyebrow">THIRD PERSON // 1v1</p>
+          <h1>COURT <span>21</span></h1>
+        </div>
+      </div>
+      <div class="topbar-actions">
+        <div class="possession-pill"><i id="possessionDot"></i><span id="possessionText">Your ball</span></div>
+        <button id="restartBtn" class="outline-button" type="button">Restart game</button>
+      </div>
+    </header>
+
+    <section class="game-layout">
+      <div class="court-column">
+        <div class="scoreboard">
+          <div class="score-team blue-team">
+            <div class="score-team-name"><span class="team-dot"></span><span>YOU</span></div>
+            <strong id="playerScore">0</strong>
+          </div>
+          <div class="score-center">
+            <span class="score-label">FIRST TO</span>
+            <strong>21</strong>
+            <span id="gameStatus" class="status-live">LIVE</span>
+          </div>
+          <div class="score-team red-team">
+            <div class="score-team-name"><span class="team-dot"></span><span>RIVAL</span></div>
+            <strong id="opponentScore">0</strong>
+          </div>
+        </div>
+
+        <div class="court-frame">
+          <canvas id="gameCanvas" width="960" height="560" aria-label="Playable one on one basketball court"></canvas>
+          <div id="gameOverlay" class="game-overlay hidden">
+            <div class="overlay-card">
+              <span id="overlayKicker" class="overlay-kicker">FINAL BUZZER</span>
+              <h2 id="overlayTitle">YOU WIN</h2>
+              <p id="overlayCopy">Great run. Reset the court and run it back.</p>
+              <button id="overlayRestart" class="primary-button" type="button">Play again</button>
+            </div>
+          </div>
+          <div id="toast" class="toast" role="status" aria-live="polite"></div>
+        </div>
+
+        <div class="controls-strip">
+          <div class="control-group"><kbd>WASD</kbd><span>move</span></div>
+          <div class="control-group"><kbd>SPACE</kbd><span>shoot</span></div>
+          <div class="control-group"><kbd>E</kbd><span>dunk near rim</span></div>
+          <div class="control-group"><kbd>SHIFT</kbd><span>lock in defense</span></div>
+          <div class="control-group"><kbd>X</kbd><span>steal if still</span></div>
+          <div class="control-group"><kbd>Q / C</kbd><span>turn camera</span></div>
+        </div>
+      </div>
+
+      <aside class="sidebar">
+        <section class="panel role-panel">
+          <div class="panel-heading">
+            <div>
+              <p class="eyebrow">YOUR BUILD</p>
+              <h2 id="roleTitle">Point Guard</h2>
+            </div>
+            <span id="roleBadge" class="role-badge">PG</span>
+          </div>
+          <p id="roleDescription" class="muted-copy">Quick hands and deep range. Create space, then let it fly.</p>
+          <div id="roleChoices" class="role-choices" aria-label="Choose your position">
+            <button class="role-choice active" data-role="PG" type="button"><b>PG</b><span>Point Guard</span></button>
+            <button class="role-choice" data-role="SG" type="button"><b>SG</b><span>Shooting Guard</span></button>
+            <button class="role-choice" data-role="SF" type="button"><b>SF</b><span>Small Forward</span></button>
+            <button class="role-choice" data-role="PF" type="button"><b>PF</b><span>Power Forward</span></button>
+            <button class="role-choice" data-role="C" type="button"><b>C</b><span>Center</span></button>
+          </div>
+          <div class="stat-list">
+            <div class="stat-row"><span>3PT range</span><div class="stat-track"><i id="statThree"></i></div><b id="statThreeValue">92</b></div>
+            <div class="stat-row"><span>Midrange</span><div class="stat-track"><i id="statMid"></i></div><b id="statMidValue">76</b></div>
+            <div class="stat-row"><span>Dunk</span><div class="stat-track"><i id="statDunk"></i></div><b id="statDunkValue">58</b></div>
+            <div class="stat-row"><span>Rebound</span><div class="stat-track"><i id="statRebound"></i></div><b id="statReboundValue">50</b></div>
+            <div class="stat-row"><span>Speed</span><div class="stat-track"><i id="statSpeed"></i></div><b id="statSpeedValue">94</b></div>
+          </div>
+        </section>
+
+        <section class="panel meter-panel">
+          <div class="panel-heading compact-heading">
+            <div>
+              <p class="eyebrow">TIMING WINDOW</p>
+              <h2 id="meterTitle">Shot meter</h2>
+            </div>
+            <span id="meterHint" class="meter-hint">SPACE</span>
+          </div>
+          <div id="meterArea" class="meter-area">
+            <div class="meter-placeholder">
+              <span class="meter-icon">◎</span>
+              <p>Hold <b>SPACE</b> and release in the green.</p>
+              <small>Green = guaranteed make unless you are covered.</small>
+            </div>
+          </div>
+        </section>
+
+        <section class="panel feed-panel">
+          <div class="panel-heading compact-heading">
+            <div><p class="eyebrow">COURT FEED</p><h2>Play-by-play</h2></div>
+            <span class="live-dot"></span>
+          </div>
+          <div id="eventFeed" class="event-feed" aria-live="polite"></div>
+        </section>
+
+        <section class="how-to panel">
+          <p class="eyebrow">QUICK TIP</p>
+          <p>This is a single half court with one scoring rim. Beyond the arc is <b>3 points</b>; inside is <b>2</b>. Use <b>Q / C</b> to turn the camera. When the rival stops, step in and press <b>X</b> to steal.</p>
+        </section>
+      </aside>
+    </section>
+
+    <footer class="footer-note">Change positions between possessions to find your matchup. Reach 21 first to own the court.</footer>
+  </main>
+  <script src="game.js"></script>
+</body>
+</html>
