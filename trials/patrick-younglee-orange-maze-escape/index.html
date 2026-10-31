@@ -1,0 +1,764 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Orange Escape</title>
+  <style>
+    :root {
+      --ink: #15233b;
+      --muted: #718098;
+      --paper: #f7f5ef;
+      --panel: #fffdf8;
+      --line: #dfe3ea;
+      --orange: #f27a38;
+      --orange-deep: #d85b25;
+      --orange-soft: #fff0e6;
+      --gold: #f5c84b;
+      --mint: #5fc3a7;
+      --navy: #0c1728;
+      --navy-2: #14243a;
+      --shadow: 0 24px 70px rgba(29, 42, 65, .14);
+    }
+
+    * { box-sizing: border-box; }
+    html, body { min-height: 100%; }
+    body {
+      margin: 0;
+      background:
+        radial-gradient(circle at 12% 0%, rgba(242, 122, 56, .11), transparent 32rem),
+        linear-gradient(135deg, #fbfaf7 0%, #f3f1eb 100%);
+      color: var(--ink);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    button { font: inherit; }
+    .page { width: min(1120px, calc(100% - 32px)); margin: 0 auto; padding: 34px 0 42px; }
+    .masthead { display: flex; justify-content: space-between; align-items: end; gap: 24px; margin-bottom: 18px; }
+    .eyebrow { margin: 0 0 7px; color: var(--orange-deep); text-transform: uppercase; letter-spacing: .17em; font-size: 11px; font-weight: 800; }
+    h1 { margin: 0; letter-spacing: -.045em; line-height: 1; font-size: clamp(32px, 5vw, 58px); }
+    .tagline { margin: 0 0 2px; color: var(--muted); font-size: 14px; max-width: 300px; text-align: right; }
+
+    .game-shell { background: var(--panel); border: 1px solid rgba(21, 35, 59, .1); box-shadow: var(--shadow); border-radius: 22px; overflow: hidden; }
+    .game-toolbar { min-height: 66px; display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 12px 18px; border-bottom: 1px solid var(--line); }
+    .brand { display: flex; align-items: center; gap: 10px; font-weight: 800; letter-spacing: -.02em; }
+    .brand-dot { width: 25px; height: 25px; border-radius: 50%; background: var(--orange); box-shadow: inset -5px -4px 0 var(--orange-deep), inset 5px 5px 0 rgba(255,255,255,.3); position: relative; }
+    .brand-dot::after { content: ""; position: absolute; width: 8px; height: 4px; border-radius: 100% 0; background: var(--mint); top: -2px; right: 2px; transform: rotate(-22deg); }
+    .toolbar-note { color: var(--muted); font-size: 12px; }
+
+    .stage { position: relative; aspect-ratio: 16 / 9; min-height: 520px; background: var(--navy); overflow: hidden; }
+    #gameCanvas { display: block; width: 100%; height: 100%; image-rendering: auto; }
+    .hud { position: absolute; inset: 0; pointer-events: none; color: #f5f7fb; }
+    .hud-top { display: flex; justify-content: space-between; gap: 14px; padding: 18px; }
+    .hud-stat { min-width: 94px; padding: 9px 12px 10px; border: 1px solid rgba(255,255,255,.14); border-radius: 11px; background: rgba(12, 23, 40, .72); backdrop-filter: blur(10px); }
+    .hud-stat-label { display: block; color: #a8b7cb; font-size: 10px; text-transform: uppercase; letter-spacing: .14em; }
+    .hud-stat-value { display: block; margin-top: 2px; font-weight: 800; font-variant-numeric: tabular-nums; font-size: 18px; }
+    .hud-left, .hud-right { display: flex; gap: 8px; }
+    .key-pips { display: flex; gap: 5px; margin-top: 6px; }
+    .key-pip { width: 10px; height: 10px; border-radius: 2px; transform: rotate(45deg); background: rgba(245,200,75,.22); border: 1px solid rgba(245,200,75,.7); }
+    .key-pip.found { background: var(--gold); box-shadow: 0 0 10px rgba(245,200,75,.7); }
+    .radar { position: absolute; z-index: 3; top: 86px; right: 18px; width: clamp(156px, 20vw, 210px); max-width: calc(100% - 36px); padding: 8px; border: 1px solid rgba(255,255,255,.14); border-radius: 12px; background: rgba(12,23,40,.82); backdrop-filter: blur(10px); }
+    .radar-label { display: flex; justify-content: space-between; color: #a8b7cb; text-transform: uppercase; letter-spacing: .12em; font-size: 9px; margin: 0 1px 6px; }
+    #minimap { display: block; width: 100%; aspect-ratio: 21 / 15; border-radius: 6px; }
+    .crosshair { position: absolute; left: 50%; top: 50%; width: 20px; height: 20px; transform: translate(-50%, -50%); opacity: .7; }
+    .crosshair::before, .crosshair::after { content: ""; position: absolute; background: rgba(255,255,255,.84); border-radius: 4px; }
+    .crosshair::before { width: 2px; height: 20px; left: 9px; top: 0; }
+    .crosshair::after { height: 2px; width: 20px; top: 9px; left: 0; }
+    .prompt { position: absolute; left: 50%; bottom: 23px; transform: translateX(-50%); max-width: calc(100% - 40px); padding: 10px 15px; border-radius: 999px; background: rgba(12,23,40,.83); border: 1px solid rgba(255,255,255,.17); color: #f5f7fb; font-size: 13px; text-align: center; white-space: nowrap; }
+    .prompt kbd { display: inline-block; padding: 1px 6px; margin: 0 2px; border-radius: 5px; background: rgba(255,255,255,.13); color: var(--gold); font-weight: 800; }
+    .status-line { position: absolute; left: 18px; bottom: 19px; color: rgba(234,240,248,.72); font-size: 11px; letter-spacing: .02em; }
+    .danger-vignette { position: absolute; z-index: 4; inset: 0; pointer-events: none; opacity: var(--danger, 0); border: 2px solid rgba(228, 52, 40, .9); box-shadow: inset 0 0 38px rgba(228, 52, 40, .74), inset 0 0 125px rgba(190, 31, 35, .54); transition: opacity .12s ease; }
+    .stage.look-ready { cursor: crosshair; }
+
+    .screen { position: absolute; inset: 0; display: grid; place-items: center; padding: 24px; background: rgba(8, 16, 29, .68); backdrop-filter: blur(5px); transition: opacity .2s ease; }
+    .screen.hidden { opacity: 0; pointer-events: none; }
+    .screen-card { width: min(470px, 100%); padding: 30px; border: 1px solid rgba(255,255,255,.16); border-radius: 18px; color: #f5f7fb; background: rgba(12,23,40,.94); box-shadow: 0 25px 80px rgba(0,0,0,.25); text-align: left; }
+    .screen-kicker { color: var(--gold); text-transform: uppercase; font-weight: 800; letter-spacing: .16em; font-size: 10px; }
+    .screen h2 { margin: 10px 0 9px; font-size: clamp(28px, 4vw, 42px); letter-spacing: -.045em; line-height: 1; }
+    .screen p { color: #b9c5d6; line-height: 1.55; font-size: 14px; margin: 0 0 18px; }
+    .screen strong { color: #f5f7fb; }
+    .instruction-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin: 18px 0 22px; }
+    .instruction { display: flex; align-items: center; gap: 9px; padding: 10px; border-radius: 9px; background: rgba(255,255,255,.06); color: #c7d1df; font-size: 12px; }
+    kbd { min-width: 26px; padding: 4px 6px; border: 1px solid rgba(255,255,255,.2); border-bottom-width: 2px; border-radius: 5px; color: #f5f7fb; text-align: center; font-size: 11px; font-weight: 800; }
+    .button-row { display: flex; flex-wrap: wrap; gap: 9px; }
+    .primary, .secondary { border: 0; border-radius: 10px; padding: 11px 16px; font-weight: 800; font-size: 13px; cursor: pointer; transition: transform .15s ease, box-shadow .15s ease, background .15s ease; }
+    .primary { background: var(--orange); color: #fff; box-shadow: 0 8px 22px rgba(242,122,56,.28); }
+    .secondary { background: rgba(255,255,255,.1); color: #e9eef6; }
+    .primary:hover, .secondary:hover { transform: translateY(-1px); }
+    .primary:focus-visible, .secondary:focus-visible { outline: 3px solid rgba(245,200,75,.75); outline-offset: 3px; }
+    .results { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 21px 0; }
+    .result { padding: 11px; border-radius: 9px; background: rgba(255,255,255,.06); }
+    .result-label { color: #9eacc0; text-transform: uppercase; letter-spacing: .12em; font-size: 9px; }
+    .result-value { margin-top: 4px; color: #fff; font-size: 18px; font-weight: 800; font-variant-numeric: tabular-nums; }
+
+    .controls-bar { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 14px 18px; border-top: 1px solid var(--line); background: #fffefb; }
+    .controls-copy { color: var(--muted); font-size: 12px; line-height: 1.45; }
+    .controls-copy strong { color: var(--ink); }
+    .restart-btn { flex: 0 0 auto; border: 1px solid #cfd6df; border-radius: 9px; padding: 9px 12px; background: transparent; color: var(--ink); font-weight: 700; font-size: 12px; cursor: pointer; }
+    .restart-btn:hover { border-color: var(--orange); color: var(--orange-deep); }
+    @media (max-width: 700px) {
+      .page { width: min(100% - 18px, 1120px); padding-top: 18px; }
+      .masthead { align-items: start; flex-direction: column; gap: 8px; }
+      .tagline { text-align: left; max-width: 100%; }
+      .stage { min-height: 430px; aspect-ratio: 4 / 3; }
+      .radar { top: 83px; right: 10px; width: 126px; max-width: calc(100% - 20px); }
+      .hud-top { padding: 10px; }
+      .hud-stat { min-width: 74px; padding: 7px 8px; }
+      .hud-stat-value { font-size: 15px; }
+      .status-line { left: 10px; bottom: 15px; max-width: 43%; }
+      .prompt { bottom: 15px; font-size: 11px; }
+      .controls-bar { align-items: flex-start; flex-direction: column; gap: 10px; }
+      .restart-btn { width: 100%; }
+      .screen-card { padding: 22px; }
+    }
+    @media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition-duration: .01ms !important; } }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <header class="masthead">
+      <div>
+        <p class="eyebrow">A first-person maze sprint</p>
+        <h1>Orange Escape</h1>
+      </div>
+      <p class="tagline">Find the three keys. Reach the exit. Don’t let the oranges catch you.</p>
+    </header>
+
+    <section class="game-shell" aria-label="Orange Escape game">
+      <div class="game-toolbar">
+        <div class="brand"><span class="brand-dot" aria-hidden="true"></span><span>Orange Escape</span></div>
+        <span class="toolbar-note">Keyboard recommended · best time wins</span>
+      </div>
+
+      <div class="stage" id="stage">
+        <canvas id="gameCanvas" aria-label="First-person maze view"></canvas>
+        <div class="hud" aria-live="polite">
+          <div class="hud-top">
+            <div class="hud-left">
+              <div class="hud-stat"><span class="hud-stat-label">Time</span><span class="hud-stat-value" id="timeValue">00:00.0</span></div>
+              <div class="hud-stat"><span class="hud-stat-label">Keys</span><div class="key-pips" id="keyPips" aria-label="0 of 3 keys collected"><span class="key-pip"></span><span class="key-pip"></span><span class="key-pip"></span></div></div>
+            </div>
+            <div class="hud-right"><div class="hud-stat"><span class="hud-stat-label">Threat</span><span class="hud-stat-value" id="threatValue">LOW</span></div></div>
+          </div>
+          <div class="radar"><div class="radar-label"><span>Maze map</span><span id="mapHint">3 keys</span></div><canvas id="minimap" width="210" height="150" aria-label="Top-down maze map"></canvas></div>
+          <div class="crosshair" aria-hidden="true"></div>
+          <div class="prompt" id="prompt">Press <kbd>W</kbd> to enter the maze</div>
+          <div class="status-line" id="statusLine">The oranges are moving.</div>
+          <div class="danger-vignette" id="dangerVignette" aria-hidden="true"></div>
+        </div>
+
+        <div class="screen" id="screen">
+          <div class="screen-card">
+            <div class="screen-kicker" id="screenKicker">Ready when you are</div>
+            <h2 id="screenTitle">Find your way out.</h2>
+            <p id="screenBody">Three keys are hidden in the maze. Collect them with <strong>E</strong>, then stand by the exit and press <strong>K</strong>. Move fast: the oranges are already hunting. Click the view and move the mouse to look around.</p>
+            <div class="instruction-grid" id="instructionGrid">
+              <div class="instruction"><kbd>W/S</kbd><span>Move forward / back</span></div>
+              <div class="instruction"><kbd>A/D</kbd><span>Turn left / right</span></div>
+              <div class="instruction"><kbd>E</kbd><span>Collect a nearby key</span></div>
+              <div class="instruction"><kbd>K</kbd><span>Open the exit door</span></div>
+              <div class="instruction"><kbd>Mouse</kbd><span>Look around after clicking</span></div>
+            </div>
+            <div class="button-row" id="screenActions"><button class="primary" id="startButton">Enter the maze</button></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="controls-bar">
+        <div class="controls-copy"><strong>WASD</strong> navigate · <strong>Mouse</strong> look · <strong>E</strong> collect · <strong>K</strong> open exit · <strong>R</strong> restart</div>
+        <button class="restart-btn" id="restartButton" type="button">Restart run</button>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    (() => {
+      'use strict';
+
+      const map = [
+        '#####################',
+        '#.........#.........#',
+        '#.#######.#.#######.#',
+        '#.#.....#.#.#.....#.#',
+        '#.#.###.#.#.#.###.#.#',
+        '#...#...#...#...#...#',
+        '###.#.#######.#.###.#',
+        '#...#.........#...#.#',
+        '#.#.###########.#.#.#',
+        '#.#.............#.#.#',
+        '#.###############.#.#',
+        '#.................#.#',
+        '#.###############.#.#',
+        '#.................X##',
+        '#####################'
+      ];
+
+      const canvas = document.getElementById('gameCanvas');
+      const ctx = canvas.getContext('2d');
+      const minimap = document.getElementById('minimap');
+      const miniCtx = minimap.getContext('2d');
+      const stage = document.getElementById('stage');
+      const screen = document.getElementById('screen');
+      const screenKicker = document.getElementById('screenKicker');
+      const screenTitle = document.getElementById('screenTitle');
+      const screenBody = document.getElementById('screenBody');
+      const screenActions = document.getElementById('screenActions');
+      const startButton = document.getElementById('startButton');
+      const restartButton = document.getElementById('restartButton');
+      const timeValue = document.getElementById('timeValue');
+      const keyPips = document.getElementById('keyPips');
+      const threatValue = document.getElementById('threatValue');
+      const prompt = document.getElementById('prompt');
+      const statusLine = document.getElementById('statusLine');
+      const mapHint = document.getElementById('mapHint');
+      const dangerVignette = document.getElementById('dangerVignette');
+
+      const FOV = Math.PI / 2.9;
+      const keys = [
+        { x: 7.5, y: 1.5, found: false },
+        { x: 5.5, y: 7.5, found: false },
+        { x: 11.5, y: 9.5, found: false }
+      ];
+      const exit = { x: 18.5, y: 13.5 };
+      const spawn = { x: 1.5, y: 1.5, angle: 0 };
+      const orangeSpawns = [
+        { x: 15.5, y: 11.5, speed: .60 },
+        { x: 17.5, y: 3.5, speed: .70 },
+        { x: 5.5, y: 9.5, speed: .64 }
+      ];
+      const input = { w: false, a: false, s: false, d: false };
+      let player;
+      let oranges;
+      let phase = 'ready';
+      let exitOpen = false;
+      let sessionKeys = 0;
+      let elapsed = 0;
+      let runStartedAt = 0;
+      let frozenAt = 0;
+      let lastFrame = performance.now();
+      let lastPathUpdate = 0;
+      let canvasWidth = 0;
+      let canvasHeight = 0;
+      let depthBuffer = [];
+      let dpr = Math.min(window.devicePixelRatio || 1, 2);
+
+      function resetActors() {
+        player = { x: spawn.x, y: spawn.y, angle: spawn.angle };
+        oranges = orangeSpawns.map((orange, index) => ({
+          ...orange,
+          x: orange.x,
+          y: orange.y,
+          angle: index * 1.7,
+          path: [],
+          pathTarget: null,
+          wanderTimer: index * .7
+        }));
+      }
+
+      function fullReset() {
+        keys.forEach(key => { key.found = false; });
+        sessionKeys = 0;
+        elapsed = 0;
+        frozenAt = 0;
+        exitOpen = false;
+        phase = 'ready';
+        resetActors();
+        if (document.pointerLockElement) document.exitPointerLock();
+        showReadyScreen();
+        updateHud();
+      }
+
+      function startRun() {
+        if (phase === 'playing') return;
+        if (phase === 'won') fullReset();
+        phase = 'playing';
+        runStartedAt = performance.now();
+        frozenAt = elapsed;
+        screen.classList.add('hidden');
+        statusLine.textContent = 'Click the view to capture mouse look; A/D also turn.';
+        updateHud();
+      }
+
+      function retryAfterLoss() {
+        resetActors();
+        phase = 'playing';
+        runStartedAt = performance.now();
+        frozenAt = elapsed;
+        screen.classList.add('hidden');
+        statusLine.textContent = 'Keep moving. Your collected keys remain safe.';
+        updateHud();
+      }
+
+      function showReadyScreen() {
+        screen.classList.remove('hidden');
+        screenKicker.textContent = 'Ready when you are';
+        screenTitle.textContent = 'Find your way out.';
+        screenBody.innerHTML = 'Three keys are hidden in the maze. Collect them with <strong>E</strong>, then stand by the exit and press <strong>K</strong>. Move fast: the oranges are already hunting. Click the view and move the mouse to look around.';
+        screenActions.innerHTML = '<button class="primary" id="startButton">Enter the maze</button>';
+        document.getElementById('startButton').addEventListener('click', startRun);
+      }
+
+      function showLossScreen() {
+        screen.classList.remove('hidden');
+        screenKicker.textContent = 'Caught';
+        screenTitle.textContent = 'The oranges got you.';
+        screenBody.innerHTML = `You survived for <strong>${formatTime(elapsed)}</strong>. Your ${sessionKeys} collected key${sessionKeys === 1 ? '' : 's'} stay collected, so you can try the same run again.`;
+        screenActions.innerHTML = '<button class="primary" id="retryButton">Try again</button><button class="secondary" id="freshButton">Start over</button>';
+        document.getElementById('retryButton').addEventListener('click', retryAfterLoss);
+        document.getElementById('freshButton').addEventListener('click', fullReset);
+      }
+
+      function showWinScreen() {
+        screen.classList.remove('hidden');
+        screenKicker.textContent = 'Maze cleared';
+        screenTitle.textContent = 'You escaped the oranges.';
+        const score = Math.max(0, Math.round(10000 / (elapsed + 1)));
+        screenBody.innerHTML = 'All three keys are yours, and the exit is open. That is a clean escape.';
+        screenActions.innerHTML = `<div class="results"><div class="result"><div class="result-label">Time</div><div class="result-value">${formatTime(elapsed)}</div></div><div class="result"><div class="result-label">Keys</div><div class="result-value">3 / 3</div></div><div class="result"><div class="result-label">Score</div><div class="result-value">${score}</div></div></div><button class="primary" id="againButton">Run it again</button>`;
+        document.getElementById('againButton').addEventListener('click', fullReset);
+      }
+
+      function formatTime(seconds) {
+        const mins = Math.floor(seconds / 60).toString().padStart(2, '0');
+        const secs = Math.floor(seconds % 60).toString().padStart(2, '0');
+        const tenths = Math.floor((seconds % 1) * 10);
+        return `${mins}:${secs}.${tenths}`;
+      }
+
+      function isWallCell(cellX, cellY) {
+        if (cellY < 0 || cellY >= map.length || cellX < 0 || cellX >= map[0].length) return true;
+        const cell = map[cellY][cellX];
+        return cell === '#' || (cell === 'X' && !exitOpen);
+      }
+
+      function isWalkable(cellX, cellY) { return !isWallCell(cellX, cellY); }
+
+      function canOccupy(x, y, radius = .2) {
+        return !isWallCell(Math.floor(x - radius), Math.floor(y - radius))
+          && !isWallCell(Math.floor(x + radius), Math.floor(y - radius))
+          && !isWallCell(Math.floor(x - radius), Math.floor(y + radius))
+          && !isWallCell(Math.floor(x + radius), Math.floor(y + radius));
+      }
+
+      function tryMove(dx, dy) {
+        const nextX = player.x + dx;
+        const nextY = player.y + dy;
+        if (canOccupy(nextX, player.y)) player.x = nextX;
+        if (canOccupy(player.x, nextY)) player.y = nextY;
+      }
+
+      function normalizeAngle(angle) {
+        while (angle > Math.PI) angle -= Math.PI * 2;
+        while (angle < -Math.PI) angle += Math.PI * 2;
+        return angle;
+      }
+
+      function near(a, b, distance) { return Math.hypot(a.x - b.x, a.y - b.y) < distance; }
+
+      function collectKey() {
+        if (phase !== 'playing') return;
+        const nearby = keys.find(key => !key.found && near(player, key, 1.15));
+        if (!nearby) {
+          statusLine.textContent = 'No key is close enough to collect.';
+          return;
+        }
+        nearby.found = true;
+        sessionKeys += 1;
+        statusLine.textContent = sessionKeys === 3 ? 'All keys found. Find the exit door.' : `Key collected. ${3 - sessionKeys} remain.`;
+        updateHud();
+      }
+
+      function openExit() {
+        if (phase !== 'playing') return;
+        if (!near(player, exit, 1.4)) {
+          statusLine.textContent = 'The exit door is somewhere deeper in the maze.';
+          return;
+        }
+        if (sessionKeys < 3) {
+          statusLine.textContent = `The door needs ${3 - sessionKeys} more key${sessionKeys === 2 ? '' : 's'}.`;
+          return;
+        }
+        exitOpen = true;
+        statusLine.textContent = 'The exit is open. Step through it!';
+        updateHud();
+      }
+
+      function getPrompt() {
+        if (phase !== 'playing') return '';
+        const nearbyKey = keys.some(key => !key.found && near(player, key, 1.25));
+        if (near(player, exit, 1.5)) return sessionKeys === 3 && !exitOpen ? 'Press <kbd>K</kbd> to open the exit' : exitOpen ? 'Step through the open exit' : `Exit locked · ${3 - sessionKeys} key${sessionKeys === 2 ? '' : 's'} needed`;
+        if (nearbyKey) return 'Press <kbd>E</kbd> to collect the key';
+        return 'W/S move · A/D turn · keep moving';
+      }
+
+      function updateHud() {
+        timeValue.textContent = formatTime(elapsed);
+        keyPips.querySelectorAll('.key-pip').forEach((pip, index) => pip.classList.toggle('found', index < sessionKeys));
+        keyPips.setAttribute('aria-label', `${sessionKeys} of 3 keys collected`);
+        mapHint.textContent = sessionKeys === 3 ? (exitOpen ? 'exit open' : 'exit ready') : `${3 - sessionKeys} key${sessionKeys === 2 ? '' : 's'} left`;
+        prompt.innerHTML = getPrompt() || 'Press <kbd>W</kbd> to enter the maze';
+        const closestOrange = oranges.reduce((best, orange) => Math.min(best, Math.hypot(orange.x - player.x, orange.y - player.y)), 99);
+        threatValue.textContent = closestOrange < 2.2 ? 'HIGH' : closestOrange < 4.3 ? 'MED' : 'LOW';
+        threatValue.style.color = closestOrange < 2.2 ? '#ff9077' : closestOrange < 4.3 ? '#f5c84b' : '#82d9bd';
+        const danger = phase === 'playing' ? Math.max(0, Math.min(.72, (4.8 - closestOrange) / 3.5 * .72)) : 0;
+        dangerVignette.style.setProperty('--danger', danger.toFixed(3));
+        stage.classList.toggle('look-ready', phase === 'playing' && document.pointerLockElement !== canvas);
+      }
+
+      function findPath(startX, startY, targetX, targetY) {
+        const start = `${startX},${startY}`;
+        const target = `${targetX},${targetY}`;
+        if (start === target) return [];
+        const queue = [[startX, startY]];
+        const visited = new Set([start]);
+        const cameFrom = new Map();
+        const directions = [[1,0],[-1,0],[0,1],[0,-1]];
+        while (queue.length) {
+          const [x, y] = queue.shift();
+          for (const [dx, dy] of directions) {
+            const nx = x + dx, ny = y + dy, id = `${nx},${ny}`;
+            if (!isWalkable(nx, ny) || visited.has(id)) continue;
+            visited.add(id);
+            cameFrom.set(id, `${x},${y}`);
+            if (id === target) {
+              const path = [[nx, ny]];
+              let current = id;
+              while (current !== start) {
+                current = cameFrom.get(current);
+                if (current !== start) path.unshift(current.split(',').map(Number));
+              }
+              return path;
+            }
+            queue.push([nx, ny]);
+          }
+        }
+        return [];
+      }
+
+      function updateOranges(delta, now) {
+        if (now - lastPathUpdate > 380) {
+          lastPathUpdate = now;
+          const targetX = Math.floor(player.x), targetY = Math.floor(player.y);
+          oranges.forEach(orange => {
+            orange.pathTarget = `${targetX},${targetY}`;
+            orange.path = findPath(Math.floor(orange.x), Math.floor(orange.y), targetX, targetY);
+          });
+        }
+        oranges.forEach((orange, index) => {
+          const distance = Math.hypot(orange.x - player.x, orange.y - player.y);
+          let target;
+          if (orange.path.length && (distance < 9 || index === 0)) {
+            target = { x: orange.path[0][0] + .5, y: orange.path[0][1] + .5 };
+            if (Math.hypot(target.x - orange.x, target.y - orange.y) < .12) orange.path.shift();
+          } else {
+            orange.wanderTimer -= delta;
+            if (orange.wanderTimer <= 0 || !orange.wanderTarget || !canOccupy(orange.wanderTarget.x, orange.wanderTarget.y, .16)) {
+              const options = [[1,0],[-1,0],[0,1],[0,-1]].map(([dx,dy]) => ({ x: Math.floor(orange.x) + dx + .5, y: Math.floor(orange.y) + dy + .5 })).filter(point => canOccupy(point.x, point.y, .16));
+              orange.wanderTarget = options[Math.floor(Math.random() * options.length)] || { x: orange.x, y: orange.y };
+              orange.wanderTimer = 1.4 + Math.random() * 2.2;
+            }
+            target = orange.wanderTarget;
+          }
+          const dx = target.x - orange.x, dy = target.y - orange.y;
+          const length = Math.hypot(dx, dy) || 1;
+          const speed = orange.speed * (distance < 4.5 ? 1.16 : 1);
+          const nextX = orange.x + dx / length * speed * delta;
+          const nextY = orange.y + dy / length * speed * delta;
+          if (canOccupy(nextX, orange.y, .16)) orange.x = nextX;
+          if (canOccupy(orange.x, nextY, .16)) orange.y = nextY;
+          orange.angle = Math.atan2(dy, dx);
+          if (Math.hypot(orange.x - player.x, orange.y - player.y) < .42) loseGame();
+        });
+      }
+
+      function loseGame() {
+        if (phase !== 'playing') return;
+        elapsed = frozenAt + (performance.now() - runStartedAt) / 1000;
+        phase = 'lost';
+        if (document.pointerLockElement) document.exitPointerLock();
+        showLossScreen();
+      }
+
+      function winGame() {
+        if (phase !== 'playing') return;
+        elapsed = frozenAt + (performance.now() - runStartedAt) / 1000;
+        phase = 'won';
+        if (document.pointerLockElement) document.exitPointerLock();
+        showWinScreen();
+      }
+
+      function update(delta, now) {
+        if (phase !== 'playing') return;
+        elapsed = frozenAt + (now - runStartedAt) / 1000;
+        const turnSpeed = 2.25;
+        const moveSpeed = 2.0;
+        if (input.a) player.angle -= turnSpeed * delta;
+        if (input.d) player.angle += turnSpeed * delta;
+        let move = 0;
+        if (input.w) move += 1;
+        if (input.s) move -= 1;
+        if (move) tryMove(Math.cos(player.angle) * moveSpeed * move * delta, Math.sin(player.angle) * moveSpeed * move * delta);
+        updateOranges(delta, now);
+        if (exitOpen && near(player, exit, .55)) winGame();
+        updateHud();
+      }
+
+      function resize() {
+        const rect = stage.getBoundingClientRect();
+        dpr = Math.min(window.devicePixelRatio || 1, 2);
+        canvasWidth = Math.max(320, rect.width);
+        canvasHeight = Math.max(240, rect.height);
+        canvas.width = Math.floor(canvasWidth * dpr);
+        canvas.height = Math.floor(canvasHeight * dpr);
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      }
+
+      function castRays() {
+        const rays = Math.floor(Math.min(canvasWidth, 720));
+        depthBuffer = new Array(rays);
+        const horizon = canvasHeight * .48;
+        const sky = ctx.createLinearGradient(0, 0, 0, horizon);
+        sky.addColorStop(0, '#091221');
+        sky.addColorStop(1, '#1d314d');
+        ctx.fillStyle = sky;
+        ctx.fillRect(0, 0, canvasWidth, horizon);
+        const floor = ctx.createLinearGradient(0, horizon, 0, canvasHeight);
+        floor.addColorStop(0, '#17263a');
+        floor.addColorStop(1, '#07101e');
+        ctx.fillStyle = floor;
+        ctx.fillRect(0, horizon, canvasWidth, canvasHeight - horizon);
+
+        for (let ray = 0; ray < rays; ray++) {
+          const cameraX = (ray / rays) * 2 - 1;
+          const rayAngle = player.angle + cameraX * FOV / 2;
+          const rayDirX = Math.cos(rayAngle);
+          const rayDirY = Math.sin(rayAngle);
+          let mapX = Math.floor(player.x), mapY = Math.floor(player.y);
+          const deltaDistX = Math.abs(1 / (rayDirX || .00001));
+          const deltaDistY = Math.abs(1 / (rayDirY || .00001));
+          const stepX = rayDirX < 0 ? -1 : 1;
+          const stepY = rayDirY < 0 ? -1 : 1;
+          let sideDistX = rayDirX < 0 ? (player.x - mapX) * deltaDistX : (mapX + 1 - player.x) * deltaDistX;
+          let sideDistY = rayDirY < 0 ? (player.y - mapY) * deltaDistY : (mapY + 1 - player.y) * deltaDistY;
+          let side = 0;
+          let hit = false;
+          let guard = 0;
+          while (!hit && guard++ < 60) {
+            if (sideDistX < sideDistY) { sideDistX += deltaDistX; mapX += stepX; side = 0; }
+            else { sideDistY += deltaDistY; mapY += stepY; side = 1; }
+            if (isWallCell(mapX, mapY)) hit = true;
+          }
+          const rawDistance = side === 0 ? sideDistX - deltaDistX : sideDistY - deltaDistY;
+          const distance = Math.max(.001, rawDistance * Math.cos(rayAngle - player.angle));
+          depthBuffer[ray] = distance;
+          const lineHeight = Math.min(canvasHeight * 1.9, canvasHeight / distance);
+          const top = horizon - lineHeight / 2;
+          const shade = Math.max(18, Math.min(54, Math.round(54 - distance * 3.7)));
+          const wallColor = side === 0 ? `rgb(${shade + 19}, ${shade + 35}, ${shade + 58})` : `rgb(${shade + 12}, ${shade + 25}, ${shade + 44})`;
+          ctx.fillStyle = wallColor;
+          ctx.fillRect(ray * canvasWidth / rays, top, canvasWidth / rays + 1.2, lineHeight);
+          if (distance < 4.5) {
+            ctx.fillStyle = `rgba(255,255,255,${Math.max(0, .05 - distance / 100)})`;
+            ctx.fillRect(ray * canvasWidth / rays, top, canvasWidth / rays + 1.2, 2);
+          }
+        }
+        return horizon;
+      }
+
+      function project(worldX, worldY) {
+        const dx = worldX - player.x, dy = worldY - player.y;
+        const distance = Math.hypot(dx, dy);
+        const angle = normalizeAngle(Math.atan2(dy, dx) - player.angle);
+        if (Math.abs(angle) > FOV * .62 || distance < .06) return null;
+        const x = canvasWidth / 2 + Math.tan(angle) / Math.tan(FOV / 2) * canvasWidth / 2;
+        const column = Math.max(0, Math.min(depthBuffer.length - 1, Math.floor(x / canvasWidth * depthBuffer.length)));
+        if (depthBuffer[column] && distance * Math.cos(angle) > depthBuffer[column] + .22) return null;
+        return { x, distance, angle };
+      }
+
+      function drawSprite(sprite, horizon, type) {
+        const projected = project(sprite.x, sprite.y);
+        if (!projected) return;
+        const size = Math.min(canvasHeight * .75, canvasHeight / projected.distance * (type === 'orange' ? .55 : .42));
+        const baseY = horizon + size * .43;
+        ctx.save();
+        ctx.globalAlpha = Math.max(.35, Math.min(1, 1.16 - projected.distance / 12));
+        ctx.fillStyle = 'rgba(2,8,17,.48)';
+        ctx.beginPath();
+        ctx.ellipse(projected.x, baseY + size * .08, size * .34, size * .095, 0, 0, Math.PI * 2);
+        ctx.fill();
+        if (type === 'orange') {
+          const radius = size * .29;
+          const gradient = ctx.createRadialGradient(projected.x - radius * .35, baseY - radius * .35, radius * .12, projected.x, baseY, radius * 1.1);
+          gradient.addColorStop(0, '#ffd08a');
+          gradient.addColorStop(.35, '#f79443');
+          gradient.addColorStop(1, '#c94b1e');
+          ctx.fillStyle = gradient;
+          ctx.beginPath();
+          ctx.arc(projected.x, baseY - radius * .48, radius, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.fillStyle = '#67bd75';
+          ctx.beginPath();
+          ctx.ellipse(projected.x + radius * .28, baseY - radius * 1.34, radius * .28, radius * .11, -.35, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.fillStyle = 'rgba(255,245,211,.7)';
+          ctx.beginPath();
+          ctx.arc(projected.x - radius * .34, baseY - radius * .82, radius * .16, 0, Math.PI * 2);
+          ctx.fill();
+        } else if (type === 'key') {
+          const s = size * .58;
+          ctx.translate(projected.x, baseY - s * .58);
+          ctx.rotate(Math.sin(performance.now() / 520 + projected.distance) * .12);
+          ctx.fillStyle = '#f5c84b';
+          ctx.shadowColor = 'rgba(245,200,75,.7)';
+          ctx.shadowBlur = 18;
+          ctx.beginPath();
+          ctx.arc(-s * .28, 0, s * .18, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.fillRect(-s * .13, -s * .055, s * .52, s * .11);
+          ctx.fillRect(s * .25, -s * .055, s * .11, s * .24);
+          ctx.fillRect(s * .1, -s * .055, s * .1, s * .17);
+          ctx.shadowBlur = 0;
+          ctx.fillStyle = '#8e5e21';
+          ctx.beginPath();
+          ctx.arc(-s * .28, 0, s * .075, 0, Math.PI * 2);
+          ctx.fill();
+        } else {
+          const w = size * .62, h = size * 1.02, frame = Math.max(2, size * .06);
+          const left = projected.x - w / 2;
+          const top = baseY - h;
+          ctx.fillStyle = '#16263a';
+          ctx.fillRect(left - frame, top - frame, w + frame * 2, h + frame * 1.2);
+          ctx.fillStyle = exitOpen ? '#4ea88f' : '#a9573d';
+          ctx.fillRect(left, top, w, h);
+          ctx.strokeStyle = exitOpen ? 'rgba(159,255,222,.9)' : 'rgba(255,215,175,.8)';
+          ctx.lineWidth = Math.max(1, size * .025);
+          ctx.strokeRect(left, top, w, h);
+
+          const signH = h * .16;
+          ctx.fillStyle = exitOpen ? '#d8fff1' : '#f5c84b';
+          ctx.fillRect(left + w * .12, top + h * .08, w * .76, signH);
+          ctx.fillStyle = '#17263a';
+          ctx.font = `800 ${Math.max(7, h * .105)}px system-ui, sans-serif`;
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText('EXIT', projected.x, top + h * .08 + signH / 2);
+
+          const holeY = top + h * .57;
+          const holeSpacing = w * .23;
+          for (let index = -1; index <= 1; index++) {
+            const holeX = projected.x + index * holeSpacing;
+            ctx.fillStyle = '#f5c84b';
+            ctx.beginPath();
+            ctx.arc(holeX, holeY, Math.max(2, size * .045), 0, Math.PI * 2);
+            ctx.fill();
+            ctx.fillStyle = '#17263a';
+            ctx.beginPath();
+            ctx.arc(holeX, holeY, Math.max(1, size * .022), 0, Math.PI * 2);
+            ctx.fill();
+            ctx.fillRect(holeX - Math.max(1, size * .012), holeY, Math.max(2, size * .024), Math.max(2, size * .07));
+          }
+
+          ctx.fillStyle = exitOpen ? '#caffee' : '#ffd3a7';
+          ctx.beginPath();
+          ctx.arc(left + w * .8, top + h * .62, Math.max(1.5, size * .035), 0, Math.PI * 2);
+          ctx.fill();
+        }
+        ctx.restore();
+      }
+
+      function drawScene() {
+        const horizon = castRays();
+        const sprites = [];
+        keys.filter(key => !key.found).forEach(key => sprites.push({ ...key, type: 'key', distance: Math.hypot(key.x - player.x, key.y - player.y) }));
+        oranges.forEach(orange => sprites.push({ ...orange, type: 'orange', distance: Math.hypot(orange.x - player.x, orange.y - player.y) }));
+        sprites.push({ ...exit, type: 'exit', distance: Math.hypot(exit.x - player.x, exit.y - player.y) });
+        sprites.sort((a, b) => b.distance - a.distance).forEach(sprite => drawSprite(sprite, horizon, sprite.type));
+        ctx.strokeStyle = 'rgba(255,255,255,.05)';
+        ctx.lineWidth = 1;
+        for (let y = horizon + 28; y < canvasHeight; y += 28) {
+          ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(canvasWidth, y); ctx.stroke();
+        }
+      }
+
+      function drawMinimap() {
+        const w = minimap.width, h = minimap.height;
+        const cellW = w / map[0].length, cellH = h / map.length;
+        miniCtx.clearRect(0, 0, w, h);
+        miniCtx.fillStyle = '#091321'; miniCtx.fillRect(0, 0, w, h);
+        for (let y = 0; y < map.length; y++) {
+          for (let x = 0; x < map[y].length; x++) {
+            const cell = map[y][x];
+            if (cell === '#') { miniCtx.fillStyle = '#2b405c'; miniCtx.fillRect(x * cellW, y * cellH, cellW + .5, cellH + .5); }
+            else if (cell === 'X') { miniCtx.fillStyle = exitOpen ? '#5fc3a7' : '#c88055'; miniCtx.fillRect(x * cellW, y * cellH, cellW + .5, cellH + .5); }
+          }
+        }
+        keys.filter(key => !key.found).forEach(key => {
+          miniCtx.save();
+          miniCtx.translate(key.x * cellW, key.y * cellH);
+          miniCtx.rotate(-.35);
+          miniCtx.fillStyle = '#f5c84b';
+          miniCtx.beginPath();
+          miniCtx.arc(-2, 0, 1.8, 0, Math.PI * 2);
+          miniCtx.fill();
+          miniCtx.fillRect(-.5, -.55, 4.5, 1.1);
+          miniCtx.fillRect(2.7, -.55, 1, 2.2);
+          miniCtx.restore();
+        });
+        oranges.forEach(orange => { miniCtx.fillStyle = '#f27635'; miniCtx.beginPath(); miniCtx.arc(orange.x * cellW, orange.y * cellH, 2.5, 0, Math.PI * 2); miniCtx.fill(); });
+        miniCtx.save();
+        miniCtx.translate(player.x * cellW, player.y * cellH);
+        miniCtx.rotate(player.angle);
+        miniCtx.fillStyle = '#f4f7fb';
+        miniCtx.beginPath(); miniCtx.moveTo(5, 0); miniCtx.lineTo(-3, -3); miniCtx.lineTo(-2, 3); miniCtx.closePath(); miniCtx.fill();
+        miniCtx.restore();
+      }
+
+      function captureMouseLook() {
+        if (phase === 'ready') startRun();
+        if (phase === 'playing' && document.pointerLockElement !== canvas && canvas.requestPointerLock) canvas.requestPointerLock();
+      }
+
+      function frame(now) {
+        const delta = Math.min(.05, (now - lastFrame) / 1000);
+        lastFrame = now;
+        update(delta, now);
+        drawScene();
+        drawMinimap();
+        requestAnimationFrame(frame);
+      }
+
+      function handleKey(event, pressed) {
+        const key = event.key.toLowerCase();
+        if (['w', 'a', 's', 'd', 'e', 'k', 'r', ' '].includes(key)) event.preventDefault();
+        if (pressed && phase === 'ready' && ['w', 'a', 's', 'd', 'e', 'k', ' '].includes(key)) startRun();
+        if (key in input) input[key] = pressed;
+        if (!pressed || event.repeat) return;
+        if (key === 'e') collectKey();
+        if (key === 'k') openExit();
+        if (key === 'r') fullReset();
+      }
+
+      window.addEventListener('keydown', event => handleKey(event, true));
+      window.addEventListener('keyup', event => handleKey(event, false));
+      window.addEventListener('resize', resize);
+      canvas.addEventListener('click', captureMouseLook);
+      document.addEventListener('mousemove', event => {
+        if (phase === 'playing' && document.pointerLockElement === canvas) player.angle = normalizeAngle(player.angle + event.movementX * .0028);
+      });
+      document.addEventListener('pointerlockchange', () => {
+        const locked = document.pointerLockElement === canvas;
+        stage.classList.toggle('look-ready', phase === 'playing' && !locked);
+        if (phase === 'playing') statusLine.textContent = locked ? 'Mouse look active. Press Esc to release the cursor.' : 'Mouse look off. Click the view to recapture it.';
+      });
+      startButton.addEventListener('click', startRun);
+      restartButton.addEventListener('click', fullReset);
+
+      resetActors();
+      resize();
+      updateHud();
+      requestAnimationFrame(frame);
+    })();
+  </script>
+</body>
+</html>

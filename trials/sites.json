@@ -1,5 +1,14 @@
 [
   {
+    "slug": "patrick-younglee-orange-maze-escape",
+    "trialId": "4de38205-9d11-4ee5-b278-f4ddd21473e2",
+    "studentName": "Patrick YoungLee",
+    "title": "Orange Maze Escape",
+    "description": "First-person maze game. Oranges are hunting you, and your mission is to collect 3 keys to open the door and escape.",
+    "submittedAt": "2026-10-31T18:54:37.927Z",
+    "thumbnail": "patrick-younglee-orange-maze-escape/thumb.png"
+  },
+  {
     "slug": "terry-niu-highway-dodge",
     "trialId": "0f5fc1ee-9932-4a4d-b5c0-c907fc453898",
     "studentName": "Terry Niu",
