@@ -1,5 +1,14 @@
 [
   {
+    "slug": "anthony-coin-climber",
+    "trialId": "1f153f7d-8150-42dc-8c84-337bfca7e11c",
+    "studentName": "Anthony",
+    "title": "Coin Climber",
+    "description": "Cookie Clicker clone with coins and enemies.",
+    "submittedAt": "2026-11-06T23:56:11.876Z",
+    "thumbnail": "anthony-coin-climber/thumb.png"
+  },
+  {
     "slug": "ron-basketball-game",
     "trialId": "b78a32c2-85e3-4fca-9f53-c2efaa783510",
     "studentName": "Ron",
