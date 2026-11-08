@@ -1,0 +1,18 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Last Standing — Survival Arena</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <canvas id="game" aria-label="Third-person survival shooter"></canvas>
+  <header><div class="brand"><span class="mark">⦿</span> LAST STANDING <small>SURVIVAL ARENA</small></div><button id="pause">PAUSE <kbd>Esc</kbd></button></header>
+  <section class="stats"><div><small>HOSTILES REMAINING</small><strong id="remaining">30 <span>/ 30</span></strong></div><div><small>ELIMINATIONS</small><strong id="kills">00</strong></div></section>
+  <div id="crosshair"><i></i></div><div id="hitmarker">×</div>
+  <footer><div class="vitals"><small>VITALS <span id="hpText">100</span></small><div class="health"><div id="hp"></div></div><span class="status">● &nbsp; OPERATOR ACTIVE</span></div><div class="controls"><span><kbd>W A S D</kbd> MOVE</span><span><kbd>LMB</kbd> FIRE · <kbd>RMB</kbd> AIM</span><span><kbd>SHIFT</kbd> SPRINT · <kbd>SPACE</kbd> JUMP · <kbd>R</kbd> RELOAD</span></div><div class="ammo"><small id="weaponStatus">AR–24 / AUTOMATIC</small><strong><span id="ammo">24</span><em> / ∞</em></strong></div></footer>
+  <div id="spawnStatus" style="position:absolute;top:205px;left:40px;font-size:10px;letter-spacing:1.5px;color:#daf885"></div>
+  <div id="notice"></div><div id="damage"></div>
+  <main id="overlay"><div class="panel"><div class="eyebrow">TACTICAL SURVIVAL • 01</div><h1>LAST<br><span>STANDING.</span></h1><p id="description">One operator. Thirty hostiles.<br>Use cover, keep moving, and clear the arena.</p><div class="brief"><span><b>WASD</b> Move</span><span><b>MOUSE</b> Look & shoot / RMB aim</span><span><b>SHIFT / SPACE</b> Sprint / jump</span><span><b>1 / 2 / 3</b> Rifle / shotgun / sniper</span><span><b>R</b> Reload</span><span><b>ESC</b> Pause</span></div><label class="difficulty-label" for="difficulty">DIFFICULTY <select id="difficulty"><option value="simple">Simple</option><option value="normal" selected>Normal</option><option value="hard">Hard</option></select></label><button id="start">ENTER ARENA <span>↗</span></button><small class="hint">Walk over items to collect · Green: health · Amber: shotgun · Blue: sniper</small></div><div class="side-label">OUTLAST. OUTMANEUVER. OVERCOME.</div></main>
+  <script src="game.js"></script>
+</body></html>

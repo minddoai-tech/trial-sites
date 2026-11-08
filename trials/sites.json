@@ -1,5 +1,14 @@
 [
   {
+    "slug": "austin-peace-elite",
+    "trialId": "15ca944c-5cdb-4ed3-91f6-77c1a732521b",
+    "studentName": "Austin",
+    "title": "peace_elite",
+    "description": "a shooting survival game",
+    "submittedAt": "2026-11-08T19:02:30.214Z",
+    "thumbnail": "austin-peace-elite/thumb.png"
+  },
+  {
     "slug": "anthony-coin-climber",
     "trialId": "1f153f7d-8150-42dc-8c84-337bfca7e11c",
     "studentName": "Anthony",
