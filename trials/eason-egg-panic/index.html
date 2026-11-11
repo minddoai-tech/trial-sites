@@ -1,0 +1,1099 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Egg Panic! — Frying Pan Defender</title>
+  <style>
+    :root {
+      --ink: #17324d;
+      --muted: #60748a;
+      --paper: #fffaf0;
+      --cream: #f7efdf;
+      --blue: #bfe7f2;
+      --blue-deep: #4e91b2;
+      --yellow: #ffd66f;
+      --orange: #f08d4f;
+      --red: #d85252;
+      --shadow: 0 16px 38px rgba(46, 77, 104, .16);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--ink);
+      font-family: ui-rounded, "Nunito", "Trebuchet MS", system-ui, sans-serif;
+      background:
+        radial-gradient(circle at 15% 15%, rgba(255,255,255,.95) 0 2px, transparent 3px),
+        radial-gradient(circle at 82% 9%, rgba(255,255,255,.8) 0 2px, transparent 3px),
+        linear-gradient(145deg, #fffaf0 0%, #f5ead5 100%);
+      background-size: 135px 135px, 180px 180px, auto;
+    }
+
+    .page {
+      width: min(1080px, calc(100% - 28px));
+      margin: 0 auto;
+      padding: 22px 0 32px;
+    }
+
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: end;
+      gap: 16px;
+      margin-bottom: 14px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 11px;
+    }
+
+    .brand-mark {
+      display: grid;
+      place-items: center;
+      width: 48px;
+      height: 48px;
+      border-radius: 15px;
+      background: var(--yellow);
+      box-shadow: 0 5px 0 #dfa844;
+      font-size: 27px;
+      transform: rotate(-6deg);
+    }
+
+    h1, h2, p { margin: 0; }
+    h1 { font-size: clamp(1.55rem, 3vw, 2.15rem); letter-spacing: -.045em; }
+    .subtitle { color: var(--muted); font-size: .9rem; margin-top: 2px; }
+
+    .tip {
+      color: var(--muted);
+      font-size: .84rem;
+      font-weight: 700;
+      text-align: right;
+    }
+
+    .game-card {
+      position: relative;
+      overflow: hidden;
+      border: 1px solid rgba(66, 105, 130, .17);
+      border-radius: 26px;
+      background: rgba(255, 255, 255, .68);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(5px);
+    }
+
+    .hud {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 10px;
+      padding: 14px 16px 13px;
+      background: rgba(255,255,255,.7);
+      border-bottom: 1px solid rgba(66, 105, 130, .12);
+    }
+
+    .stat {
+      min-width: 0;
+      padding: 8px 10px;
+      border-radius: 14px;
+      background: rgba(245, 237, 222, .76);
+    }
+
+    .stat-label {
+      display: block;
+      color: var(--muted);
+      font-size: .68rem;
+      font-weight: 900;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+    }
+
+    .stat-value {
+      display: block;
+      margin-top: 2px;
+      overflow: hidden;
+      font-size: 1.1rem;
+      font-weight: 950;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .health-track {
+      display: flex;
+      gap: 2px;
+      align-items: center;
+      align-content: center;
+      flex-wrap: wrap;
+      height: 27px;
+      max-height: 29px;
+      overflow: hidden;
+    }
+
+    .heart { font-size: 12px; line-height: 1; filter: saturate(1.2); }
+    .heart.empty { filter: grayscale(1); opacity: .28; }
+
+    .arena-wrap {
+      position: relative;
+      padding: 12px;
+      background: linear-gradient(180deg, #d9f3f5 0%, #c8ebef 56%, #b7dce3 100%);
+    }
+
+    canvas {
+      display: block;
+      width: 100%;
+      height: auto;
+      min-height: 380px;
+      border-radius: 17px;
+      background: #c8ebef;
+      cursor: crosshair;
+      touch-action: none;
+      box-shadow: inset 0 0 0 2px rgba(255,255,255,.4);
+    }
+
+    .canvas-hint {
+      position: absolute;
+      top: 26px;
+      left: 28px;
+      pointer-events: none;
+      color: rgba(23, 50, 77, .57);
+      font-size: .76rem;
+      font-weight: 900;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+    }
+
+    .bottom-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: center;
+      padding: 12px 17px 15px;
+      color: var(--muted);
+      font-size: .83rem;
+      font-weight: 800;
+    }
+
+    .legend { display: flex; gap: 15px; flex-wrap: wrap; }
+    .legend span { display: inline-flex; align-items: center; gap: 5px; }
+    .legend i { display: inline-block; width: 10px; height: 10px; border-radius: 50%; }
+    .legend .fresh { background: var(--yellow); border: 2px solid #eeae42; }
+    .legend .hot { background: var(--red); border: 2px solid #a93f45; }
+    .legend .boss { background: #8b5bb5; border: 2px solid #64438a; }
+
+    .actions { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
+    .buy-button { background: #e58b48; box-shadow: 0 4px 0 #b76532; }
+    .buy-button:active { box-shadow: 0 1px 0 #b76532; }
+    button:disabled { cursor: not-allowed; filter: grayscale(.55); opacity: .55; transform: none; }
+
+    button {
+      border: 0;
+      border-radius: 13px;
+      padding: 11px 19px;
+      color: #fff;
+      background: var(--blue-deep);
+      box-shadow: 0 4px 0 #39718d;
+      cursor: pointer;
+      font: inherit;
+      font-weight: 950;
+      transition: transform .12s ease, filter .12s ease;
+    }
+
+    button:hover { filter: brightness(1.07); transform: translateY(-1px); }
+    button:active { box-shadow: 0 1px 0 #39718d; transform: translateY(2px); }
+
+    .overlay {
+      position: absolute;
+      inset: 0;
+      z-index: 5;
+      display: grid;
+      place-items: center;
+      padding: 24px;
+      background: rgba(23, 50, 77, .25);
+      opacity: 1;
+      transition: opacity .2s ease;
+    }
+
+    .overlay.hidden { pointer-events: none; opacity: 0; }
+
+    .modal {
+      width: min(450px, 100%);
+      padding: 28px 27px 25px;
+      border: 2px solid rgba(255,255,255,.7);
+      border-radius: 24px;
+      background: var(--paper);
+      box-shadow: 0 18px 48px rgba(23,50,77,.25);
+      text-align: center;
+    }
+
+    .modal-egg { font-size: 54px; line-height: 1; margin-bottom: 10px; }
+    .modal h2 { font-size: 1.8rem; letter-spacing: -.04em; }
+    .modal p { margin: 10px auto 18px; color: var(--muted); line-height: 1.5; font-weight: 700; }
+    .modal .small { margin-top: 12px; font-size: .78rem; }
+
+    @media (max-width: 600px) {
+      .page { width: min(100% - 16px, 1080px); padding-top: 13px; }
+      .topbar { align-items: center; }
+      .tip { display: none; }
+      .hud { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; padding: 9px; }
+      .stat { padding: 7px 7px; }
+      .stat-label { font-size: .58rem; }
+      .stat-value { font-size: .94rem; }
+      .arena-wrap { padding: 8px; }
+      canvas { min-height: 340px; }
+      .bottom-row { align-items: flex-start; flex-direction: column; padding: 10px 12px 13px; }
+      .bottom-row button { align-self: stretch; }
+      .actions { width: 100%; flex-direction: column; }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <header class="topbar">
+      <div class="brand">
+        <div class="brand-mark" aria-hidden="true">🍳</div>
+        <div>
+          <h1>Egg Panic!</h1>
+          <p class="subtitle">A tiny frying-pan defense game</p>
+        </div>
+      </div>
+      <p class="tip">Move your mouse • Click to swing</p>
+    </header>
+
+    <section class="game-card" aria-label="Egg Panic game">
+      <div class="hud">
+        <div class="stat"><span class="stat-label">Score</span><span class="stat-value" id="score">0</span></div>
+        <div class="stat"><span class="stat-label">Eggs</span><span class="stat-value" id="cracked">0</span></div>
+        <div class="stat"><span class="stat-label">Pan turrets</span><span class="stat-value" id="turrets">0</span></div>
+        <div class="stat"><span class="stat-label">Survival · endless</span><span class="stat-value" id="time">0:00 ∞</span></div>
+        <div class="stat"><span class="stat-label">Health · 20 lives</span><span class="health-track" id="health" aria-label="20 hearts"></span></div>
+      </div>
+
+      <div class="arena-wrap">
+        <canvas id="game" width="960" height="590" aria-label="Kitchen game arena. Move the cursor and click the flying egg planes to hit them."></canvas>
+        <div class="canvas-hint">Click eggs • upgrade your pan • build endless turrets</div>
+      </div>
+
+      <div class="bottom-row">
+        <div class="legend" aria-label="Threat types">
+          <span><i class="fresh"></i> Fresh egg · 1 hit</span>
+          <span><i class="hot"></i> Overcooked · 6 hits + explosion</span>
+          <span><i class="boss"></i> Boss · 500 hits, +20 each round</span>
+        </div>
+        <div class="actions">
+          <button class="buy-button" id="buyTurretButton" type="button">Buy pan turret · 5 eggs</button>
+          <button class="buy-button" id="upgradePanButton" type="button">Upgrade pan · 8 eggs</button>
+          <button id="restartButton" type="button">Restart game</button>
+        </div>
+      </div>
+
+      <div class="overlay" id="overlay">
+        <div class="modal">
+          <div class="modal-egg" id="modalEgg" aria-hidden="true">🥚</div>
+          <h2 id="modalTitle">The eggs are coming!</h2>
+          <p id="modalText">You hate eating eggs, but now the eggs hate you back. Move your cursor to aim your frying pan, then click an egg to crack it. Spend cracked eggs to build automatic turrets or upgrade your pan's size.</p>
+          <button id="startButton" type="button">Start defending</button>
+          <p class="small">Endless mode · bosses arrive every 60 seconds. Turrets have unlimited ammo and fire 0.1s faster after every shot.</p>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    (() => {
+      "use strict";
+
+      const canvas = document.getElementById("game");
+      const ctx = canvas.getContext("2d");
+      const overlay = document.getElementById("overlay");
+      const modalEgg = document.getElementById("modalEgg");
+      const modalTitle = document.getElementById("modalTitle");
+      const modalText = document.getElementById("modalText");
+      const startButton = document.getElementById("startButton");
+      const restartButton = document.getElementById("restartButton");
+      const buyTurretButton = document.getElementById("buyTurretButton");
+      const upgradePanButton = document.getElementById("upgradePanButton");
+      const scoreEl = document.getElementById("score");
+      const timeEl = document.getElementById("time");
+      const crackedEl = document.getElementById("cracked");
+      const turretEl = document.getElementById("turrets");
+      const healthEl = document.getElementById("health");
+
+      const W = canvas.width;
+      const H = canvas.height;
+      const TURRET_COST = 5;
+      const PAN_UPGRADE_BASE_COST = 8;
+      const TURRET_START_COOLDOWN = 1.35;
+      const TURRET_SHOT_ACCELERATION = .1;
+      const TURRET_MIN_COOLDOWN = .1;
+      const BOSS_INTERVAL = 60;
+      const MAX_HEALTH = 20;
+      const TAU = Math.PI * 2;
+
+      let eggs = [];
+      let turrets = [];
+      let shots = [];
+      let particles = [];
+      let floatingTexts = [];
+      let gameState = "ready";
+      let score = 0;
+      let cracked = 0;
+      let totalCracked = 0;
+      let bossesDefeated = 0;
+      let bossesSpawned = 0;
+      let health = MAX_HEALTH;
+      let panLevel = 1;
+      let elapsed = 0;
+      let nextBossAt = BOSS_INTERVAL;
+      let boss = null;
+      let bossWarning = 0;
+      let spawnClock = 0;
+      let lastFrame = 0;
+      let eggId = 0;
+      let shake = 0;
+      let panSwing = 0;
+      let pointer = { x: W / 2, y: H * .72, inside: false };
+
+      const player = { x: W / 2, y: H - 70, targetX: W / 2 };
+
+      function resetGame() {
+        eggs = [];
+        turrets = [];
+        shots = [];
+        particles = [];
+        floatingTexts = [];
+        score = 0;
+        cracked = 0;
+        totalCracked = 0;
+        bossesDefeated = 0;
+        bossesSpawned = 0;
+        health = MAX_HEALTH;
+        panLevel = 1;
+        elapsed = 0;
+        nextBossAt = BOSS_INTERVAL;
+        boss = null;
+        bossWarning = 0;
+        spawnClock = 0;
+        shake = 0;
+        panSwing = 0;
+        player.x = W / 2;
+        player.targetX = W / 2;
+        updateHud();
+      }
+
+      function beginGame() {
+        resetGame();
+        gameState = "playing";
+        updateHud();
+        overlay.classList.add("hidden");
+        lastFrame = performance.now();
+        requestAnimationFrame(frame);
+      }
+
+      function showResult() {
+        gameState = "lost";
+        overlay.classList.remove("hidden");
+        modalEgg.textContent = "🍳";
+        modalTitle.textContent = "The eggs got you!";
+        modalText.textContent = `You lasted ${formatTime(elapsed)}, cracked ${totalCracked} eggs, and defeated ${bossesDefeated} boss${bossesDefeated === 1 ? "" : "es"}. Build turrets early to survive longer!`;
+        startButton.textContent = "Play again";
+      }
+
+      function updateHud() {
+        scoreEl.textContent = score.toLocaleString();
+        timeEl.textContent = `${formatTime(elapsed)} ∞`;
+        crackedEl.textContent = cracked.toString();
+        turretEl.textContent = turrets.length.toString();
+        buyTurretButton.disabled = gameState !== "playing" || cracked < TURRET_COST;
+        buyTurretButton.textContent = `Buy pan turret · ${TURRET_COST} eggs`;
+        const panCost = getPanUpgradeCost();
+        upgradePanButton.disabled = gameState !== "playing" || cracked < panCost;
+        upgradePanButton.textContent = `Upgrade pan · ${panCost} eggs (Lv ${panLevel})`;
+        healthEl.innerHTML = "";
+        for (let i = 0; i < MAX_HEALTH; i++) {
+          const heart = document.createElement("span");
+          heart.className = `heart${i >= health ? " empty" : ""}`;
+          heart.textContent = "♥";
+          healthEl.appendChild(heart);
+        }
+        healthEl.setAttribute("aria-label", `${health} of ${MAX_HEALTH} lives remaining`);
+      }
+
+      function formatTime(value) {
+        const minutes = Math.floor(value / 60);
+        const seconds = Math.floor(value % 60).toString().padStart(2, "0");
+        return `${minutes}:${seconds}`;
+      }
+
+      function getPanUpgradeCost() {
+        return Math.ceil(PAN_UPGRADE_BASE_COST * Math.pow(1.28, panLevel - 1));
+      }
+
+      function getPanScale() {
+        return Math.min(2.4, 1 + (panLevel - 1) * .14);
+      }
+
+      function arenaPoint(event) {
+        const rect = canvas.getBoundingClientRect();
+        return {
+          x: (event.clientX - rect.left) * W / rect.width,
+          y: (event.clientY - rect.top) * H / rect.height
+        };
+      }
+
+      function updatePointer(event) {
+        const point = arenaPoint(event);
+        pointer.x = point.x;
+        pointer.y = point.y;
+        pointer.inside = true;
+        player.targetX = clamp(point.x, 72, W - 72);
+      }
+
+      canvas.addEventListener("pointermove", updatePointer);
+      canvas.addEventListener("pointerenter", updatePointer);
+      canvas.addEventListener("pointerleave", () => { pointer.inside = false; });
+      canvas.addEventListener("pointerdown", (event) => {
+        event.preventDefault();
+        updatePointer(event);
+        if (gameState === "playing") strike(pointer.x, pointer.y);
+      });
+
+      startButton.addEventListener("click", beginGame);
+      restartButton.addEventListener("click", beginGame);
+      buyTurretButton.addEventListener("click", buyTurret);
+      upgradePanButton.addEventListener("click", upgradePan);
+
+      function clamp(value, min, max) { return Math.max(min, Math.min(max, value)); }
+      function random(min, max) { return min + Math.random() * (max - min); }
+
+      function buyTurret() {
+        if (gameState !== "playing" || cracked < TURRET_COST) return;
+        cracked -= TURRET_COST;
+        turrets.push({ x: 0, y: H - 28, cooldown: .25, cooldownTime: TURRET_START_COOLDOWN });
+        layoutTurrets();
+        floatingTexts.push({ x: turrets[turrets.length - 1].x, y: H - 74, text: "TURRET BUILT!", color: "#39718d", age: 0, life: 1.2 });
+        burst(turrets[turrets.length - 1].x, Math.max(40, turrets[turrets.length - 1].y - 10), "#f8d77d", 14, 1.5);
+        updateHud();
+      }
+
+      function layoutTurrets() {
+        const columns = 8;
+        const left = 68;
+        const spacing = (W - left * 2) / (columns - 1);
+        turrets.forEach((turret, index) => {
+          const row = Math.floor(index / columns);
+          const column = index % columns;
+          turret.x = left + spacing * column;
+          turret.y = H - 29 - row * 34;
+        });
+      }
+
+      function upgradePan() {
+        const cost = getPanUpgradeCost();
+        if (gameState !== "playing" || cracked < cost) return;
+        cracked -= cost;
+        panLevel++;
+        floatingTexts.push({ x: player.x, y: player.y - 68, text: `PAN LEVEL ${panLevel}!`, color: "#39718d", age: 0, life: 1.3 });
+        burst(player.x + 28, player.y - 15, "#f8d77d", 18, 1.8);
+        updateHud();
+      }
+
+      function spawnEgg() {
+        const side = Math.random() < .5 ? "left" : "right";
+        const x = side === "left" ? random(55, W * .35) : random(W * .65, W - 55);
+        eggs.push({
+          id: eggId++,
+          x,
+          y: random(-52, -20),
+          radius: random(25, 32),
+          speed: random(31, 46) + elapsed * 1.1,
+          age: 0,
+          hot: false,
+          hp: 1,
+          maxHp: 1,
+          wobble: random(0, TAU),
+          tilt: random(-.14, .14)
+        });
+      }
+
+      function spawnBoss() {
+        const maxHp = 500 + bossesSpawned * 20;
+        bossesSpawned++;
+        boss = {
+          x: W / 2,
+          y: -86,
+          radius: 58,
+          speed: 20 + elapsed * .08,
+          age: 0,
+          hp: maxHp,
+          maxHp,
+          wobble: random(0, TAU),
+          tilt: 0
+        };
+        bossWarning = 4;
+        floatingTexts.push({ x: W / 2, y: 72, text: "BOSS PLANE INCOMING!", color: "#64438a", age: 0, life: 2.5 });
+        burst(W / 2, 30, "#8b5bb5", 22, 2);
+      }
+
+      function evolveEgg(egg) {
+        egg.hot = true;
+        egg.hp = 6;
+        egg.maxHp = 6;
+        egg.radius += 3;
+        burst(egg.x, egg.y, "#d85252", 10, 1.2);
+        floatingTexts.push({ x: egg.x, y: egg.y - 34, text: "OVERCOOKED!", color: "#a83c45", age: 0, life: 1 });
+      }
+
+      function strike(x, y) {
+        panSwing = 1;
+        const panReach = 17 * getPanScale();
+        let target = null;
+        let targetKind = "egg";
+        let closest = Infinity;
+        for (const egg of eggs) {
+          const distance = Math.hypot(egg.x - x, egg.y - y);
+          if (distance < egg.radius + panReach && distance < closest) {
+            target = egg;
+            closest = distance;
+          }
+        }
+        if (boss) {
+          const distance = Math.hypot(boss.x - x, boss.y - y);
+          if (distance < boss.radius + panReach && distance < closest) {
+            target = boss;
+            targetKind = "boss";
+          }
+        }
+        if (!target) {
+          burst(x, y, "rgba(255,255,255,.8)", 3, .7);
+          return;
+        }
+
+        damageTarget(target, targetKind);
+      }
+
+      function damageTarget(target, targetKind) {
+        target.hp--;
+        burst(target.x, target.y, targetKind === "boss" ? "#d5a2f0" : target.hot ? "#ff8c63" : "#fff1a4", targetKind === "boss" ? 10 : target.hot ? 7 : 5, 1.4);
+        if (target.hp > 0) {
+          floatingTexts.push({ x: target.x, y: target.y - target.radius - 8, text: `${target.hp} hits`, color: targetKind === "boss" ? "#64438a" : "#a83c45", age: 0, life: .75 });
+          return;
+        }
+
+        if (targetKind === "boss") {
+          defeatBoss(target);
+          return;
+        }
+
+        const index = eggs.indexOf(target);
+        if (index >= 0) eggs.splice(index, 1);
+        cracked++;
+        totalCracked++;
+        score += target.hot ? 220 : 100;
+        floatingTexts.push({ x: target.x, y: target.y - target.radius, text: target.hot ? "+220  BOOM!" : "+100", color: target.hot ? "#c14448" : "#39718d", age: 0, life: 1.1 });
+        if (target.hot) {
+          burst(target.x, target.y, "#d85252", 25, 2.4);
+          shake = .35;
+          if (Math.hypot(target.x - player.x, target.y - player.y) < 180) damagePlayer();
+        } else {
+          burst(target.x, target.y, "#ffd66f", 16, 1.7);
+        }
+        updateHud();
+      }
+
+      function defeatBoss(target) {
+        boss = null;
+        bossesDefeated++;
+        cracked += 10;
+        totalCracked += 10;
+        score += 2500;
+        floatingTexts.push({ x: target.x, y: target.y - target.radius - 12, text: "+2500  +10 EGGS!", color: "#64438a", age: 0, life: 1.5 });
+        burst(target.x, target.y, "#8b5bb5", 42, 2.7);
+        shake = .65;
+        updateHud();
+      }
+
+      function damagePlayer(amount = 1) {
+        health = Math.max(0, health - amount);
+        shake = .55;
+        floatingTexts.push({ x: player.x, y: player.y - 55, text: amount > 1 ? "BOSS HIT!" : "OUCH!", color: "#c14448", age: 0, life: .9 });
+        updateHud();
+        if (health <= 0) showResult();
+      }
+
+      function findTurretTarget() {
+        if (boss) return { target: boss, kind: "boss" };
+        let closest = null;
+        for (const egg of eggs) {
+          if (!closest || egg.y > closest.y) closest = egg;
+        }
+        return closest ? { target: closest, kind: "egg" } : null;
+      }
+
+      function updateTurrets(dt) {
+        for (const turret of turrets) {
+          turret.cooldown -= dt;
+          if (turret.cooldown > 0) continue;
+          const selection = findTurretTarget();
+          if (!selection) continue;
+          shots.push({
+            x: turret.x,
+            y: turret.y - 23,
+            target: selection.target,
+            kind: selection.kind,
+            speed: 510,
+            age: 0
+          });
+          turret.cooldown = turret.cooldownTime;
+          turret.cooldownTime = Math.max(TURRET_MIN_COOLDOWN, turret.cooldownTime - TURRET_SHOT_ACCELERATION);
+        }
+      }
+
+      function updateShots(dt) {
+        for (let i = shots.length - 1; i >= 0; i--) {
+          const shot = shots[i];
+          const targetStillExists = shot.kind === "boss" ? boss === shot.target : eggs.includes(shot.target);
+          if (!targetStillExists) {
+            shots.splice(i, 1);
+            continue;
+          }
+          shot.age += dt;
+          const dx = shot.target.x - shot.x;
+          const dy = shot.target.y - shot.y;
+          const distance = Math.max(1, Math.hypot(dx, dy));
+          shot.x += dx / distance * shot.speed * dt;
+          shot.y += dy / distance * shot.speed * dt;
+          if (distance < shot.target.radius + 10) {
+            damageTarget(shot.target, shot.kind);
+            burst(shot.x, shot.y, shot.kind === "boss" ? "#d5a2f0" : "#f8d77d", 5, 1.1);
+            shots.splice(i, 1);
+          }
+        }
+      }
+
+      function updateBoss(dt) {
+        if (!boss) return;
+        boss.age += dt;
+        boss.tilt = Math.sin(boss.age * 2 + boss.wobble) * .08;
+        const dx = player.x - boss.x;
+        const dy = player.y - boss.y;
+        const distance = Math.max(1, Math.hypot(dx, dy));
+        boss.x += dx / distance * boss.speed * dt;
+        boss.y += dy / distance * boss.speed * dt;
+        if (distance < boss.radius + 38) {
+          const impactX = boss.x;
+          const impactY = boss.y;
+          boss = null;
+          damagePlayer(2);
+          burst(impactX, impactY, "#8b5bb5", 34, 2.5);
+        }
+      }
+
+      function update(dt) {
+        elapsed += dt;
+        panSwing = Math.max(0, panSwing - dt * 4.5);
+        shake = Math.max(0, shake - dt * 2.4);
+        player.x += (player.targetX - player.x) * Math.min(1, dt * 9);
+        bossWarning = Math.max(0, bossWarning - dt);
+
+        if (elapsed >= nextBossAt) {
+          nextBossAt += BOSS_INTERVAL;
+          if (!boss) spawnBoss();
+        }
+
+        spawnClock -= dt;
+        const spawnRate = Math.max(.43, 1.02 - elapsed * .018);
+        if (spawnClock <= 0) {
+          spawnEgg();
+          if (elapsed > 13 && Math.random() < .18) spawnEgg();
+          spawnClock = spawnRate;
+        }
+
+        for (let i = eggs.length - 1; i >= 0; i--) {
+          const egg = eggs[i];
+          egg.age += dt;
+          if (!egg.hot && egg.age > 7) evolveEgg(egg);
+          const dx = player.x - egg.x;
+          const dy = player.y - egg.y;
+          const distance = Math.max(1, Math.hypot(dx, dy));
+          const drift = Math.sin(egg.age * 3 + egg.wobble) * .35;
+          egg.x += dx / distance * egg.speed * dt + drift;
+          egg.y += dy / distance * egg.speed * dt;
+          if (distance < egg.radius + 35) {
+            eggs.splice(i, 1);
+            damagePlayer();
+            burst(egg.x, egg.y, egg.hot ? "#d85252" : "#f08d4f", 18, 1.8);
+          }
+        }
+
+        updateBoss(dt);
+        updateTurrets(dt);
+        updateShots(dt);
+
+        for (let i = particles.length - 1; i >= 0; i--) {
+          const particle = particles[i];
+          particle.age += dt;
+          particle.x += particle.vx * dt;
+          particle.y += particle.vy * dt;
+          particle.vy += 80 * dt;
+          if (particle.age > particle.life) particles.splice(i, 1);
+        }
+        for (let i = floatingTexts.length - 1; i >= 0; i--) {
+          const text = floatingTexts[i];
+          text.age += dt;
+          text.y -= 22 * dt;
+          if (text.age > text.life) floatingTexts.splice(i, 1);
+        }
+
+        updateHud();
+      }
+
+      function burst(x, y, color, count, force) {
+        for (let i = 0; i < count; i++) {
+          const angle = random(0, TAU);
+          const speed = random(20, 75) * force;
+          particles.push({
+            x, y,
+            vx: Math.cos(angle) * speed,
+            vy: Math.sin(angle) * speed,
+            radius: random(2, 6),
+            color,
+            age: 0,
+            life: random(.35, .75) * force
+          });
+        }
+      }
+
+      function drawBackground() {
+        // Warm tiled backsplash.
+        ctx.fillStyle = "#f7efe0";
+        ctx.fillRect(0, 0, W, H);
+        ctx.fillStyle = "#fffaf0";
+        ctx.fillRect(0, 0, W, 365);
+        ctx.strokeStyle = "rgba(176, 145, 111, .2)";
+        ctx.lineWidth = 2;
+        for (let x = 0; x <= W; x += 76) {
+          ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, 365); ctx.stroke();
+        }
+        for (let y = 0; y <= 365; y += 48) {
+          ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke();
+        }
+
+        // Cabinets and a little kitchen window.
+        ctx.fillStyle = "#d9945c";
+        ctx.fillRect(28, 28, 182, 112);
+        ctx.fillRect(W - 210, 28, 182, 112);
+        ctx.strokeStyle = "#b66b43";
+        ctx.lineWidth = 4;
+        ctx.strokeRect(36, 36, 166, 96);
+        ctx.strokeRect(W - 202, 36, 166, 96);
+        ctx.fillStyle = "#dff4ef";
+        ctx.fillRect(W / 2 - 93, 45, 186, 120);
+        ctx.strokeStyle = "#8bb4b0";
+        ctx.lineWidth = 7;
+        ctx.strokeRect(W / 2 - 93, 45, 186, 120);
+        ctx.lineWidth = 3;
+        ctx.beginPath(); ctx.moveTo(W / 2, 45); ctx.lineTo(W / 2, 165); ctx.moveTo(W / 2 - 93, 105); ctx.lineTo(W / 2 + 93, 105); ctx.stroke();
+        ctx.fillStyle = "#a8d5c0";
+        ctx.beginPath(); ctx.arc(W / 2 - 50, 80, 14, 0, TAU); ctx.arc(W / 2 + 38, 122, 17, 0, TAU); ctx.fill();
+
+        // Countertop and lower cupboards.
+        ctx.fillStyle = "#c57b4c";
+        ctx.fillRect(0, 350, W, 28);
+        ctx.fillStyle = "#e9bd83";
+        ctx.fillRect(0, 378, W, H - 378);
+        ctx.strokeStyle = "rgba(125, 76, 48, .45)";
+        ctx.lineWidth = 3;
+        for (let x = 0; x <= W; x += 144) {
+          ctx.strokeRect(x + 8, 404, 128, H - 422);
+          ctx.beginPath(); ctx.arc(x + 72, 430, 4, 0, TAU); ctx.stroke();
+        }
+
+        // Stovetop, sink, and hanging utensils make the play space feel like a kitchen.
+        ctx.fillStyle = "#687686";
+        ctx.beginPath(); ctx.roundRect(42, 323, 190, 13, 6); ctx.fill();
+        ctx.fillStyle = "#3f5362";
+        ctx.beginPath(); ctx.arc(92, 329, 18, 0, TAU); ctx.arc(176, 329, 18, 0, TAU); ctx.fill();
+        ctx.strokeStyle = "#8d6040";
+        ctx.lineWidth = 5;
+        ctx.beginPath(); ctx.moveTo(270, 0); ctx.lineTo(270, 66); ctx.moveTo(320, 0); ctx.lineTo(320, 52); ctx.moveTo(W - 280, 0); ctx.lineTo(W - 280, 58); ctx.stroke();
+        ctx.strokeStyle = "#687686";
+        ctx.lineWidth = 4;
+        ctx.beginPath(); ctx.arc(270, 82, 18, 0, TAU); ctx.moveTo(302, 52); ctx.lineTo(320, 82); ctx.lineTo(338, 52); ctx.moveTo(W - 298, 58); ctx.lineTo(W - 280, 90); ctx.lineTo(W - 262, 58); ctx.stroke();
+
+        ctx.fillStyle = "rgba(255,255,255,.45)";
+        ctx.fillRect(0, 0, W, 12);
+      }
+
+      function drawEgg(egg) {
+        drawPlane(egg, egg.hot, false);
+        if (egg.hot && egg.hp < egg.maxHp) {
+          ctx.fillStyle = "rgba(23,50,77,.28)";
+          ctx.fillRect(egg.x - egg.radius, egg.y - egg.radius - 16, egg.radius * 2, 4);
+          ctx.fillStyle = "#fff2a1";
+          ctx.fillRect(egg.x - egg.radius, egg.y - egg.radius - 16, egg.radius * 2 * egg.hp / egg.maxHp, 4);
+        }
+      }
+
+      function drawPlane(entity, hot, bossPlane) {
+        const bob = Math.sin(entity.age * 4 + entity.wobble) * (bossPlane ? 3 : 2);
+        const direction = Math.atan2(player.y - entity.y, player.x - entity.x) - Math.PI / 2;
+        const radius = entity.radius;
+        const body = bossPlane ? "#8b5bb5" : hot ? "#e16b58" : "#fff8dc";
+        const outline = bossPlane ? "#64438a" : hot ? "#a83c45" : "#e5ba60";
+        const wing = bossPlane ? "#64438a" : hot ? "#a84b4d" : "#6f9eaa";
+        ctx.save();
+        ctx.translate(entity.x, entity.y + bob);
+        ctx.rotate(direction + (entity.tilt || 0));
+        ctx.shadowColor = bossPlane ? "rgba(70, 42, 103, .35)" : "rgba(36,82,104,.2)";
+        ctx.shadowBlur = bossPlane ? 18 : 9;
+        ctx.shadowOffsetY = 7;
+
+        // Wings and tail make the egg-shaped body read as a small plane.
+        ctx.fillStyle = wing;
+        ctx.beginPath();
+        ctx.moveTo(-radius * .12, -radius * .05);
+        ctx.lineTo(-radius * 1.45, radius * .22);
+        ctx.lineTo(-radius * 1.05, radius * .53);
+        ctx.lineTo(-radius * .13, radius * .3);
+        ctx.lineTo(radius * .13, radius * .3);
+        ctx.lineTo(radius * 1.05, radius * .53);
+        ctx.lineTo(radius * 1.45, radius * .22);
+        ctx.lineTo(radius * .12, -radius * .05);
+        ctx.closePath();
+        ctx.fill();
+        ctx.strokeStyle = outline;
+        ctx.lineWidth = bossPlane ? 4 : 2.5;
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(-radius * .1, -radius * .56);
+        ctx.lineTo(-radius * .65, -radius * .84);
+        ctx.lineTo(-radius * .46, -radius * .42);
+        ctx.lineTo(radius * .46, -radius * .42);
+        ctx.lineTo(radius * .65, -radius * .84);
+        ctx.lineTo(radius * .1, -radius * .56);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+
+        ctx.shadowColor = "transparent";
+        ctx.beginPath();
+        ctx.moveTo(0, radius * 1.06);
+        ctx.bezierCurveTo(radius * .58, radius * .62, radius * .53, -radius * .57, 0, -radius * .98);
+        ctx.bezierCurveTo(-radius * .53, -radius * .57, -radius * .58, radius * .62, 0, radius * 1.06);
+        ctx.closePath();
+        ctx.fillStyle = body;
+        ctx.fill();
+        ctx.strokeStyle = outline;
+        ctx.lineWidth = bossPlane ? 5 : 3;
+        ctx.stroke();
+
+        if (hot || bossPlane) {
+          ctx.strokeStyle = bossPlane ? "#d5a2f0" : "#8f3644";
+          ctx.lineWidth = bossPlane ? 3 : 2.5;
+          ctx.beginPath();
+          ctx.moveTo(-radius * .2, -radius * .68); ctx.lineTo(0, -radius * .2); ctx.lineTo(-radius * .18, radius * .18);
+          ctx.moveTo(radius * .2, -radius * .55); ctx.lineTo(radius * .06, -.02 * radius); ctx.lineTo(radius * .25, radius * .43);
+          ctx.stroke();
+        }
+
+        // Cockpit/face keeps the planes friendly and readable at game distance.
+        ctx.fillStyle = bossPlane ? "#fff7de" : "#ffd66f";
+        ctx.beginPath();
+        ctx.ellipse(0, -radius * .25, radius * (bossPlane ? .34 : .31), radius * (bossPlane ? .25 : .23), 0, 0, TAU);
+        ctx.fill();
+        ctx.fillStyle = bossPlane ? "#c14448" : "#17324d";
+        ctx.beginPath();
+        ctx.arc(-radius * .12, -radius * .27, bossPlane ? 4.5 : 2.2, 0, TAU);
+        ctx.arc(radius * .12, -radius * .27, bossPlane ? 4.5 : 2.2, 0, TAU);
+        ctx.fill();
+        ctx.strokeStyle = bossPlane ? "#4b2b62" : "#17324d";
+        ctx.lineWidth = bossPlane ? 3 : 2;
+        ctx.beginPath();
+        ctx.arc(0, -radius * .13, radius * (bossPlane ? .22 : .16), .15, Math.PI - .15);
+        ctx.stroke();
+
+        // A little spinning propeller at the nose.
+        const propX = 0;
+        const propY = radius * 1.05;
+        const propAngle = entity.age * 9;
+        ctx.strokeStyle = bossPlane ? "#d5a2f0" : "#445463";
+        ctx.lineWidth = bossPlane ? 3 : 2;
+        ctx.beginPath();
+        ctx.moveTo(propX + Math.cos(propAngle) * radius * .24, propY + Math.sin(propAngle) * radius * .24);
+        ctx.lineTo(propX - Math.cos(propAngle) * radius * .24, propY - Math.sin(propAngle) * radius * .24);
+        ctx.moveTo(propX + Math.cos(propAngle + Math.PI / 2) * radius * .18, propY + Math.sin(propAngle + Math.PI / 2) * radius * .18);
+        ctx.lineTo(propX - Math.cos(propAngle + Math.PI / 2) * radius * .18, propY - Math.sin(propAngle + Math.PI / 2) * radius * .18);
+        ctx.stroke();
+        ctx.fillStyle = outline;
+        ctx.beginPath(); ctx.arc(propX, propY, bossPlane ? 5 : 3, 0, TAU); ctx.fill();
+        ctx.restore();
+      }
+
+      function drawBoss() {
+        if (!boss) return;
+        drawPlane(boss, false, true);
+        const barWidth = 190;
+        const barX = boss.x - barWidth / 2;
+        const barY = boss.y - boss.radius - 24;
+        ctx.fillStyle = "rgba(23,50,77,.3)";
+        ctx.fillRect(barX, barY, barWidth, 8);
+        ctx.fillStyle = "#8b5bb5";
+        ctx.fillRect(barX, barY, barWidth * boss.hp / boss.maxHp, 8);
+        ctx.fillStyle = "#64438a";
+        ctx.font = "900 12px ui-rounded, Nunito, sans-serif";
+        ctx.textAlign = "center";
+        ctx.fillText(`BOSS PLANE · ${boss.hp}/${boss.maxHp}`, boss.x, barY - 6);
+      }
+
+      function drawTurrets() {
+        for (const turret of turrets) {
+          ctx.save();
+          ctx.translate(turret.x, turret.y);
+          ctx.fillStyle = "rgba(23,50,77,.2)";
+          ctx.beginPath(); ctx.ellipse(0, 9, 39, 8, 0, 0, TAU); ctx.fill();
+          ctx.fillStyle = "#4e91b2";
+          ctx.beginPath(); ctx.roundRect(-25, -12, 50, 23, 9); ctx.fill();
+          ctx.fillStyle = "#f8d77d";
+          ctx.beginPath(); ctx.arc(0, -12, 9, 0, TAU); ctx.fill();
+          ctx.save();
+          ctx.translate(0, -16);
+          ctx.rotate(-.8);
+          ctx.fillStyle = "#704935";
+          ctx.roundRect(4, -5, 42, 8, 4); ctx.fill();
+          ctx.fillStyle = "#687686";
+          ctx.beginPath(); ctx.ellipse(0, 0, 19, 13, 0, 0, TAU); ctx.fill();
+          ctx.strokeStyle = "#445463"; ctx.lineWidth = 2; ctx.stroke();
+          ctx.restore();
+          ctx.restore();
+        }
+      }
+
+      function drawShots() {
+        for (const shot of shots) {
+          ctx.save();
+          ctx.strokeStyle = shot.kind === "boss" ? "rgba(139,91,181,.35)" : "rgba(248,215,125,.45)";
+          ctx.lineWidth = 3;
+          ctx.beginPath(); ctx.moveTo(shot.x, shot.y + 18); ctx.lineTo(shot.x, shot.y + 34); ctx.stroke();
+          ctx.fillStyle = shot.kind === "boss" ? "#8b5bb5" : "#f8d77d";
+          ctx.beginPath(); ctx.arc(shot.x, shot.y, shot.kind === "boss" ? 7 : 5, 0, TAU); ctx.fill();
+          ctx.restore();
+        }
+      }
+
+      function drawBossNotice() {
+        if (!boss && bossWarning <= 0) return;
+        ctx.save();
+        ctx.textAlign = "center";
+        if (bossWarning > 0) {
+          ctx.globalAlpha = Math.min(1, bossWarning * 1.5);
+          ctx.fillStyle = "rgba(100,67,138,.92)";
+          ctx.beginPath();
+          ctx.roundRect(W / 2 - 160, 18, 320, 38, 12);
+          ctx.fill();
+          ctx.fillStyle = "#fff7de";
+          ctx.font = "950 17px ui-rounded, Nunito, sans-serif";
+          ctx.fillText("⚠ BOSS PLANE INCOMING ⚠", W / 2, 44);
+        } else if (!boss) {
+          ctx.globalAlpha = .7;
+          ctx.fillStyle = "#64438a";
+          ctx.font = "900 12px ui-rounded, Nunito, sans-serif";
+          ctx.textAlign = "right";
+          ctx.fillText(`NEXT BOSS IN ${formatTime(Math.max(0, nextBossAt - elapsed))}`, W - 20, 34);
+        }
+        ctx.restore();
+      }
+
+      function drawPlayer() {
+        ctx.save();
+        ctx.translate(player.x, player.y);
+        if (shake > 0) ctx.translate(random(-5, 5) * shake, random(-3, 3) * shake);
+
+        ctx.fillStyle = "rgba(23,50,77,.2)";
+        ctx.beginPath(); ctx.ellipse(0, 34, 62, 13, 0, 0, TAU); ctx.fill();
+
+        ctx.fillStyle = "#f2a278";
+        ctx.beginPath(); ctx.arc(0, -18, 25, 0, TAU); ctx.fill();
+        ctx.fillStyle = "#6c4c3c";
+        ctx.beginPath(); ctx.arc(0, -27, 26, Math.PI, TAU); ctx.fill();
+        ctx.fillStyle = "#17324d";
+        ctx.beginPath(); ctx.arc(-8, -16, 2.5, 0, TAU); ctx.arc(8, -16, 2.5, 0, TAU); ctx.fill();
+        ctx.strokeStyle = "#17324d"; ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.arc(0, -9, 7, .15, Math.PI - .15); ctx.stroke();
+
+        ctx.fillStyle = "#4e91b2";
+        ctx.beginPath(); ctx.roundRect(-29, 5, 58, 38, 14); ctx.fill();
+        ctx.fillStyle = "#f8d77d";
+        ctx.beginPath(); ctx.roundRect(-8, 5, 16, 38, 5); ctx.fill();
+
+        const swing = panSwing > 0 ? Math.sin((1 - panSwing) * Math.PI) : 0;
+        ctx.save();
+        ctx.translate(34, 10);
+        ctx.scale(getPanScale(), getPanScale());
+        ctx.rotate(-.8 - swing * 1.35);
+        ctx.fillStyle = "#704935";
+        ctx.roundRect(4, -6, 68, 11, 5); ctx.fill();
+        ctx.fillStyle = "#687686";
+        ctx.beginPath(); ctx.ellipse(0, 0, 31, 22, 0, 0, TAU); ctx.fill();
+        ctx.strokeStyle = "#445463"; ctx.lineWidth = 3; ctx.stroke();
+        ctx.fillStyle = "#8998a3";
+        ctx.beginPath(); ctx.ellipse(0, -2, 23, 14, 0, 0, TAU); ctx.fill();
+        ctx.restore();
+        ctx.restore();
+      }
+
+      function drawParticles() {
+        for (const particle of particles) {
+          const alpha = 1 - particle.age / particle.life;
+          ctx.globalAlpha = Math.max(0, alpha);
+          ctx.fillStyle = particle.color;
+          ctx.beginPath(); ctx.arc(particle.x, particle.y, particle.radius * alpha, 0, TAU); ctx.fill();
+        }
+        ctx.globalAlpha = 1;
+      }
+
+      function drawFloatingTexts() {
+        ctx.save();
+        ctx.textAlign = "center";
+        ctx.font = "900 15px ui-rounded, Nunito, sans-serif";
+        for (const item of floatingTexts) {
+          ctx.globalAlpha = Math.max(0, 1 - item.age / item.life);
+          ctx.fillStyle = item.color;
+          ctx.fillText(item.text, item.x, item.y);
+        }
+        ctx.restore();
+        ctx.globalAlpha = 1;
+      }
+
+      function draw() {
+        ctx.clearRect(0, 0, W, H);
+        drawBackground();
+        drawTurrets();
+        for (const egg of eggs) drawEgg(egg);
+        drawBoss();
+        drawPlayer();
+        drawShots();
+        drawParticles();
+        drawFloatingTexts();
+        drawBossNotice();
+      }
+
+      function frame(now) {
+        if (gameState !== "playing") {
+          draw();
+          return;
+        }
+        const dt = Math.min(.035, (now - lastFrame) / 1000 || 0);
+        lastFrame = now;
+        update(dt);
+        draw();
+        if (gameState === "playing") requestAnimationFrame(frame);
+      }
+
+      resetGame();
+      draw();
+    })();
+  </script>
+</body>
+</html>
