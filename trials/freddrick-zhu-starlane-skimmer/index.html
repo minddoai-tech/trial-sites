@@ -1,0 +1,2271 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Starlane Skimmer</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --ink: #f6fbff;
+      --muted: #a9b8c7;
+      --panel: rgba(9, 19, 32, 0.78);
+      --panel-strong: rgba(9, 19, 32, 0.92);
+      --cyan: #65e4ff;
+      --gold: #ffd86b;
+      --rose: #ff6b8d;
+      --lime: #9dff8a;
+      --violet: #b77cff;
+      --line: rgba(255, 255, 255, 0.16);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      overflow: hidden;
+      background: #080f1c;
+      color: var(--ink);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    body {
+      display: grid;
+      place-items: center;
+      padding: 18px;
+    }
+
+    .shell {
+      position: relative;
+      width: min(100%, 1240px);
+      height: min(100%, 820px);
+      min-height: 640px;
+      overflow: hidden;
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      border-radius: 8px;
+      background: #07111f;
+      box-shadow: 0 22px 80px rgba(0, 0, 0, 0.5);
+      touch-action: none;
+    }
+
+    canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+      background: #08111e;
+    }
+
+    .hud {
+      position: absolute;
+      inset: 16px 16px auto 16px;
+      display: grid;
+      grid-template-columns: 1fr auto auto auto auto;
+      align-items: start;
+      gap: 10px;
+      pointer-events: none;
+    }
+
+    .brand,
+    .stat,
+    .power-panel,
+    .controls {
+      border: 1px solid var(--line);
+      background: var(--panel);
+      backdrop-filter: blur(14px);
+      border-radius: 8px;
+      box-shadow: 0 12px 36px rgba(0, 0, 0, 0.2);
+    }
+
+    .brand {
+      width: fit-content;
+      min-width: 190px;
+      padding: 10px 12px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 16px;
+      line-height: 1.1;
+      letter-spacing: 0;
+    }
+
+    .hint {
+      margin-top: 5px;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.35;
+    }
+
+    .stat {
+      min-width: 94px;
+      padding: 9px 12px;
+      text-align: right;
+    }
+
+    .label {
+      color: var(--muted);
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    .value {
+      margin-top: 2px;
+      font-variant-numeric: tabular-nums;
+      font-size: 22px;
+      line-height: 1;
+      font-weight: 800;
+    }
+
+    .controls {
+      position: absolute;
+      right: 16px;
+      bottom: 16px;
+      display: flex;
+      gap: 8px;
+      padding: 8px;
+    }
+
+    .power-panel {
+      position: absolute;
+      left: 16px;
+      bottom: 16px;
+      width: min(240px, calc(100% - 168px));
+      padding: 8px;
+      clip-path: polygon(0 0, calc(100% - 14px) 0, 100% 14px, 100% 100%, 14px 100%, 0 calc(100% - 14px));
+    }
+
+    .power-title {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 8px;
+      color: var(--gold);
+      font-size: 10px;
+      font-weight: 900;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      text-shadow: 0 0 12px rgba(255, 216, 107, 0.7);
+    }
+
+    .power-title span:last-child {
+      color: var(--cyan);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .power-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 5px;
+    }
+
+    .power-chip {
+      position: relative;
+      min-height: 42px;
+      overflow: hidden;
+      border: 1px solid rgba(101, 228, 255, 0.24);
+      border-radius: 4px;
+      padding: 6px;
+      background: linear-gradient(135deg, rgba(255, 216, 107, 0.08), rgba(101, 228, 255, 0.08));
+    }
+
+    .power-chip::after {
+      content: "";
+      position: absolute;
+      inset: auto 0 0 0;
+      height: 3px;
+      transform: scaleX(var(--fill, 0));
+      transform-origin: left;
+      background: currentColor;
+      box-shadow: 0 0 14px currentColor;
+    }
+
+    .power-chip strong {
+      display: block;
+      color: var(--ink);
+      font-size: 12px;
+      line-height: 1;
+    }
+
+    .power-chip small {
+      display: block;
+      margin-top: 4px;
+      color: var(--muted);
+      font-size: 9px;
+      line-height: 1.15;
+    }
+
+    .power-chip.laser {
+      color: var(--cyan);
+    }
+
+    .power-chip.boost {
+      color: var(--lime);
+    }
+
+    .power-chip.shield {
+      color: var(--rose);
+    }
+
+    .power-chip.heal {
+      color: var(--gold);
+    }
+
+    .power-chip.token {
+      color: var(--violet);
+    }
+
+    button {
+      width: 42px;
+      height: 38px;
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.08);
+      color: var(--ink);
+      cursor: pointer;
+      display: grid;
+      place-items: center;
+      transition: transform 120ms ease, background 120ms ease, border-color 120ms ease;
+    }
+
+    button:hover {
+      background: rgba(255, 255, 255, 0.14);
+      border-color: rgba(255, 255, 255, 0.32);
+    }
+
+    button:active {
+      transform: translateY(1px);
+    }
+
+    button:disabled {
+      cursor: not-allowed;
+      opacity: 0.45;
+    }
+
+    button svg {
+      width: 19px;
+      height: 19px;
+      stroke: currentColor;
+      stroke-width: 2.2;
+      fill: none;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .overlay {
+      position: absolute;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      padding: 22px;
+      background: linear-gradient(rgba(7, 13, 24, 0.28), rgba(7, 13, 24, 0.66));
+      backdrop-filter: blur(2px);
+    }
+
+    .upgrade-overlay {
+      position: absolute;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      padding: 22px;
+      background: rgba(5, 9, 18, 0.38);
+      backdrop-filter: blur(3px);
+      z-index: 4;
+    }
+
+    .shop-overlay {
+      position: absolute;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      padding: 22px;
+      background: rgba(4, 8, 14, 0.42);
+      backdrop-filter: blur(3px);
+      z-index: 5;
+    }
+
+    .upgrade-panel {
+      width: min(92%, 560px);
+      border: 1px solid rgba(255, 216, 107, 0.42);
+      border-radius: 8px;
+      background:
+        linear-gradient(135deg, rgba(255, 216, 107, 0.12), rgba(183, 124, 255, 0.12)),
+        var(--panel-strong);
+      padding: 18px;
+      box-shadow: 0 18px 70px rgba(0, 0, 0, 0.52), 0 0 28px rgba(255, 216, 107, 0.14);
+      clip-path: polygon(0 0, calc(100% - 18px) 0, 100% 18px, 100% 100%, 18px 100%, 0 calc(100% - 18px));
+    }
+
+    .shop-panel {
+      width: min(94%, 720px);
+      border: 1px solid rgba(101, 228, 255, 0.38);
+      border-radius: 8px;
+      background:
+        radial-gradient(circle at 12% 0%, rgba(101, 228, 255, 0.18), transparent 34%),
+        radial-gradient(circle at 88% 10%, rgba(255, 216, 107, 0.14), transparent 32%),
+        var(--panel-strong);
+      padding: 18px;
+      box-shadow: 0 18px 70px rgba(0, 0, 0, 0.52), 0 0 28px rgba(101, 228, 255, 0.12);
+      clip-path: polygon(0 0, calc(100% - 18px) 0, 100% 18px, 100% 100%, 18px 100%, 0 calc(100% - 18px));
+    }
+
+    .shop-panel h2 {
+      margin: 0 0 6px;
+      color: var(--cyan);
+      font-size: 28px;
+      letter-spacing: 0;
+      text-shadow: 2px 0 rgba(255, 216, 107, 0.65), -2px 0 rgba(183, 124, 255, 0.55);
+    }
+
+    .shop-panel p {
+      margin: 0 0 14px;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.4;
+    }
+
+    .shop-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .shop-card {
+      width: 100%;
+      height: 116px;
+      display: block;
+      text-align: left;
+      padding: 12px;
+      border-color: rgba(255, 216, 107, 0.28);
+      background: rgba(255, 255, 255, 0.06);
+    }
+
+    .shop-card strong,
+    .shop-card span,
+    .shop-card small {
+      display: block;
+    }
+
+    .shop-card strong {
+      margin-bottom: 7px;
+      color: var(--ink);
+      font-size: 14px;
+    }
+
+    .shop-card span {
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.3;
+    }
+
+    .shop-card small {
+      margin-top: 9px;
+      color: var(--gold);
+      font-size: 11px;
+      font-weight: 900;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .upgrade-panel h2 {
+      margin: 0 0 6px;
+      color: var(--gold);
+      font-size: 28px;
+      letter-spacing: 0;
+      text-shadow: 2px 0 rgba(255, 107, 141, 0.7), -2px 0 rgba(101, 228, 255, 0.55);
+    }
+
+    .upgrade-panel p {
+      margin: 0 0 14px;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.4;
+    }
+
+    .upgrade-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .upgrade-card {
+      width: 100%;
+      height: 118px;
+      display: block;
+      text-align: left;
+      padding: 12px;
+      border-color: rgba(101, 228, 255, 0.3);
+      background: rgba(255, 255, 255, 0.06);
+    }
+
+    .upgrade-card strong {
+      display: block;
+      margin-bottom: 7px;
+      color: var(--ink);
+      font-size: 14px;
+    }
+
+    .upgrade-card span {
+      display: block;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.3;
+    }
+
+    .upgrade-card small {
+      display: block;
+      margin-top: 9px;
+      color: var(--gold);
+      font-size: 11px;
+      font-weight: 900;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .boss-hud {
+      position: absolute;
+      top: 86px;
+      left: 50%;
+      z-index: 2;
+      width: min(560px, calc(100% - 36px));
+      transform: translateX(-50%);
+      border: 1px solid rgba(255, 107, 141, 0.45);
+      border-radius: 8px;
+      padding: 8px 10px 10px;
+      background: rgba(14, 8, 18, 0.76);
+      box-shadow: 0 0 26px rgba(255, 107, 141, 0.16);
+      pointer-events: none;
+    }
+
+    .boss-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 6px;
+      color: var(--rose);
+      font-size: 11px;
+      font-weight: 900;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+
+    .boss-track {
+      height: 10px;
+      overflow: hidden;
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.08);
+    }
+
+    .boss-fill {
+      width: 100%;
+      height: 100%;
+      transform-origin: left;
+      transform: scaleX(var(--boss-fill, 1));
+      background: linear-gradient(90deg, var(--rose), var(--gold));
+      box-shadow: 0 0 18px rgba(255, 107, 141, 0.8);
+    }
+
+    .menu {
+      width: min(92%, 430px);
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      border-radius: 8px;
+      background: var(--panel-strong);
+      padding: 22px;
+      box-shadow: 0 18px 70px rgba(0, 0, 0, 0.45);
+    }
+
+    .menu h2 {
+      margin: 0 0 8px;
+      font-size: clamp(28px, 7vw, 44px);
+      line-height: 0.95;
+      letter-spacing: 0;
+    }
+
+    .menu p {
+      color: var(--muted);
+      margin: 0 0 18px;
+      line-height: 1.5;
+      font-size: 14px;
+    }
+
+    .menu-actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .primary {
+      width: auto;
+      min-width: 138px;
+      padding: 0 16px;
+      grid-auto-flow: column;
+      gap: 8px;
+      background: linear-gradient(135deg, rgba(101, 228, 255, 0.26), rgba(157, 255, 138, 0.22));
+      border-color: rgba(101, 228, 255, 0.46);
+      font-weight: 800;
+    }
+
+    .scoreline {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      margin: 18px 0;
+    }
+
+    .scorebox {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 9px;
+      background: rgba(255, 255, 255, 0.05);
+    }
+
+    .scorebox b {
+      display: block;
+      margin-top: 3px;
+      font-size: 18px;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .deck {
+      margin: 18px 0;
+      display: grid;
+      gap: 8px;
+    }
+
+    .deck-row {
+      position: relative;
+      display: grid;
+      grid-template-columns: 74px 1fr;
+      gap: 10px;
+      align-items: center;
+      min-height: 48px;
+      overflow: hidden;
+      border: 1px solid rgba(101, 228, 255, 0.26);
+      border-radius: 4px;
+      padding: 9px 10px;
+      background: linear-gradient(100deg, rgba(255, 216, 107, 0.16), rgba(183, 124, 255, 0.08), rgba(101, 228, 255, 0.10));
+      clip-path: polygon(0 0, calc(100% - 10px) 0, 100% 10px, 100% 100%, 10px 100%, 0 calc(100% - 10px));
+    }
+
+    .deck-row::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: repeating-linear-gradient(90deg, transparent, transparent 16px, rgba(255, 255, 255, 0.08) 17px);
+      opacity: 0.25;
+      pointer-events: none;
+    }
+
+    .deck-code {
+      color: var(--gold);
+      font-size: 18px;
+      font-weight: 950;
+      letter-spacing: 0;
+      text-shadow: 2px 0 rgba(255, 107, 141, 0.7), -2px 0 rgba(101, 228, 255, 0.55);
+    }
+
+    .deck-copy {
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.3;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    @media (max-width: 680px) {
+      body {
+        padding: 0;
+      }
+
+      .shell {
+        width: 100%;
+        height: 100%;
+        min-height: 100%;
+        border-radius: 0;
+        border: 0;
+      }
+
+      .hud {
+        inset: 10px 10px auto 10px;
+        grid-template-columns: 1fr auto auto;
+      }
+
+      .brand {
+        min-width: 0;
+        max-width: 210px;
+      }
+
+      .hint {
+        display: none;
+      }
+
+      .stat {
+        min-width: 76px;
+        padding: 8px 9px;
+      }
+
+      .stat:nth-child(4),
+      .stat:nth-child(5) {
+        display: none;
+      }
+
+      .value {
+        font-size: 18px;
+      }
+
+      .controls {
+        right: 10px;
+        bottom: 10px;
+      }
+
+      .power-panel {
+        left: 10px;
+        bottom: 10px;
+        width: calc(100% - 126px);
+        padding: 8px;
+      }
+
+      .power-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 5px;
+      }
+
+      .power-chip {
+        min-height: 34px;
+        padding: 6px 8px;
+      }
+
+      .power-chip small,
+      .power-title span:first-child {
+        display: none;
+      }
+
+      .upgrade-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .shop-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .upgrade-card {
+        height: auto;
+        min-height: 86px;
+      }
+
+      .shop-card {
+        height: auto;
+        min-height: 86px;
+      }
+
+      .menu {
+        padding: 18px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell" id="gameShell" aria-label="Starlane Skimmer browser game">
+    <canvas id="game" width="960" height="680"></canvas>
+
+    <section class="hud" aria-live="polite">
+      <div class="brand">
+        <h1>Starlane Skimmer</h1>
+        <div class="hint">Arrows/WASD or drag. F fires lasers. Collect power shards.</div>
+      </div>
+      <div class="stat">
+        <div class="label">Score</div>
+        <div class="value" id="score">0</div>
+      </div>
+      <div class="stat">
+        <div class="label">Best</div>
+        <div class="value" id="best">0</div>
+      </div>
+      <div class="stat">
+        <div class="label">Tokens</div>
+        <div class="value" id="tokens">0</div>
+      </div>
+      <div class="stat">
+        <div class="label">Stars</div>
+        <div class="value" id="starCredits">0</div>
+      </div>
+    </section>
+
+    <div class="controls">
+      <button id="laserBtn" aria-label="Fire laser" title="Fire laser">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12h13"/><path d="m13 6 7 6-7 6"/><path d="M4 8v8"/></svg>
+      </button>
+      <button id="pauseBtn" aria-label="Pause game" title="Pause">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14M16 5v14"/></svg>
+      </button>
+      <button id="restartBtn" aria-label="Restart game" title="Restart">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v6h6"/></svg>
+      </button>
+    </div>
+
+    <aside class="power-panel" aria-label="Power up menu">
+      <div class="power-title">
+        <span>Power Deck</span>
+        <span id="powerStatus">BOOT</span>
+      </div>
+      <div class="power-grid">
+        <div class="power-chip laser" id="laserChip">
+          <strong>LZR</strong>
+          <small id="laserStatus">ammo 0</small>
+        </div>
+        <div class="power-chip boost" id="boostChip">
+          <strong>BOOST</strong>
+          <small id="boostStatus">offline</small>
+        </div>
+        <div class="power-chip shield" id="shieldChip">
+          <strong>SHIELD</strong>
+          <small id="shieldStatus">offline</small>
+        </div>
+        <div class="power-chip heal" id="healChip">
+          <strong>HEAL</strong>
+          <small id="healStatus">find medkits</small>
+        </div>
+        <div class="power-chip token" id="tokenChip">
+          <strong>UPGRADE</strong>
+          <small id="tokenStatus">tokens 0</small>
+        </div>
+      </div>
+    </aside>
+
+    <section class="boss-hud hidden" id="bossHud" aria-label="Boss health">
+      <div class="boss-row">
+        <span>Netwatch Dreadnought</span>
+        <span id="bossHealthText">100%</span>
+      </div>
+      <div class="boss-track">
+        <div class="boss-fill" id="bossFill"></div>
+      </div>
+    </section>
+
+    <div class="overlay" id="overlay">
+      <div class="menu">
+        <h2 id="menuTitle">Skim the starlane</h2>
+        <p id="menuText">Thread the ship through moving rock fields, grab neon power shards, and burn a path through the lane.</p>
+        <div class="scoreline">
+          <div class="scorebox">
+            <div class="label">Last</div>
+            <b id="lastScore">0</b>
+          </div>
+          <div class="scorebox">
+            <div class="label">Best</div>
+            <b id="menuBest">0</b>
+          </div>
+          <div class="scorebox">
+            <div class="label">Level</div>
+            <b id="menuLevel">1</b>
+          </div>
+        </div>
+        <div class="deck" aria-label="Power up guide">
+          <div class="deck-row">
+            <div class="deck-code">LZR</div>
+            <div class="deck-copy">Pick up cyan shards for laser ammo. Press F or the arrow button to fire.</div>
+          </div>
+          <div class="deck-row">
+            <div class="deck-code">B00ST</div>
+            <div class="deck-copy">Green shards kick the ship into overdrive and leave a hot trail.</div>
+          </div>
+          <div class="deck-row">
+            <div class="deck-code">ICE</div>
+            <div class="deck-copy">Rose shards create a brief crash shield for reckless lane changes.</div>
+          </div>
+          <div class="deck-row">
+            <div class="deck-code">MED</div>
+            <div class="deck-copy">Gold medkits repair hull damage. Violet chips buy permanent run upgrades.</div>
+          </div>
+        </div>
+        <div class="menu-actions">
+          <button class="primary" id="playBtn" aria-label="Start game">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m8 5 11 7-11 7z"/></svg>
+            Play
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="upgrade-overlay hidden" id="upgradeOverlay">
+      <div class="upgrade-panel">
+        <h2>Upgrade Terminal</h2>
+        <p id="upgradeText">Spend tokens on ship systems. The lane keeps getting meaner.</p>
+        <div class="upgrade-grid">
+          <button class="upgrade-card" data-upgrade="health" aria-label="Upgrade health">
+            <strong>Hull Plating</strong>
+            <span id="healthUpgradeText">+1 max health and repair 1 hull.</span>
+            <small>1 token</small>
+          </button>
+          <button class="upgrade-card" data-upgrade="speed" aria-label="Upgrade speed">
+            <strong>Reflex Drive</strong>
+            <span id="speedUpgradeText">Sharper acceleration and higher boost control.</span>
+            <small>1 token</small>
+          </button>
+          <button class="upgrade-card" data-upgrade="laser" aria-label="Upgrade laser damage">
+            <strong>Rail Amplifier</strong>
+            <span id="laserUpgradeText">Lasers hit harder and pierce boss armor.</span>
+            <small>1 token</small>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="shop-overlay hidden" id="shopOverlay">
+      <div class="shop-panel">
+        <h2>Star Shop</h2>
+        <p id="shopText">Spend collected stars on weapons, hull work, or help from nearby factions.</p>
+        <div class="shop-grid">
+          <button class="shop-card" data-shop="damage" aria-label="Buy damage upgrade">
+            <strong>Prism Damage</strong>
+            <span id="shopDamageText">Improve all laser and gun damage.</span>
+            <small>6 stars</small>
+          </button>
+          <button class="shop-card" data-shop="health" aria-label="Buy health upgrade">
+            <strong>Field Repairs</strong>
+            <span id="shopHealthText">Repair hull and reinforce max health.</span>
+            <small>5 stars</small>
+          </button>
+          <button class="shop-card" data-shop="guns" aria-label="Buy ship guns">
+            <strong>Gun Pods</strong>
+            <span id="shopGunsText">Add side guns and extra projectiles.</span>
+            <small>8 stars</small>
+          </button>
+          <button class="shop-card" data-shop="alien" aria-label="Hire alien help">
+            <strong>Alien Wing</strong>
+            <span id="shopAlienText">A fast escort fires plasma beside you.</span>
+            <small>10 stars</small>
+          </button>
+          <button class="shop-card" data-shop="human" aria-label="Hire human help">
+            <strong>Human Patrol</strong>
+            <span id="shopHumanText">A durable escort adds steady cannon fire.</span>
+            <small>10 stars</small>
+          </button>
+          <button class="shop-card" data-shop="skip" aria-label="Close star shop">
+            <strong>Keep Flying</strong>
+            <span>Save stars for the next shop pass.</span>
+            <small>free</small>
+          </button>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    const canvas = document.getElementById("game");
+    const ctx = canvas.getContext("2d");
+    const shell = document.getElementById("gameShell");
+    const controls = document.querySelector(".controls");
+    const scoreEl = document.getElementById("score");
+    const bestEl = document.getElementById("best");
+    const tokensEl = document.getElementById("tokens");
+    const starCreditsEl = document.getElementById("starCredits");
+    const overlay = document.getElementById("overlay");
+    const upgradeOverlay = document.getElementById("upgradeOverlay");
+    const upgradeText = document.getElementById("upgradeText");
+    const shopOverlay = document.getElementById("shopOverlay");
+    const shopText = document.getElementById("shopText");
+    const playBtn = document.getElementById("playBtn");
+    const laserBtn = document.getElementById("laserBtn");
+    const pauseBtn = document.getElementById("pauseBtn");
+    const restartBtn = document.getElementById("restartBtn");
+    const menuTitle = document.getElementById("menuTitle");
+    const menuText = document.getElementById("menuText");
+    const lastScore = document.getElementById("lastScore");
+    const menuBest = document.getElementById("menuBest");
+    const menuLevel = document.getElementById("menuLevel");
+    const powerStatus = document.getElementById("powerStatus");
+    const laserStatus = document.getElementById("laserStatus");
+    const boostStatus = document.getElementById("boostStatus");
+    const shieldStatus = document.getElementById("shieldStatus");
+    const healStatus = document.getElementById("healStatus");
+    const tokenStatus = document.getElementById("tokenStatus");
+    const laserChip = document.getElementById("laserChip");
+    const boostChip = document.getElementById("boostChip");
+    const shieldChip = document.getElementById("shieldChip");
+    const healChip = document.getElementById("healChip");
+    const tokenChip = document.getElementById("tokenChip");
+    const bossHud = document.getElementById("bossHud");
+    const bossFill = document.getElementById("bossFill");
+    const bossHealthText = document.getElementById("bossHealthText");
+    const healthUpgradeText = document.getElementById("healthUpgradeText");
+    const speedUpgradeText = document.getElementById("speedUpgradeText");
+    const laserUpgradeText = document.getElementById("laserUpgradeText");
+    const shopDamageText = document.getElementById("shopDamageText");
+    const shopHealthText = document.getElementById("shopHealthText");
+    const shopGunsText = document.getElementById("shopGunsText");
+    const shopAlienText = document.getElementById("shopAlienText");
+    const shopHumanText = document.getElementById("shopHumanText");
+
+    const storageKey = "starlane-skimmer-best";
+    const keys = new Set();
+    const pointer = { active: false, x: 0, y: 0 };
+    const stars = [];
+    const rocks = [];
+    const lasers = [];
+    const enemyLasers = [];
+    const powerUps = [];
+    const allies = [];
+    const backgroundBodies = [];
+    const backgroundShips = [];
+    const bursts = [];
+    const dust = [];
+
+    let best = Number(localStorage.getItem(storageKey) || 0);
+    let score = 0;
+    let level = 1;
+    let lives = 8;
+    let maxLives = 8;
+    let upgradeTokens = 0;
+    let starCredits = 0;
+    let healthLevel = 0;
+    let speedLevel = 0;
+    let laserLevel = 0;
+    let gunLevel = 0;
+    let alienLevel = 0;
+    let humanLevel = 0;
+    let running = false;
+    let paused = false;
+    let upgrading = false;
+    let shopping = false;
+    let lastTime = 0;
+    let starTimer = 0;
+    let rockTimer = 0;
+    let powerTimer = 2;
+    let upgradeTimer = 15;
+    let shopTimer = 30;
+    let nextUpgradeAt = 0;
+    let nextShopAt = 0;
+    let laserAmmo = 0;
+    let laserCooldown = 0;
+    let allyShotTimer = 1.2;
+    let boostTime = 0;
+    let shieldTime = 0;
+    let shake = 0;
+    let animationId = 0;
+
+    const boss = {
+      active: false,
+      spawned: false,
+      defeated: false,
+      x: 0,
+      y: 0,
+      vy: 90,
+      r: 74,
+      hp: 0,
+      maxHp: 0,
+      shotTimer: 0,
+      burstTimer: 0,
+      intro: 0
+    };
+
+    const ship = {
+      x: 180,
+      y: 340,
+      vx: 0,
+      vy: 0,
+      r: 17,
+      invincible: 0
+    };
+
+    bestEl.textContent = best;
+    menuBest.textContent = best;
+
+    function resizeCanvas() {
+      const rect = shell.getBoundingClientRect();
+      const scale = Math.max(1, Math.min(2, window.devicePixelRatio || 1));
+      canvas.width = Math.floor(rect.width * scale);
+      canvas.height = Math.floor(rect.height * scale);
+      ctx.setTransform(scale, 0, 0, scale, 0, 0);
+      canvas.style.width = `${rect.width}px`;
+      canvas.style.height = `${rect.height}px`;
+      ship.x = Math.min(ship.x, rect.width - 40);
+      ship.y = Math.min(ship.y, rect.height - 40);
+    }
+
+    function bounds() {
+      return shell.getBoundingClientRect();
+    }
+
+    function rand(min, max) {
+      return Math.random() * (max - min) + min;
+    }
+
+    function asteroidSpeedScale() {
+      return 1 + Math.min(score / 900, 1.9);
+    }
+
+    function laserDamage() {
+      return 1 + laserLevel + Math.floor(gunLevel / 2);
+    }
+
+    function shipSpeedScale() {
+      return 1 + speedLevel * 0.16;
+    }
+
+    function scorePressure() {
+      return Math.min(score / 1200, 1.8);
+    }
+
+    function shopCost(type) {
+      if (type === "damage") return 6 + laserLevel * 3;
+      if (type === "health") return 5 + healthLevel * 2;
+      if (type === "guns") return 8 + gunLevel * 4;
+      if (type === "alien") return 10 + alienLevel * 4;
+      if (type === "human") return 10 + humanLevel * 4;
+      return 0;
+    }
+
+    function refreshShopText() {
+      shopDamageText.textContent = `Level ${laserLevel}: improve all laser, gun, and ally damage.`;
+      shopHealthText.textContent = `Level ${healthLevel}: repair hull and raise max health.`;
+      shopGunsText.textContent = `Level ${gunLevel}: add extra side-gun projectiles.`;
+      shopAlienText.textContent = `Allies ${alienLevel}: fast plasma escorts.`;
+      shopHumanText.textContent = `Allies ${humanLevel}: steady cannon escorts.`;
+      shopOverlay.querySelectorAll("[data-shop]").forEach((button) => {
+        const cost = shopCost(button.dataset.shop);
+        const price = button.querySelector("small");
+        price.textContent = cost > 0 ? `${cost} stars` : "free";
+        button.disabled = cost > starCredits;
+      });
+    }
+
+    function showUpgradeMenu(reason = "Routine system scan") {
+      if (!running || paused || upgrading || shopping) return;
+      upgradeTokens += 1;
+      upgrading = true;
+      upgradeTimer = 15;
+      nextUpgradeAt = performance.now() + 15000;
+      upgradeText.textContent = `${reason}. +1 upgrade token loaded. Spend now or close with an upgrade choice.`;
+      upgradeOverlay.classList.remove("hidden");
+      updateHud();
+    }
+
+    function showStarShop(reason = "Star trader relay") {
+      if (!running || paused || upgrading || shopping) return;
+      shopping = true;
+      shopTimer = 30;
+      nextShopAt = performance.now() + 30000;
+      shopText.textContent = `${reason}. You have ${starCredits} stars to spend.`;
+      refreshShopText();
+      shopOverlay.classList.remove("hidden");
+      updateHud();
+    }
+
+    function closeStarShop() {
+      shopping = false;
+      shopOverlay.classList.add("hidden");
+      lastTime = performance.now();
+      updateHud();
+      animationId = requestAnimationFrame(loop);
+    }
+
+    function buyShop(type) {
+      if (!shopping) return;
+      const cost = shopCost(type);
+      if (type === "skip") {
+        closeStarShop();
+        return;
+      }
+      if (starCredits < cost) {
+        shopText.textContent = `Not enough stars yet. You have ${starCredits}; this costs ${cost}.`;
+        refreshShopText();
+        return;
+      }
+
+      starCredits -= cost;
+      if (type === "damage") {
+        laserLevel += 1;
+        laserAmmo = Math.min(22, laserAmmo + 4);
+      }
+      if (type === "health") {
+        healthLevel += 1;
+        maxLives = Math.min(10, maxLives + 1);
+        lives = Math.min(maxLives, lives + 3);
+      }
+      if (type === "guns") {
+        gunLevel += 1;
+        laserAmmo = Math.min(24, laserAmmo + 5);
+      }
+      if (type === "alien") {
+        alienLevel += 1;
+        addAlly("alien");
+      }
+      if (type === "human") {
+        humanLevel += 1;
+        addAlly("human");
+      }
+      closeStarShop();
+    }
+
+    function buyUpgrade(type) {
+      if (!upgrading || upgradeTokens <= 0) return;
+      upgradeTokens -= 1;
+      if (type === "health") {
+        healthLevel += 1;
+        maxLives = Math.min(8, maxLives + 1);
+        lives = Math.min(maxLives, lives + 2);
+      }
+      if (type === "speed") {
+        speedLevel += 1;
+        boostTime = Math.max(boostTime, 1.2);
+      }
+      if (type === "laser") {
+        laserLevel += 1;
+        laserAmmo = Math.min(18, laserAmmo + 3);
+      }
+      upgrading = false;
+      upgradeOverlay.classList.add("hidden");
+      lastTime = performance.now();
+      updateHud();
+      animationId = requestAnimationFrame(loop);
+    }
+
+    function damageShip(amount = 1) {
+      if (ship.invincible > 0) return false;
+      if (shieldTime > 0) {
+        shieldTime = Math.max(0, shieldTime - 1.6);
+        ship.invincible = 0.35;
+        shake = Math.max(shake, 0.7);
+        bursts.push({ x: ship.x, y: ship.y, r: 34, life: 0.32, color: "#ff6b8d" });
+        return false;
+      }
+      lives -= amount;
+      ship.invincible = 1.25;
+      ship.vx = -220;
+      shake = 1;
+      if (lives <= 0) {
+        endGame();
+        return true;
+      }
+      return false;
+    }
+
+    function addAlly(type) {
+      const count = allies.filter((ally) => ally.type === type).length;
+      const offset = type === "alien" ? -48 - count * 22 : 48 + count * 22;
+      allies.push({
+        type,
+        x: ship.x - 56 - count * 18,
+        y: ship.y + offset,
+        offset,
+        phase: rand(0, Math.PI * 2),
+        cooldown: rand(0.2, 0.9)
+      });
+    }
+
+    function seedBackground(rect) {
+      backgroundBodies.length = 0;
+      backgroundShips.length = 0;
+      const colors = ["#315e8f", "#8f6a42", "#7f9b8e", "#9f5f78", "#c0b07b"];
+      for (let i = 0; i < 6; i += 1) {
+        backgroundBodies.push({
+          x: rand(0, rect.width),
+          y: rand(80, rect.height - 100),
+          r: rand(28, 78),
+          color: colors[i % colors.length],
+          ring: i % 2 === 0,
+          drift: rand(4, 12),
+          alpha: rand(0.18, 0.42)
+        });
+      }
+      for (let i = 0; i < 5; i += 1) {
+        backgroundShips.push({
+          x: rand(0, rect.width),
+          y: rand(90, rect.height - 110),
+          scale: rand(0.5, 1.1),
+          speed: rand(12, 28),
+          blink: rand(0, Math.PI * 2)
+        });
+      }
+    }
+
+    function resetGame() {
+      const rect = bounds();
+      score = 0;
+      level = 1;
+      maxLives = 8;
+      lives = 8;
+      upgradeTokens = 0;
+      starCredits = 0;
+      healthLevel = 0;
+      speedLevel = 0;
+      laserLevel = 0;
+      gunLevel = 0;
+      alienLevel = 0;
+      humanLevel = 0;
+      starTimer = 0;
+      rockTimer = 0;
+      powerTimer = 1.1;
+      upgradeTimer = 15;
+      shopTimer = 30;
+      nextUpgradeAt = 0;
+      nextShopAt = 0;
+      laserAmmo = 3;
+      laserCooldown = 0;
+      allyShotTimer = 1.2;
+      boostTime = 0;
+      shieldTime = 0;
+      shake = 0;
+      stars.length = 0;
+      rocks.length = 0;
+      lasers.length = 0;
+      enemyLasers.length = 0;
+      powerUps.length = 0;
+      allies.length = 0;
+      bursts.length = 0;
+      dust.length = 0;
+      upgrading = false;
+      shopping = false;
+      upgradeOverlay.classList.add("hidden");
+      shopOverlay.classList.add("hidden");
+      boss.active = false;
+      boss.spawned = false;
+      boss.defeated = false;
+      boss.hp = 0;
+      boss.maxHp = 0;
+      bossHud.classList.add("hidden");
+      ship.x = Math.max(86, rect.width * 0.18);
+      ship.y = rect.height * 0.5;
+      ship.vx = 0;
+      ship.vy = 0;
+      ship.invincible = 1.4;
+
+      for (let i = 0; i < 120; i += 1) {
+        dust.push({
+          x: rand(0, rect.width),
+          y: rand(0, rect.height),
+          z: rand(0.35, 1),
+          tw: rand(0, Math.PI * 2)
+        });
+      }
+      seedBackground(rect);
+      updateHud();
+    }
+
+    function updateHud() {
+      scoreEl.textContent = score;
+      bestEl.textContent = best;
+      tokensEl.textContent = upgradeTokens;
+      starCreditsEl.textContent = starCredits;
+      menuBest.textContent = best;
+      menuLevel.textContent = level;
+      powerStatus.textContent = laserAmmo > 0 ? "ARMED" : "SEEK";
+      laserStatus.textContent = `ammo ${laserAmmo}`;
+      boostStatus.textContent = boostTime > 0 ? `${boostTime.toFixed(1)}s` : "offline";
+      shieldStatus.textContent = shieldTime > 0 ? `${shieldTime.toFixed(1)}s` : "offline";
+      healStatus.textContent = `${lives}/${maxLives} hull`;
+      tokenStatus.textContent = `tokens ${upgradeTokens}`;
+      laserChip.style.setProperty("--fill", Math.min(laserAmmo / 8, 1));
+      boostChip.style.setProperty("--fill", Math.min(boostTime / 4, 1));
+      shieldChip.style.setProperty("--fill", Math.min(shieldTime / 5, 1));
+      healChip.style.setProperty("--fill", lives / maxLives);
+      tokenChip.style.setProperty("--fill", Math.min(upgradeTokens / 4, 1));
+      healthUpgradeText.textContent = `Level ${healthLevel}: +1 max health and repair 1 hull.`;
+      speedUpgradeText.textContent = `Level ${speedLevel}: sharper acceleration and stronger boost control.`;
+      laserUpgradeText.textContent = `Level ${laserLevel}: damage ${laserDamage()} per shot.`;
+      refreshShopText();
+      if (boss.active) {
+        const ratio = Math.max(0, boss.hp / boss.maxHp);
+        bossFill.style.setProperty("--boss-fill", ratio);
+        bossHealthText.textContent = `${Math.ceil(ratio * 100)}%`;
+      }
+    }
+
+    function setOverlay(show, title = "", text = "") {
+      overlay.classList.toggle("hidden", !show);
+      if (title) menuTitle.textContent = title;
+      if (text) menuText.textContent = text;
+    }
+
+    function startGame() {
+      resetGame();
+      running = true;
+      paused = false;
+      setPauseButton(false);
+      lastTime = performance.now();
+      nextUpgradeAt = lastTime + 15000;
+      nextShopAt = lastTime + 30000;
+      setOverlay(false);
+      cancelAnimationFrame(animationId);
+      animationId = requestAnimationFrame(loop);
+      canvas.focus();
+    }
+
+    function endGame() {
+      running = false;
+      paused = false;
+      upgrading = false;
+      best = Math.max(best, score);
+      localStorage.setItem(storageKey, String(best));
+      lastScore.textContent = score;
+      updateHud();
+      upgradeOverlay.classList.add("hidden");
+      shopOverlay.classList.add("hidden");
+      bossHud.classList.add("hidden");
+      setOverlay(true, "Run complete", "One spark too close. Launch again and try to push the lane a little farther.");
+    }
+
+    function togglePause() {
+      if (!running || upgrading || shopping) return;
+      paused = !paused;
+      if (paused) {
+        setOverlay(true, "Paused", "Take a breath. The lane will wait right here.");
+        setPauseButton(true);
+      } else {
+        setOverlay(false);
+        setPauseButton(false);
+        lastTime = performance.now();
+        animationId = requestAnimationFrame(loop);
+      }
+    }
+
+    function setPauseButton(isPaused) {
+      if (isPaused) {
+        pauseBtn.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m8 5 11 7-11 7z"/></svg>';
+        pauseBtn.setAttribute("aria-label", "Resume game");
+        pauseBtn.setAttribute("title", "Resume");
+      } else {
+        pauseBtn.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14M16 5v14"/></svg>';
+        pauseBtn.setAttribute("aria-label", "Pause game");
+        pauseBtn.setAttribute("title", "Pause");
+      }
+    }
+
+    function spawnStar(rect) {
+      stars.push({
+        x: rect.width + 30,
+        y: rand(72, rect.height - 42),
+        vx: -rand(150, 210) - level * 10,
+        r: rand(8, 12),
+        pulse: rand(0, Math.PI * 2)
+      });
+    }
+
+    function spawnRock(rect) {
+      const size = rand(18, 36) + Math.min(level * 1.6, 18);
+      rocks.push({
+        x: rect.width + size + 20,
+        y: rand(74, rect.height - 48),
+        vx: -rand(190, 275) - level * 18,
+        vy: rand(-36, 36),
+        r: size,
+        angle: rand(0, Math.PI * 2),
+        spin: rand(-2.2, 2.2),
+        sides: Math.floor(rand(7, 11)),
+        seed: rand(0, 999)
+      });
+    }
+
+    function spawnPowerUp(rect) {
+      const roll = Math.random();
+      const type = boss.active
+        ? (roll < 0.52 ? "shield" : roll < 0.68 ? "heal" : roll < 0.82 ? "laser" : roll < 0.94 ? "boost" : "token")
+        : (roll < 0.28 ? "laser" : roll < 0.49 ? "boost" : roll < 0.66 ? "shield" : roll < 0.82 ? "heal" : roll < 0.93 ? "token" : "burst");
+      powerUps.push({
+        type,
+        x: rect.width + 34,
+        y: rand(86, rect.height - 66),
+        vx: -rand(140, 190) - level * 8,
+        r: 16,
+        pulse: rand(0, Math.PI * 2)
+      });
+    }
+
+    function spawnBoss(rect) {
+      boss.active = true;
+      boss.spawned = true;
+      boss.defeated = false;
+      boss.maxHp = 34 + laserLevel * 4;
+      boss.hp = boss.maxHp;
+      boss.x = rect.width + 110;
+      boss.y = rect.height * 0.5;
+      boss.vy = 88;
+      boss.shotTimer = 1.4;
+      boss.burstTimer = 4;
+      boss.intro = 2.4;
+      bossHud.classList.remove("hidden");
+      showUpgradeMenu("Boss signal detected");
+    }
+
+    function defeatBoss() {
+      boss.active = false;
+      boss.defeated = true;
+      bossHud.classList.add("hidden");
+      score += 500;
+      upgradeTokens += 3;
+      laserAmmo = Math.min(18, laserAmmo + 8);
+      shake = 1.2;
+      for (let i = 0; i < 32; i += 1) {
+        bursts.push({ x: boss.x + rand(-60, 45), y: boss.y + rand(-55, 55), r: rand(8, 22), life: rand(0.28, 0.72), color: i % 2 ? "#ff6b8d" : "#ffd86b" });
+      }
+      showUpgradeMenu("Boss core cracked");
+    }
+
+    function fireLaser() {
+      if (!running || paused || upgrading || shopping || laserAmmo <= 0 || laserCooldown > 0) return;
+      laserAmmo -= 1;
+      laserCooldown = 0.18;
+      shootLaser(ship.x + 22, ship.y, laserDamage(), "#65e4ff", 820 + speedLevel * 35, 44 + laserLevel * 6);
+      if (gunLevel > 0) {
+        shootLaser(ship.x + 12, ship.y - 13, Math.max(1, laserDamage() - 1), "#ffd86b", 760 + gunLevel * 24, 34 + gunLevel * 4);
+      }
+      if (gunLevel > 1) {
+        shootLaser(ship.x + 12, ship.y + 13, Math.max(1, laserDamage() - 1), "#ffd86b", 760 + gunLevel * 24, 34 + gunLevel * 4);
+      }
+      if (gunLevel > 3) {
+        shootLaser(ship.x + 6, ship.y, laserDamage(), "#b77cff", 900, 64);
+      }
+      bursts.push({ x: ship.x + 25, y: ship.y, r: 5, life: 0.16, color: "#65e4ff" });
+      updateHud();
+    }
+
+    function shootLaser(x, y, damage, color, vx, length) {
+      lasers.push({
+        x,
+        y,
+        vx,
+        life: 0.9,
+        length,
+        damage,
+        color
+      });
+    }
+
+    function powerColor(type) {
+      if (type === "laser") return "#65e4ff";
+      if (type === "boost") return "#9dff8a";
+      if (type === "shield") return "#ff6b8d";
+      if (type === "heal") return "#ffd86b";
+      if (type === "burst") return "#b77cff";
+      return "#b77cff";
+    }
+
+    function activatePower(type, source) {
+      if (type === "laser") {
+        laserAmmo = Math.min(30, laserAmmo + 15);
+        score += 15;
+        fireLaser();
+      }
+      if (type === "boost") {
+        boostTime = 4.2;
+        ship.vx += 430;
+        score += 20;
+      }
+      if (type === "shield") {
+        shieldTime = 5.2;
+        ship.invincible = Math.max(ship.invincible, 0.8);
+        score += 12;
+      }
+      if (type === "heal") {
+        lives = Math.min(maxLives, lives + 1);
+        score += 10;
+      }
+      if (type === "token") {
+        upgradeTokens += 1;
+        score += 30;
+      }
+      if (type === "burst") {
+        gunLevel += 1;
+        laserAmmo = Math.min(24, laserAmmo + 4);
+        score += 24;
+      }
+
+      shake = Math.max(shake, 0.22);
+      for (let p = 0; p < 16; p += 1) {
+        bursts.push({
+          x: source.x + rand(-8, 8),
+          y: source.y + rand(-8, 8),
+          r: rand(3, 7),
+          life: rand(0.22, 0.46),
+          color: powerColor(type)
+        });
+      }
+    }
+
+    function moveShip(dt, rect) {
+      const baseAccel = (boostTime > 0 ? 1160 : 760) * shipSpeedScale();
+      let ax = 0;
+      let ay = 0;
+      if (keys.has("arrowleft") || keys.has("a")) ax -= baseAccel;
+      if (keys.has("arrowright") || keys.has("d")) ax += baseAccel;
+      if (keys.has("arrowup") || keys.has("w")) ay -= baseAccel;
+      if (keys.has("arrowdown") || keys.has("s")) ay += baseAccel;
+
+      if (pointer.active) {
+        const dx = pointer.x - ship.x;
+        const dy = pointer.y - ship.y;
+        ship.vx += dx * 9 * dt;
+        ship.vy += dy * 9 * dt;
+      }
+
+      ship.vx += ax * dt;
+      ship.vy += ay * dt;
+      if (boostTime > 0) ship.vx += (260 + speedLevel * 48) * dt;
+      ship.vx *= Math.pow(0.045, dt);
+      ship.vy *= Math.pow(0.045, dt);
+      ship.x += ship.vx * dt;
+      ship.y += ship.vy * dt;
+      ship.x = Math.max(28, Math.min(rect.width - 28, ship.x));
+      ship.y = Math.max(62, Math.min(rect.height - 28, ship.y));
+      ship.invincible = Math.max(0, ship.invincible - dt);
+    }
+
+    function updateBoss(dt, rect) {
+      if (!boss.active) return;
+
+      boss.intro = Math.max(0, boss.intro - dt);
+      boss.x += ((rect.width - 112) - boss.x) * Math.min(1, dt * 1.4);
+      boss.y += boss.vy * dt;
+      if (boss.y < 132 || boss.y > rect.height - 118) boss.vy *= -1;
+
+      boss.shotTimer -= dt;
+      boss.burstTimer -= dt;
+      if (boss.shotTimer <= 0) {
+        enemyLasers.push({
+          x: boss.x - boss.r * 0.9,
+          y: boss.y + rand(-32, 32),
+          vx: -430 - scorePressure() * 90,
+          length: 62,
+          life: 2.2
+        });
+        boss.shotTimer = Math.max(0.58, 1.25 - scorePressure() * 0.18);
+      }
+      if (boss.burstTimer <= 0) {
+        for (let i = -1; i <= 1; i += 1) {
+          enemyLasers.push({
+            x: boss.x - boss.r * 0.9,
+            y: boss.y + i * 38,
+            vx: -390 - scorePressure() * 80,
+            length: 54,
+            life: 2.2
+          });
+        }
+        boss.burstTimer = Math.max(2.4, 4.2 - scorePressure() * 0.35);
+      }
+
+      if (distance(ship, boss) < ship.r + boss.r * 0.66 && ship.invincible <= 0) {
+        if (damageShip(2)) return;
+      }
+    }
+
+    function updateAllies(dt) {
+      for (const ally of allies) {
+        ally.phase += dt * 3;
+        ally.x += ((ship.x - 54) - ally.x) * Math.min(1, dt * 4);
+        ally.y += ((ship.y + ally.offset + Math.sin(ally.phase) * 10) - ally.y) * Math.min(1, dt * 4);
+        ally.cooldown -= dt;
+        if (ally.cooldown <= 0) {
+          const damage = ally.type === "alien" ? Math.max(1, laserDamage()) : Math.max(1, laserDamage() - 1);
+          const color = ally.type === "alien" ? "#9dff8a" : "#ffd86b";
+          const speed = ally.type === "alien" ? 860 : 720;
+          shootLaser(ally.x + 18, ally.y, damage, color, speed, ally.type === "alien" ? 52 : 42);
+          ally.cooldown = ally.type === "alien" ? 0.78 : 1.05;
+        }
+      }
+    }
+
+    function update(dt, elapsed = dt) {
+      const rect = bounds();
+      level = 1 + Math.floor(score / 180);
+      starTimer -= elapsed;
+      rockTimer -= elapsed;
+      powerTimer -= elapsed;
+      upgradeTimer -= elapsed;
+      shopTimer -= elapsed;
+      allyShotTimer -= elapsed;
+      laserCooldown = Math.max(0, laserCooldown - dt);
+      boostTime = Math.max(0, boostTime - elapsed);
+      shieldTime = Math.max(0, shieldTime - elapsed);
+      shake = Math.max(0, shake - dt * 10);
+
+      if (starTimer <= 0) {
+        spawnStar(rect);
+        starTimer = Math.max(0.38, 0.88 - level * 0.035);
+      }
+      if (rockTimer <= 0) {
+        spawnRock(rect);
+        if (!boss.active) {
+          if (score > 450 && Math.random() < 0.55) spawnRock(rect);
+          if (score > 900 && Math.random() < 0.55) spawnRock(rect);
+          if (score > 1500 && Math.random() < 0.45) spawnRock(rect);
+        }
+        rockTimer = boss.active
+          ? Math.max(0.7, 1.45 - scorePressure() * 0.16)
+          : Math.max(0.14, 0.82 - level * 0.048 - scorePressure() * 0.17);
+      }
+      if (powerTimer <= 0) {
+        spawnPowerUp(rect);
+        if (boss.active && Math.random() < 0.72) spawnPowerUp(rect);
+        if (!boss.active && score > 400 && Math.random() < 0.55) spawnPowerUp(rect);
+        if (score > 1000 && Math.random() < 0.35) spawnPowerUp(rect);
+        powerTimer = boss.active
+          ? Math.max(0.82, rand(1.4, 2.4) - scorePressure() * 0.18)
+          : Math.max(0.95, rand(2.4, 4.2) - Math.min(level * 0.08, 0.8) - scorePressure() * 0.72);
+      }
+      const now = performance.now();
+      if (now >= nextShopAt) {
+        showStarShop("Star trader relay opened");
+        return;
+      }
+      if (now >= nextUpgradeAt) {
+        showUpgradeMenu("Upgrade interval reached");
+        return;
+      }
+      if (score >= 1000 && !boss.spawned) {
+        spawnBoss(rect);
+        return;
+      }
+
+      moveShip(dt, rect);
+      updateBoss(dt, rect);
+      updateAllies(dt);
+
+      for (const speck of dust) {
+        speck.x -= (28 + level * 3) * speck.z * dt;
+        speck.tw += dt * speck.z;
+        if (speck.x < -6) {
+          speck.x = rect.width + 6;
+          speck.y = rand(0, rect.height);
+        }
+      }
+
+      for (let i = stars.length - 1; i >= 0; i -= 1) {
+        const star = stars[i];
+        star.x += star.vx * dt;
+        star.pulse += dt * 5;
+        if (distance(ship, star) < ship.r + star.r) {
+          score += 25;
+          starCredits += 1;
+          stars.splice(i, 1);
+          for (let p = 0; p < 10; p += 1) {
+            dust.push({ x: star.x, y: star.y, z: rand(0.8, 1.7), tw: rand(0, 7) });
+          }
+        } else if (star.x < -40) {
+          stars.splice(i, 1);
+        }
+      }
+
+      for (let i = powerUps.length - 1; i >= 0; i -= 1) {
+        const power = powerUps[i];
+        power.x += power.vx * dt;
+        power.pulse += dt * 5.4;
+        if (distance(ship, power) < ship.r + power.r) {
+          activatePower(power.type, power);
+          powerUps.splice(i, 1);
+        } else if (power.x < -45) {
+          powerUps.splice(i, 1);
+        }
+      }
+
+      for (let i = lasers.length - 1; i >= 0; i -= 1) {
+        const laser = lasers[i];
+        laser.x += laser.vx * dt;
+        laser.life -= dt;
+        let hit = false;
+        for (let r = rocks.length - 1; r >= 0; r -= 1) {
+          const rock = rocks[r];
+          const dx = rock.x - laser.x;
+          const dy = Math.abs(rock.y - laser.y);
+          if (dx > -16 && dx < laser.length + rock.r && dy < rock.r * 0.82) {
+            score += 18 + laser.damage * 3;
+            shake = Math.max(shake, 0.28);
+            bursts.push({ x: rock.x, y: rock.y, r: rock.r * 0.7, life: 0.34, color: "#65e4ff" });
+            rocks.splice(r, 1);
+            hit = true;
+            break;
+          }
+        }
+        if (!hit && boss.active && laser.x + laser.length > boss.x - boss.r && laser.x < boss.x + boss.r * 0.7 && Math.abs(laser.y - boss.y) < boss.r * 0.75) {
+          boss.hp -= laser.damage;
+          score += 8 * laser.damage;
+          shake = Math.max(shake, 0.22);
+          bursts.push({ x: boss.x - boss.r * 0.75, y: laser.y, r: 12 + laser.damage * 3, life: 0.28, color: "#65e4ff" });
+          hit = true;
+          if (boss.hp <= 0) defeatBoss();
+        }
+        if (hit || laser.life <= 0 || laser.x > rect.width + 70) lasers.splice(i, 1);
+      }
+
+      for (let i = enemyLasers.length - 1; i >= 0; i -= 1) {
+        const beam = enemyLasers[i];
+        beam.x += beam.vx * dt;
+        beam.life -= dt;
+        if (Math.abs(ship.y - beam.y) < 11 && beam.x < ship.x + ship.r && beam.x + beam.length > ship.x - ship.r) {
+          enemyLasers.splice(i, 1);
+          if (damageShip(1)) return;
+        } else if (beam.life <= 0 || beam.x < -beam.length - 30) {
+          enemyLasers.splice(i, 1);
+        }
+      }
+
+      for (let i = rocks.length - 1; i >= 0; i -= 1) {
+        const rock = rocks[i];
+        const speedScale = asteroidSpeedScale();
+        rock.x += rock.vx * speedScale * dt;
+        rock.y += rock.vy * Math.min(speedScale, 1.8) * dt;
+        rock.angle += rock.spin * dt;
+        if (rock.y < 62 || rock.y > rect.height - 25) rock.vy *= -1;
+        if (distance(ship, rock) < ship.r + rock.r * 0.72 && ship.invincible <= 0) {
+          rocks.splice(i, 1);
+          if (shieldTime > 0) score += 10;
+          bursts.push({ x: rock.x, y: rock.y, r: rock.r, life: 0.32, color: shieldTime > 0 ? "#ff6b8d" : "#ffd86b" });
+          if (damageShip(1)) return;
+        } else if (rock.x < -rock.r - 30) {
+          rocks.splice(i, 1);
+          score += 4;
+        }
+      }
+
+      for (let i = bursts.length - 1; i >= 0; i -= 1) {
+        bursts[i].life -= dt;
+        bursts[i].r += 80 * dt;
+        if (bursts[i].life <= 0) bursts.splice(i, 1);
+      }
+
+      score += Math.floor(dt * 5);
+      best = Math.max(best, score);
+      updateHud();
+    }
+
+    function distance(a, b) {
+      return Math.hypot(a.x - b.x, a.y - b.y);
+    }
+
+    function drawBackground(rect) {
+      const grd = ctx.createLinearGradient(0, 0, rect.width, rect.height);
+      grd.addColorStop(0, "#030813");
+      grd.addColorStop(0.45, "#0b1c31");
+      grd.addColorStop(1, "#11181f");
+      ctx.fillStyle = grd;
+      ctx.fillRect(0, 0, rect.width, rect.height);
+
+      for (const body of backgroundBodies) {
+        body.x -= body.drift * 0.016;
+        if (body.x < -body.r * 3) body.x = rect.width + body.r * 2;
+
+        ctx.save();
+        ctx.globalAlpha = body.alpha;
+        const planet = ctx.createRadialGradient(body.x - body.r * 0.28, body.y - body.r * 0.35, body.r * 0.12, body.x, body.y, body.r);
+        planet.addColorStop(0, "#f6fbff");
+        planet.addColorStop(0.16, body.color);
+        planet.addColorStop(1, "#050912");
+        ctx.fillStyle = planet;
+        ctx.beginPath();
+        ctx.arc(body.x, body.y, body.r, 0, Math.PI * 2);
+        ctx.fill();
+        if (body.ring) {
+          ctx.strokeStyle = "rgba(246,251,255,0.38)";
+          ctx.lineWidth = Math.max(1, body.r * 0.08);
+          ctx.beginPath();
+          ctx.ellipse(body.x, body.y, body.r * 1.6, body.r * 0.34, -0.18, 0, Math.PI * 2);
+          ctx.stroke();
+        }
+        ctx.restore();
+      }
+
+      for (const craft of backgroundShips) {
+        craft.x -= craft.speed * 0.016;
+        craft.blink += 0.04;
+        if (craft.x < -70) {
+          craft.x = rect.width + rand(60, 240);
+          craft.y = rand(90, rect.height - 110);
+        }
+        ctx.save();
+        ctx.translate(craft.x, craft.y);
+        ctx.scale(craft.scale, craft.scale);
+        ctx.globalAlpha = 0.28;
+        ctx.fillStyle = "#a9b8c7";
+        ctx.beginPath();
+        ctx.moveTo(28, 0);
+        ctx.lineTo(-18, -9);
+        ctx.lineTo(-34, 0);
+        ctx.lineTo(-18, 9);
+        ctx.closePath();
+        ctx.fill();
+        ctx.fillStyle = Math.sin(craft.blink) > 0 ? "#65e4ff" : "#ff6b8d";
+        ctx.beginPath();
+        ctx.arc(-4, 0, 3, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+      }
+
+      ctx.save();
+      ctx.globalAlpha = boostTime > 0 ? 0.42 : 0.24;
+      ctx.strokeStyle = "#65e4ff";
+      ctx.lineWidth = 1;
+      for (let y = 86; y < rect.height; y += 58) {
+        ctx.beginPath();
+        ctx.moveTo(0, y);
+        ctx.bezierCurveTo(rect.width * 0.28, y - 24, rect.width * 0.58, y + 24, rect.width, y - 10);
+        ctx.stroke();
+      }
+      ctx.restore();
+
+      if (boostTime > 0) {
+        ctx.save();
+        ctx.globalAlpha = 0.26;
+        ctx.strokeStyle = "#9dff8a";
+        ctx.lineWidth = 2;
+        for (let y = 72; y < rect.height; y += 84) {
+          ctx.beginPath();
+          ctx.moveTo(rect.width * 0.18, y);
+          ctx.lineTo(rect.width, y - 32);
+          ctx.stroke();
+        }
+        ctx.restore();
+      }
+
+      for (const speck of dust) {
+        const alpha = 0.2 + 0.55 * Math.abs(Math.sin(speck.tw));
+        ctx.fillStyle = `rgba(246, 251, 255, ${alpha})`;
+        ctx.beginPath();
+        ctx.arc(speck.x, speck.y, speck.z * 1.7, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+
+    function drawShip() {
+      ctx.save();
+      ctx.translate(ship.x, ship.y);
+      const flicker = ship.invincible > 0 && Math.sin(performance.now() * 0.025) < 0;
+      if (flicker) ctx.globalAlpha = 0.42;
+
+      if (shieldTime > 0) {
+        ctx.save();
+        ctx.globalAlpha = 0.32 + Math.sin(performance.now() * 0.012) * 0.1;
+        ctx.strokeStyle = "#ff6b8d";
+        ctx.shadowColor = "#ff6b8d";
+        ctx.shadowBlur = 18;
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.arc(0, 0, 30, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.restore();
+      }
+
+      const thrust = boostTime > 0 ? 22 : 9;
+      ctx.save();
+      ctx.shadowColor = boostTime > 0 ? "#9dff8a" : "#65e4ff";
+      ctx.shadowBlur = 18;
+      ctx.fillStyle = boostTime > 0 ? "#9dff8a" : "#65e4ff";
+      ctx.beginPath();
+      ctx.moveTo(-18, -9);
+      ctx.lineTo(-36 - Math.random() * thrust, -3);
+      ctx.lineTo(-18, 0);
+      ctx.closePath();
+      ctx.fill();
+      ctx.beginPath();
+      ctx.moveTo(-18, 9);
+      ctx.lineTo(-36 - Math.random() * thrust, 3);
+      ctx.lineTo(-18, 0);
+      ctx.closePath();
+      ctx.fill();
+      ctx.restore();
+
+      ctx.shadowColor = "#65e4ff";
+      ctx.shadowBlur = 18;
+      ctx.fillStyle = "#cfefff";
+      ctx.strokeStyle = "#65e4ff";
+      ctx.lineWidth = 2;
+
+      ctx.beginPath();
+      ctx.moveTo(30, 0);
+      ctx.lineTo(-18, -18);
+      ctx.lineTo(-8, 0);
+      ctx.lineTo(-18, 18);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.shadowBlur = 10;
+      ctx.fillStyle = "#6edfff";
+      ctx.beginPath();
+      ctx.moveTo(2, -18);
+      ctx.lineTo(-28, -34);
+      ctx.lineTo(-13, -7);
+      ctx.closePath();
+      ctx.fill();
+
+      ctx.beginPath();
+      ctx.moveTo(2, 18);
+      ctx.lineTo(-28, 34);
+      ctx.lineTo(-13, 7);
+      ctx.closePath();
+      ctx.fill();
+
+      ctx.shadowBlur = 8;
+      ctx.fillStyle = "#101a27";
+      ctx.strokeStyle = "#ffd86b";
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.ellipse(-8, -18, 7, 4, -0.28, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.ellipse(-8, 18, 7, 4, 0.28, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.shadowColor = "#ffffff";
+      ctx.shadowBlur = 12;
+      ctx.fillStyle = "#111e2f";
+      ctx.beginPath();
+      ctx.ellipse(7, 0, 8, 5.5, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = "#f6fbff";
+      ctx.beginPath();
+      ctx.ellipse(10, -1, 3.5, 2.2, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    }
+
+    function drawAlly(ally) {
+      ctx.save();
+      ctx.translate(ally.x, ally.y);
+      ctx.shadowColor = ally.type === "alien" ? "#9dff8a" : "#ffd86b";
+      ctx.shadowBlur = 12;
+      ctx.fillStyle = ally.type === "alien" ? "#193329" : "#3b3320";
+      ctx.strokeStyle = ally.type === "alien" ? "#9dff8a" : "#ffd86b";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      if (ally.type === "alien") {
+        ctx.moveTo(18, 0);
+        ctx.quadraticCurveTo(0, -16, -22, -7);
+        ctx.quadraticCurveTo(-8, 0, -22, 7);
+        ctx.quadraticCurveTo(0, 16, 18, 0);
+      } else {
+        ctx.moveTo(20, 0);
+        ctx.lineTo(-15, -10);
+        ctx.lineTo(-22, 0);
+        ctx.lineTo(-15, 10);
+      }
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    function drawLaser(laser) {
+      ctx.save();
+      ctx.lineCap = "round";
+      const color = laser.color || "#65e4ff";
+      ctx.shadowColor = color;
+      ctx.shadowBlur = 16;
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 5;
+      ctx.beginPath();
+      ctx.moveTo(laser.x, laser.y);
+      ctx.lineTo(laser.x + laser.length, laser.y);
+      ctx.stroke();
+      ctx.strokeStyle = "#f6fbff";
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.moveTo(laser.x + 8, laser.y);
+      ctx.lineTo(laser.x + laser.length - 5, laser.y);
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    function drawEnemyLaser(beam) {
+      ctx.save();
+      ctx.lineCap = "round";
+      ctx.shadowColor = "#ff6b8d";
+      ctx.shadowBlur = 18;
+      ctx.strokeStyle = "#ff6b8d";
+      ctx.lineWidth = 6;
+      ctx.beginPath();
+      ctx.moveTo(beam.x, beam.y);
+      ctx.lineTo(beam.x + beam.length, beam.y);
+      ctx.stroke();
+      ctx.strokeStyle = "#ffd86b";
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.moveTo(beam.x + 8, beam.y);
+      ctx.lineTo(beam.x + beam.length - 6, beam.y);
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    function drawStar(star) {
+      const glow = 4 + Math.sin(star.pulse) * 2;
+      ctx.save();
+      ctx.translate(star.x, star.y);
+      ctx.rotate(star.pulse * 0.3);
+      ctx.shadowColor = "#ffd86b";
+      ctx.shadowBlur = 18 + glow;
+      ctx.fillStyle = "#ffd86b";
+      ctx.beginPath();
+      for (let i = 0; i < 10; i += 1) {
+        const radius = i % 2 === 0 ? star.r + glow * 0.25 : star.r * 0.46;
+        const angle = -Math.PI / 2 + i * Math.PI / 5;
+        ctx.lineTo(Math.cos(angle) * radius, Math.sin(angle) * radius);
+      }
+      ctx.closePath();
+      ctx.fill();
+      ctx.restore();
+    }
+
+    function drawRock(rock) {
+      ctx.save();
+      ctx.translate(rock.x, rock.y);
+      ctx.rotate(rock.angle);
+      ctx.fillStyle = "#8f9fb0";
+      ctx.strokeStyle = "#d4dde7";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      for (let i = 0; i < rock.sides; i += 1) {
+        const a = i / rock.sides * Math.PI * 2;
+        const rough = 0.78 + 0.22 * Math.sin(rock.seed + i * 2.11);
+        const radius = rock.r * rough;
+        const x = Math.cos(a) * radius;
+        const y = Math.sin(a) * radius;
+        if (i === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      }
+      ctx.closePath();
+      ctx.fill();
+      ctx.globalAlpha = 0.35;
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    function drawPowerUp(power) {
+      const color = powerColor(power.type);
+      const label = power.type === "laser" ? "L" : power.type === "boost" ? "B" : power.type === "shield" ? "S" : power.type === "heal" ? "+" : power.type === "burst" ? "G" : "T";
+      const pulse = Math.sin(power.pulse) * 3;
+      ctx.save();
+      ctx.translate(power.x, power.y);
+      ctx.rotate(power.pulse * 0.18);
+      ctx.shadowColor = color;
+      ctx.shadowBlur = 18 + pulse;
+      ctx.strokeStyle = color;
+      ctx.fillStyle = "rgba(8, 17, 30, 0.92)";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      for (let i = 0; i < 6; i += 1) {
+        const angle = Math.PI / 6 + i * Math.PI / 3;
+        const radius = power.r + pulse;
+        const x = Math.cos(angle) * radius;
+        const y = Math.sin(angle) * radius;
+        if (i === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      }
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+      ctx.rotate(-power.pulse * 0.18);
+      ctx.fillStyle = color;
+      ctx.font = "900 13px system-ui, sans-serif";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText(label, 0, 1);
+      ctx.restore();
+    }
+
+    function drawBoss() {
+      if (!boss.active) return;
+
+      ctx.save();
+      ctx.translate(boss.x, boss.y);
+      const pulse = Math.sin(performance.now() * 0.006) * 4;
+      ctx.shadowColor = "#ff6b8d";
+      ctx.shadowBlur = 30;
+      ctx.fillStyle = "#160915";
+      ctx.strokeStyle = "#ff6b8d";
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(-boss.r - 32, -18);
+      ctx.lineTo(-boss.r * 0.28, -boss.r - 18 + pulse);
+      ctx.lineTo(68, -54);
+      ctx.lineTo(102, 0);
+      ctx.lineTo(68, 54);
+      ctx.lineTo(-boss.r * 0.28, boss.r + 18 - pulse);
+      ctx.lineTo(-boss.r - 32, 18);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.fillStyle = "#30192b";
+      ctx.beginPath();
+      ctx.moveTo(-46, -20);
+      ctx.lineTo(70, 0);
+      ctx.lineTo(-46, 20);
+      ctx.lineTo(-76, 0);
+      ctx.closePath();
+      ctx.fill();
+
+      ctx.shadowColor = "#ffd86b";
+      ctx.shadowBlur = 16;
+      ctx.fillStyle = "#ffd86b";
+      ctx.beginPath();
+      ctx.arc(-24, -20, 9, 0, Math.PI * 2);
+      ctx.arc(-24, 20, 9, 0, Math.PI * 2);
+      ctx.arc(42, 0, 11, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.shadowColor = "#65e4ff";
+      ctx.shadowBlur = 14;
+      ctx.strokeStyle = "#65e4ff";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(-86, -28);
+      ctx.lineTo(74, 0);
+      ctx.lineTo(-86, 28);
+      ctx.moveTo(-18, -62);
+      ctx.lineTo(-42, 62);
+      ctx.moveTo(82, -20);
+      ctx.lineTo(110, -26);
+      ctx.moveTo(82, 20);
+      ctx.lineTo(110, 26);
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    function drawBurst(burst) {
+      ctx.save();
+      ctx.globalAlpha = Math.max(0, burst.life * 2.8);
+      ctx.strokeStyle = burst.color;
+      ctx.shadowColor = burst.color;
+      ctx.shadowBlur = 18;
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.arc(burst.x, burst.y, burst.r, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    function drawLives(rect) {
+      const x = 18;
+      const y = rect.height - 22;
+      for (let i = 0; i < maxLives; i += 1) {
+        ctx.fillStyle = i < lives ? "#ff6b8d" : "rgba(255,255,255,0.16)";
+        ctx.beginPath();
+        ctx.arc(x + i * 16, y, 5.5, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+
+    function draw() {
+      const rect = bounds();
+      ctx.save();
+      if (shake > 0) {
+        ctx.translate(rand(-7, 7) * shake, rand(-7, 7) * shake);
+      }
+      drawBackground(rect);
+      for (const star of stars) drawStar(star);
+      for (const power of powerUps) drawPowerUp(power);
+      for (const laser of lasers) drawLaser(laser);
+      for (const beam of enemyLasers) drawEnemyLaser(beam);
+      for (const rock of rocks) drawRock(rock);
+      for (const burst of bursts) drawBurst(burst);
+      drawBoss();
+      for (const ally of allies) drawAlly(ally);
+      drawShip();
+      drawLives(rect);
+      ctx.restore();
+    }
+
+    function loop(now) {
+      if (!running || paused || upgrading || shopping) return;
+      const elapsed = Math.max(0, (now - lastTime) / 1000 || 0);
+      const dt = Math.min(0.033, elapsed);
+      lastTime = now;
+      update(dt, Math.min(elapsed, 0.25));
+      draw();
+      animationId = requestAnimationFrame(loop);
+    }
+
+    function pointerPosition(event) {
+      const rect = bounds();
+      return {
+        x: event.clientX - rect.left,
+        y: event.clientY - rect.top
+      };
+    }
+
+    window.addEventListener("resize", () => {
+      resizeCanvas();
+      draw();
+    });
+
+    window.addEventListener("keydown", (event) => {
+      const key = event.key.toLowerCase();
+      if (["arrowleft", "arrowright", "arrowup", "arrowdown", "w", "a", "s", "d", " ", "f", "k", "enter"].includes(key)) {
+        event.preventDefault();
+      }
+      if (key === "f" || key === "k" || key === "enter") {
+        fireLaser();
+        return;
+      }
+      if (key === " " || key === "p") {
+        if (!running) startGame();
+        else togglePause();
+        return;
+      }
+      keys.add(key);
+    });
+
+    window.addEventListener("keyup", (event) => {
+      keys.delete(event.key.toLowerCase());
+    });
+
+    shell.addEventListener("pointerdown", (event) => {
+      pointer.active = true;
+      Object.assign(pointer, pointerPosition(event));
+      shell.setPointerCapture(event.pointerId);
+      if (!running) startGame();
+    });
+
+    shell.addEventListener("pointermove", (event) => {
+      if (!pointer.active) return;
+      Object.assign(pointer, pointerPosition(event));
+    });
+
+    shell.addEventListener("pointerup", () => {
+      pointer.active = false;
+    });
+
+    shell.addEventListener("pointercancel", () => {
+      pointer.active = false;
+    });
+
+    controls.addEventListener("pointerdown", (event) => {
+      event.stopPropagation();
+    });
+    upgradeOverlay.addEventListener("pointerdown", (event) => {
+      event.stopPropagation();
+    });
+    shopOverlay.addEventListener("pointerdown", (event) => {
+      event.stopPropagation();
+    });
+    upgradeOverlay.querySelectorAll("[data-upgrade]").forEach((button) => {
+      button.addEventListener("click", () => buyUpgrade(button.dataset.upgrade));
+    });
+    shopOverlay.querySelectorAll("[data-shop]").forEach((button) => {
+      button.addEventListener("click", () => buyShop(button.dataset.shop));
+    });
+    playBtn.addEventListener("click", startGame);
+    laserBtn.addEventListener("pointerdown", (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      fireLaser();
+    });
+    pauseBtn.addEventListener("click", togglePause);
+    restartBtn.addEventListener("click", startGame);
+
+    resizeCanvas();
+    resetGame();
+    draw();
+  </script>
+</body>
+</html>
