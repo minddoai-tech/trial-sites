@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Geometry Dash: Unlock Run</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <main class="app-shell">
+    <header class="topbar">
+      <div>
+        <p class="eyebrow">ARCADE RUNNER</p>
+        <h1>GEOMETRY <span>DASH</span></h1>
+      </div>
+      <div class="topbar-tip">SPACE / CLICK TO JUMP <span>•</span> HOLD SPACE TO FLY <span>•</span> R TO RESTART</div>
+    </header>
+
+    <section class="game-card">
+      <div class="canvas-wrap">
+        <canvas id="gameCanvas" width="960" height="540" aria-label="Geometry Dash game canvas"></canvas>
+        <div id="gameOverlay" class="game-overlay hidden">
+          <div class="overlay-card">
+            <p id="overlayKicker" class="eyebrow">RUN OVER</p>
+            <h2 id="overlayTitle">DIED</h2>
+            <p id="overlayMessage">Your cube ran out of health.</p>
+            <div class="overlay-actions">
+              <button id="overlayPrimary" class="button button-primary">RESTART</button>
+              <button id="overlaySecondary" class="button button-ghost">LEVEL SELECT</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="game-hint"><span class="key">SPACE</span> jump / fly <span class="muted">|</span> <span class="key">R</span> restart <span class="muted">|</span> press <span class="key">ESC</span> for level select</div>
+      <div class="game-controls">
+        <button id="musicToggle" class="small-button">♫ MUSIC: OFF</button>
+        <button id="randomTheme" class="small-button">✦ RANDOM BACKGROUND</button>
+      </div>
+    </section>
+
+    <section id="menuPanel" class="menu-panel">
+      <div class="panel-heading">
+        <div>
+          <p class="eyebrow">SELECT A LEVEL</p>
+          <h2>Build your streak.</h2>
+        </div>
+        <div id="saveSummary" class="save-summary"></div>
+      </div>
+      <div id="levelGrid" class="level-grid"></div>
+      <div class="skin-section">
+        <div>
+          <p class="eyebrow">COLLECTION</p>
+          <h2>Cube skins</h2>
+          <p class="section-copy">Finish levels to unlock stronger cubes. Better skins give you more health.</p>
+        </div>
+        <div id="skinGrid" class="skin-grid"></div>
+      </div>
+    </section>
+
+    <footer class="footer-note">A tiny original arcade tribute. No external assets or libraries required.</footer>
+  </main>
+  <script src="game.js"></script>
+</body>
+</html>
