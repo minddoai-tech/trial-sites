@@ -1,5 +1,14 @@
 [
   {
+    "slug": "oberen-oh-soccer",
+    "trialId": "eb2f242f-2bfe-4f5d-82c0-97d5691f68a7",
+    "studentName": "Oberen Oh",
+    "title": "Soccer",
+    "description": "play the game",
+    "submittedAt": "2026-11-11T22:28:51.100Z",
+    "thumbnail": "oberen-oh-soccer/thumb.png"
+  },
+  {
     "slug": "austin-tu-shadowfall",
     "trialId": "1752608c-b53a-4ffb-ac5b-0ac4bd61bb8f",
     "studentName": "Austin Tu",
