@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Turbo Goal</title>
+  <style>
+    :root{--ink:#f7f9ff;--muted:#a8b3c7;--panel:#111827e8;--line:#ffffff22;--blue:#3498ff;--orange:#ff8b3d}
+    *{box-sizing:border-box} body{margin:0;min-height:100vh;background:#070b15;color:var(--ink);font-family:Inter,ui-sans-serif,system-ui,-apple-system,Segoe UI,sans-serif;display:grid;place-items:center;padding:18px}
+    .shell{width:min(1160px,100%)} header{display:flex;align-items:end;justify-content:space-between;margin:0 4px 12px;gap:20px} h1{font-size:clamp(25px,4vw,42px);margin:0;letter-spacing:-.04em} .tag{color:#94a3b8;font-size:13px;margin-top:4px}.status{font-size:12px;color:#91a3bd;text-align:right}.status b{color:#fff}
+    .game-wrap{position:relative;border:1px solid #ffffff1e;border-radius:20px;overflow:hidden;box-shadow:0 24px 80px #0008;background:#0d1321} canvas{display:block;width:100%;height:auto;aspect-ratio:16/9;background:#0d1321}
+    .hud{position:absolute;left:50%;top:14px;transform:translateX(-50%);display:flex;align-items:center;gap:15px;pointer-events:none;background:#0a0e18cf;border:1px solid var(--line);border-radius:16px;padding:8px 16px;backdrop-filter:blur(8px);white-space:nowrap}.score{font-size:24px;font-weight:800;letter-spacing:.04em}.blue{color:#69b7ff}.orange{color:#ffae78}.boost-meter{font-size:11px;color:#9fe5ff;font-weight:800;letter-spacing:.04em}.series{font-size:12px;color:#cbd5e1;font-weight:800}.clock{font-variant-numeric:tabular-nums;font-size:17px;color:#e6edf9}.divider{width:1px;height:24px;background:#ffffff2a}
+    .panel{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:min(470px,calc(100% - 34px));background:var(--panel);border:1px solid #ffffff2b;border-radius:18px;padding:25px;text-align:center;box-shadow:0 18px 60px #0009;backdrop-filter:blur(12px)}.panel.hidden{display:none}.panel h2{margin:0 0 9px;font-size:28px}.panel p{color:#c5cede;line-height:1.45;margin:8px 0 18px}.keys{display:flex;justify-content:center;flex-wrap:wrap;gap:7px;margin:14px 0 20px}.key{border:1px solid #ffffff31;background:#ffffff0e;border-radius:7px;padding:6px 9px;font-size:12px;color:#dce5f5}.key strong{color:#fff}.btn{cursor:pointer;border:0;border-radius:10px;background:linear-gradient(135deg,#479fff,#2677ee);color:white;font-weight:800;padding:11px 18px;font-size:14px;box-shadow:0 7px 20px #247bf955}.btn:hover{filter:brightness(1.12)}
+    .help{display:flex;justify-content:space-between;gap:12px;align-items:center;margin:10px 4px 0;color:#8492a9;font-size:12px}.help span:last-child{color:#b5c1d4}
+    @media(max-width:650px){body{padding:8px}.hud{top:8px;gap:8px;padding:6px 10px}.score{font-size:18px}.clock{font-size:14px}.help{font-size:10px}}
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <header><div><h1>Turbo Goal</h1><div class="tag">Curvy arena soccer with cars</div></div><div class="status"><b>3 v 3</b><br>5 minute match</div></header>
+    <div class="game-wrap">
+      <canvas id="game" width="1100" height="620" aria-label="Turbo Goal game"></canvas>
+      <div class="hud"><span class="score blue" id="blueScore">0</span><span class="series" id="seriesScore"></span><span class="boost-meter" id="boostMeter">BOOST 100%</span><span class="clock" id="clock">05:00</span><span class="score orange" id="orangeScore">0</span></div>
+      <section class="panel" id="panel"><h2 id="panelTitle">Turbo Goal</h2><p id="panelText">Choose a mode, then beat the orange team by driving, boosting and double-jumping into the ball.</p><div class="keys"><span class="key"><strong>↑ ↓</strong> Drive</span><span class="key"><strong>← →</strong> Steer</span><span class="key"><strong>Shift</strong> Boost</span><span class="key"><strong>Space</strong> Jump / double jump</span></div><button class="btn" id="startBtn">Quick match</button> <button class="btn" id="tournamentBtn">Tournament</button></section>
+    </div>
+    <div class="help"><span>Blue car is you · Orange cars are bots</span><span>Press R anytime to restart</span></div>
+  </main>
+  <script>
+  (()=>{
+    const canvas=document.querySelector('#game'),ctx=canvas.getContext('2d'),W=canvas.width,H=canvas.height;
+    const blueScoreEl=document.querySelector('#blueScore'),orangeScoreEl=document.querySelector('#orangeScore'),boostEl=document.querySelector('#boostMeter'),seriesEl=document.querySelector('#seriesScore'),clockEl=document.querySelector('#clock'),panel=document.querySelector('#panel'),title=document.querySelector('#panelTitle'),text=document.querySelector('#panelText'),startBtn=document.querySelector('#startBtn'),tournamentBtn=document.querySelector('#tournamentBtn');
+    const keys={}; let state='menu',last=0,elapsed=0,goalFlash=0,serve=0, golden=false, firstGoalTeam=null,mode='quick',tournamentWins={blue:0,orange:0},tournamentMatch=0,musicCtx=null,musicTimer=null,musicStep=0;
+    const field={left:74,right:1026,top:76,bottom:544,goalY:310,goalH:166};
+    const boostPads=[{x:125,y:125,cooldown:0},{x:975,y:125,cooldown:0},{x:125,y:495,cooldown:0},{x:975,y:495,cooldown:0}];
+    const ball={x:550,y:310,vx:0,vy:0,r:16};
+    let cars=[],score={blue:0,orange:0};
+    const clamp=(n,a,b)=>Math.max(a,Math.min(b,n)); const len=(x,y)=>Math.hypot(x,y)||1; const rnd=(a,b)=>a+Math.random()*(b-a);
+    function makeCar(team,x,y,player=false){return {team,x,y,vx:0,vy:0,r:25,angle:team==='blue'?0:Math.PI,boost:100,boosting:false,onGround:false,jumps:0,jumpPulse:0,player,hit:0,color:team==='blue'?'#3d9cff':'#ff8e43'} }
+    function resetWorld(){cars=[makeCar('blue',310,310,true),makeCar('blue',270,230),makeCar('blue',270,400),makeCar('orange',790,310),makeCar('orange',830,230),makeCar('orange',830,400)]; ball.x=550;ball.y=310;ball.vx=0;ball.vy=0;serve=1.2;cars.forEach(c=>{c.vx=c.vy=0});}
+    function keepRoster(){
+      const spots={blue:[[310,310],[270,230],[270,400]],orange:[[790,310],[830,230],[830,400]]};
+      for(const team of ['blue','orange']){
+        const members=cars.filter(c=>c.team===team);
+        for(let i=0;i<3;i++){
+          if(!members[i]){const [x,y]=spots[team][i];cars.push(makeCar(team,x,y));continue}
+          const c=members[i];
+          if(!Number.isFinite(c.x)||!Number.isFinite(c.y)||c.x<field.left-80||c.x>field.right+80||c.y<field.top-80||c.y>field.bottom+80){const [x,y]=spots[team][i];c.x=x;c.y=y;c.vx=0;c.vy=0;c.jumpPulse=0;c.jumps=0}
+        }
+      }
+    }
+    function startMusic(){if(!musicCtx)musicCtx=new (window.AudioContext||window.webkitAudioContext)();musicCtx.resume();if(musicTimer)return;const melody=[261.63,329.63,392,523.25,392,329.63,293.66,349.23,440,587.33,440,349.23];musicTimer=setInterval(()=>{const now=musicCtx.currentTime,note=melody[musicStep%melody.length],osc=musicCtx.createOscillator(),gain=musicCtx.createGain();osc.type='triangle';osc.frequency.value=note;gain.gain.setValueAtTime(.0001,now);gain.gain.exponentialRampToValueAtTime(.045,now+.025);gain.gain.exponentialRampToValueAtTime(.0001,now+.28);osc.connect(gain).connect(musicCtx.destination);osc.start(now);osc.stop(now+.3);if(musicStep%4===0){const bass=musicCtx.createOscillator(),bg=musicCtx.createGain();bass.type='sine';bass.frequency.value=note/2;bg.gain.setValueAtTime(.0001,now);bg.gain.exponentialRampToValueAtTime(.06,now+.03);bg.gain.exponentialRampToValueAtTime(.0001,now+.55);bass.connect(bg).connect(musicCtx.destination);bass.start(now);bass.stop(now+.58)}musicStep++},350)}
+    function start(selected='quick'){startMusic();mode=selected;tournamentBtn.textContent='Tournament';tournamentBtn.onclick=()=>start('tournament');if(selected==='tournament'){tournamentWins={blue:0,orange:0};tournamentMatch=1}score={blue:0,orange:0};elapsed=0;golden=false;firstGoalTeam=null;state='play';panel.classList.add('hidden');resetWorld();updateHud()}
+    function nextTournamentMatch(){tournamentMatch++;score={blue:0,orange:0};elapsed=0;golden=false;firstGoalTeam=null;state='play';panel.classList.add('hidden');resetWorld();updateHud()}
+    startBtn.onclick=()=>start('quick');tournamentBtn.onclick=()=>start('tournament');
+    addEventListener('keydown',e=>{if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight',' ','Shift'].includes(e.key))e.preventDefault();keys[e.key.toLowerCase()]=true;if(e.key.toLowerCase()==='r')start();if(e.key===' '&&state==='play') jump(cars[0]);});
+    addEventListener('keyup',e=>keys[e.key.toLowerCase()]=false);
+    function jump(c){if(!c||c.jumps>=2)return;c.jumps++;c.jumpPulse=1;c.onGround=false}
+    function control(c,dt){let forward=keys.arrowup?1:keys.arrowdown?-0.62:0,turn=(keys.arrowright?1:0)-(keys.arrowleft?1:0);if(c.team==='orange')return;
+      c.angle+=turn*dt*2.9*(forward>=0?1:-1);let boost=keys.shift&&c.boost>0&&forward>0;c.boosting=boost;if(boost){c.boost-=dt*31;forward=1.8}let accel=forward* (boost?690:390);c.vx+=Math.cos(c.angle)*accel*dt;c.vy+=Math.sin(c.angle)*accel*dt;
+    }
+    function bot(c,dt){let goalX=c.team==='blue'?field.right:field.left;let approachX=ball.x+(goalX-ball.x)*.22,dx=approachX-c.x,dy=ball.y-c.y,d=len(dx,dy),target=Math.atan2(dy,dx);let diff=Math.atan2(Math.sin(target-c.angle),Math.cos(target-c.angle));c.angle+=clamp(diff,-dt*2.8,dt*2.8);let drive=d>44?1:.3;c.boosting=c.boost>0&&d>170&&Math.random()<dt*1.7;if(c.boosting){c.boost-=dt*25;drive=1.75}let accel=c.boosting?690:390;c.vx+=Math.cos(c.angle)*accel*drive*dt;c.vy+=Math.sin(c.angle)*accel*drive*dt;if(d<120&&Math.random()<dt*.7)jump(c);}
+    function physics(dt){
+      if(serve>0){serve-=dt;return}
+      for(const c of cars){
+        if(c.player)control(c,dt);else bot(c,dt);
+        c.x+=c.vx*dt;c.y+=c.vy*dt;c.vx*=Math.pow(.18,dt);c.vy*=Math.pow(.18,dt);c.jumpPulse=Math.max(0,c.jumpPulse-dt*2.7);if(c.jumpPulse===0)c.jumps=0;
+        const wallCurve=42*Math.sin(clamp((c.y-field.top)/(field.bottom-field.top),0,1)*Math.PI),leftWall=field.left+wallCurve,rightWall=field.right-wallCurve;
+        const inGoalMouth=Math.abs(c.y-field.goalY)<field.goalH/2-c.r;
+        const leftEdge=inGoalMouth?field.left-35+c.r:Math.max(field.left+c.r,leftWall+c.r),rightEdge=inGoalMouth?field.right+35-c.r:Math.min(field.right-c.r,rightWall-c.r);
+        if(c.x<leftEdge){c.x=leftEdge;c.vx=Math.max(Math.abs(c.vx)*.72,55);if(!c.player)c.vy+=Math.sign(field.goalY-c.y)*18}
+        if(c.x>rightEdge){c.x=rightEdge;c.vx=-Math.max(Math.abs(c.vx)*.72,55);if(!c.player)c.vy+=Math.sign(field.goalY-c.y)*18}
+        if(c.y>field.bottom-c.r){c.y=field.bottom-c.r;c.vy=-Math.max(Math.abs(c.vy)*.72,35);c.onGround=true}else if(c.y<field.top+c.r){c.y=field.top+c.r;c.vy=Math.max(Math.abs(c.vy)*.72,35);c.onGround=true}else c.onGround=false;
+      }
+      ball.x+=ball.vx*dt;ball.y+=ball.vy*dt;ball.vx*=Math.pow(.42,dt);ball.vy*=Math.pow(.55,dt);
+      if(ball.y-ball.r<field.top){ball.y=field.top+ball.r;ball.vy=Math.abs(ball.vy)*.72} if(ball.y+ball.r>field.bottom){ball.y=field.bottom-ball.r;ball.vy=-Math.abs(ball.vy)*.72}
+      // The curved side walls funnel shots toward the goals.
+      const curve=42*Math.sin((ball.y-field.top)/(field.bottom-field.top)*Math.PI);
+      const inBlueMouth=Math.abs(ball.y-field.goalY)<field.goalH/2-ball.r;
+      if(ball.x-ball.r<field.left+curve&&!inBlueMouth){ball.x=field.left+curve+ball.r;ball.vx=Math.abs(ball.vx)*.75}
+      if(ball.x+ball.r>field.right-curve&&!inBlueMouth){ball.x=field.right-curve-ball.r;ball.vx=-Math.abs(ball.vx)*.75}
+      for(const c of cars){let dx=ball.x-c.x,dy=ball.y-c.y,d=len(dx,dy),min=ball.r+c.r;if(d<min){let nx=dx/d,ny=dy/d,push=min-d;ball.x+=nx*push;ball.y+=ny*push;let kick=200+Math.hypot(c.vx,c.vy)*.9;ball.vx+=nx*kick;ball.vy+=ny*kick;c.hit=.12}}
+      for(const px of [field.left-4,field.right+4]){let dx=ball.x-px,dy=ball.y-field.goalY,d=len(dx,dy),min=ball.r+18;if(d<min){let nx=dx/d,ny=dy/d;ball.x=px+nx*min;ball.y=field.goalY+ny*min;let hit=ball.vx*nx+ball.vy*ny;if(hit<0){ball.vx-=nx*hit*1.8;ball.vy-=ny*hit*1.8}}for(const c of cars){dx=c.x-px;dy=c.y-field.goalY;d=len(dx,dy);min=c.r+18;if(d<min){let nx=dx/d,ny=dy/d;c.x=px+nx*min;c.y=field.goalY+ny*min;let hit=c.vx*nx+c.vy*ny;if(hit<0){c.vx-=nx*hit*1.5;c.vy-=ny*hit*1.5}}}}
+      for(const pad of boostPads){pad.cooldown=Math.max(0,pad.cooldown-dt);if(pad.cooldown===0)for(const c of cars){if(Math.hypot(c.x-pad.x,c.y-pad.y)<c.r+18){c.boost=100;pad.cooldown=60;break}}}
+      for(let i=0;i<cars.length;i++)for(let j=i+1;j<cars.length;j++){let a=cars[i],b=cars[j],dx=b.x-a.x,dy=b.y-a.y,d=len(dx,dy),min=a.r+b.r;if(d<min){let nx=dx/d,ny=dy/d,push=(min-d)/2;a.x-=nx*push;a.y-=ny*push;b.x+=nx*push;b.y+=ny*push;let impact=180+Math.abs((b.vx-a.vx)*nx+(b.vy-a.vy)*ny)*.7;a.vx-=nx*impact;a.vy-=ny*impact;b.vx+=nx*impact;b.vy+=ny*impact;a.hit=.16;b.hit=.16}}
+      // A final post-collision wall pass keeps bumper impacts from pushing cars into goals.
+      for(const c of cars){const wallCurve=42*Math.sin(clamp((c.y-field.top)/(field.bottom-field.top),0,1)*Math.PI),leftWall=field.left+wallCurve,rightWall=field.right-wallCurve,inGoalMouth=Math.abs(c.y-field.goalY)<field.goalH/2-c.r,leftEdge=inGoalMouth?field.left-35+c.r:Math.max(field.left+c.r,leftWall+c.r),rightEdge=inGoalMouth?field.right+35-c.r:Math.min(field.right-c.r,rightWall-c.r);if(c.x<leftEdge){c.x=leftEdge;c.vx=Math.max(c.vx,55)}if(c.x>rightEdge){c.x=rightEdge;c.vx=Math.min(c.vx,-55)}if(c.y<field.top+c.r){c.y=field.top+c.r;c.vy=Math.max(c.vy,35)}if(c.y>field.bottom-c.r){c.y=field.bottom-c.r;c.vy=Math.min(c.vy,-35)}}
+      keepRoster();
+      // goals are deeper than the wall line; a ball must be entirely inside.
+      if(ball.x-ball.r<field.left-35&&Math.abs(ball.y-field.goalY)<field.goalH/2-ball.r) goal('orange');
+      if(ball.x+ball.r>field.right+35&&Math.abs(ball.y-field.goalY)<field.goalH/2-ball.r) goal('blue');
+    }
+    function goal(team){score[team]++;firstGoalTeam=firstGoalTeam||team;goalFlash=.8;updateHud();if(golden){end(team==='blue'?'Blue wins the golden goal!':'Orange wins the golden goal!',team);return}resetWorld();}
+    function end(message,winner=null){if(mode==='tournament'&&winner){tournamentWins[winner]++;if(tournamentWins[winner]>=2){state='ended';title.textContent=`${winner==='blue'?'Blue':'Orange'} wins the tournament!`;text.textContent=`Series score (${tournamentWins.blue}–${tournamentWins.orange}).`;startBtn.textContent='Quick match';tournamentBtn.textContent='Tournament';tournamentBtn.onclick=()=>start('tournament');panel.classList.remove('hidden');return}state='ended';title.textContent=`${message} · Game ${tournamentMatch} of 3`;text.textContent=`Series score (${tournamentWins.blue}–${tournamentWins.orange}).`;startBtn.textContent='Quick match';tournamentBtn.textContent='Next tournament game';tournamentBtn.onclick=nextTournamentMatch;panel.classList.remove('hidden');return}state='ended';title.textContent=message;text.textContent=`Final score  ${score.blue} — ${score.orange}.  Jump back into the arena for another match.`;startBtn.textContent='Restart match';tournamentBtn.textContent='Tournament';tournamentBtn.onclick=()=>start('tournament');panel.classList.remove('hidden')}
+    function updateHud(){blueScoreEl.textContent=score.blue;orangeScoreEl.textContent=score.orange;boostEl.textContent=`BOOST ${Math.round(cars[0]?.boost||0)}%`;seriesEl.textContent=mode==='tournament'?`(${tournamentWins.blue}–${tournamentWins.orange})`:'';let remain=Math.max(0,300-elapsed),m=Math.floor(remain/60),s=Math.floor(remain%60);clockEl.textContent=`${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`}
+    function draw(){ctx.clearRect(0,0,W,H);let bg=ctx.createLinearGradient(0,0,0,H);bg.addColorStop(0,'#17253a');bg.addColorStop(1,'#08111f');ctx.fillStyle=bg;ctx.fillRect(0,0,W,H);
+      // ceiling ribs and soft arena glow
+      ctx.strokeStyle='#ffffff10';ctx.lineWidth=2;for(let x=0;x<W;x+=55){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x+70,field.top);ctx.stroke()}ctx.fillStyle='#1a6b56';ctx.fillRect(field.left,field.top,field.right-field.left,field.bottom-field.top);
+      ctx.beginPath();ctx.moveTo(field.left,field.top);ctx.bezierCurveTo(field.left+48,180,field.left-12,430,field.left,field.bottom);ctx.lineTo(field.right,field.bottom);ctx.bezierCurveTo(field.right+12,430,field.right-48,180,field.right,field.top);ctx.closePath();ctx.fillStyle='#1a6b56';ctx.fill();ctx.strokeStyle='#61d4a533';ctx.lineWidth=4;ctx.stroke();
+      ctx.setLineDash([10,12]);ctx.strokeStyle='#ffffff32';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(550,field.top+8);ctx.lineTo(550,field.bottom-8);ctx.stroke();ctx.setLineDash([]);ctx.beginPath();ctx.arc(550,310,78,0,Math.PI*2);ctx.stroke();
+      drawGoal('blue',field.left-5);drawGoal('orange',field.right+5);drawWalls();drawBoostPads();drawBall();cars.forEach(drawCar);
+      if(serve>0&&state==='play'){ctx.fillStyle='#fff';ctx.font='700 16px system-ui';ctx.textAlign='center';ctx.fillText('GET READY',550,54)} if(goalFlash>0){ctx.fillStyle=`rgba(255,255,255,${goalFlash*.35})`;ctx.fillRect(0,0,W,H);goalFlash-=.016}
+    }
+    function drawGoal(team,x){let col=team==='blue'?'#389cff':'#ff8b3d';ctx.save();ctx.strokeStyle=col;ctx.lineWidth=8;ctx.globalAlpha=.9;ctx.beginPath();ctx.moveTo(x,field.goalY-field.goalH/2);ctx.lineTo(x+(team==='blue'?-35:35),field.goalY-field.goalH/2);ctx.lineTo(x+(team==='blue'?-35:35),field.goalY+field.goalH/2);ctx.lineTo(x,field.goalY+field.goalH/2);ctx.stroke();ctx.globalAlpha=.1;ctx.fillStyle=col;ctx.fillRect(team==='blue'?x-35:x,field.goalY-field.goalH/2,35,field.goalH);ctx.restore()}
+    function drawWalls(){ctx.save();ctx.strokeStyle='#f4f7fb';ctx.lineWidth=7;ctx.shadowColor='#ffffff66';ctx.shadowBlur=8;const goalTop=field.goalY-field.goalH/2,goalBottom=field.goalY+field.goalH/2;ctx.beginPath();ctx.moveTo(field.left,field.top);ctx.lineTo(field.left,goalTop);ctx.moveTo(field.left,goalBottom);ctx.lineTo(field.left,field.bottom);ctx.moveTo(field.right,field.top);ctx.lineTo(field.right,goalTop);ctx.moveTo(field.right,goalBottom);ctx.lineTo(field.right,field.bottom);ctx.stroke();ctx.beginPath();ctx.moveTo(field.left,field.top);ctx.lineTo(field.right,field.top);ctx.moveTo(field.left,field.bottom);ctx.lineTo(field.right,field.bottom);ctx.stroke();ctx.shadowBlur=8;ctx.fillStyle='#aeb6c2';ctx.strokeStyle='#e6ebf2';ctx.lineWidth=3;for(const x of [field.left-4,field.right+4]){ctx.beginPath();ctx.arc(x,field.goalY,10,0,Math.PI*2);ctx.fill();ctx.stroke()}ctx.restore()}
+    function drawBoostPads(){for(const p of boostPads){if(p.cooldown>0)continue;ctx.save();ctx.translate(p.x,p.y);ctx.shadowColor='#57dcff';ctx.shadowBlur=18;ctx.fillStyle='#56d9ff';ctx.beginPath();ctx.arc(0,0,13,0,Math.PI*2);ctx.fill();ctx.shadowBlur=0;ctx.fillStyle='#e9fbff';ctx.beginPath();ctx.moveTo(0,-8);ctx.lineTo(6,0);ctx.lineTo(1,0);ctx.lineTo(5,8);ctx.lineTo(-5,0);ctx.lineTo(0,0);ctx.closePath();ctx.fill();ctx.restore()}}
+    function drawBall(){ctx.beginPath();ctx.arc(ball.x,ball.y,ball.r,0,Math.PI*2);ctx.fillStyle='#f5f7fb';ctx.shadowColor='#fff';ctx.shadowBlur=14;ctx.fill();ctx.shadowBlur=0;ctx.strokeStyle='#cbd5e1';ctx.stroke()}
+    function drawCar(c){let hop=c.jumpPulse>0?Math.sin((1-c.jumpPulse)*Math.PI)*16:0;ctx.save();ctx.translate(c.x,c.y-hop);ctx.rotate(c.angle);ctx.globalAlpha=c.hit>0?0.7:1;if(c.boosting){ctx.fillStyle='#ffd166';ctx.beginPath();ctx.moveTo(-22,-8);ctx.lineTo(-48,0);ctx.lineTo(-22,8);ctx.fill();ctx.fillStyle='#ff7043';ctx.beginPath();ctx.moveTo(-23,-5);ctx.lineTo(-38,0);ctx.lineTo(-23,5);ctx.fill()}ctx.shadowColor='#0008';ctx.shadowBlur=hop+5;ctx.fillStyle='#050a12';ctx.fillRect(-25,-18,50,36);ctx.shadowBlur=0;ctx.fillStyle=c.color;ctx.beginPath();ctx.roundRect(-22,-16,44,32,9);ctx.fill();ctx.fillStyle='#dceaffaa';ctx.fillRect(0,-11,14,22);ctx.fillStyle='#111827';ctx.fillRect(-15,-18,10,5);ctx.fillRect(10,-18,10,5);ctx.fillRect(-15,13,10,5);ctx.fillRect(10,13,10,5);if(c.player){ctx.strokeStyle='#fff';ctx.lineWidth=2;ctx.stroke()}ctx.restore();if(c.player){ctx.fillStyle='#fff';ctx.font='700 11px system-ui';ctx.textAlign='center';ctx.fillText('YOU',c.x,c.y-34-hop)}c.hit=Math.max(0,c.hit-.016)}
+    function loop(t){let dt=Math.min(.033,(t-last)/1000||0);last=t;if(state==='play'){elapsed+=dt;if(!golden&&elapsed>=300){if(score.blue===score.orange){golden=true;title.textContent='Golden goal';text.textContent='Regulation is tied. First goal wins!';panel.classList.remove('hidden');setTimeout(()=>{if(state==='play')panel.classList.add('hidden')},1700)}else {const winner=score.blue>score.orange?'blue':'orange';end(winner==='blue'?'Blue wins!':'Orange wins!',winner)}}physics(dt);updateHud()}draw();requestAnimationFrame(loop)}
+    resetWorld();requestAnimationFrame(loop);
+  })();
+  </script>
+</body>
+</html>
