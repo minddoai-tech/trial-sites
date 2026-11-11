@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Blockbound</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <main class="game-shell">
+    <header class="topbar">
+      <div class="brand"><span class="brand-mark">✦</span><span>BLOCKBOUND</span></div>
+      <div class="status"><span class="status-dot"></span><span id="modeLabel">SURVIVAL MODE</span><span class="divider"></span><span id="health">♥ 100</span><span class="divider"></span><span id="clock">DAY 01 · 08:00</span></div>
+      <button class="icon-btn" id="helpBtn" aria-label="Show controls">?</button>
+    </header>
+
+    <section class="game-area">
+      <canvas id="game" width="960" height="600" tabindex="0" aria-label="Blockbound game world"></canvas>
+      <div class="crosshair" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+      <div class="touch-controls" aria-label="Movement controls"><button data-key="arrowleft">◀</button><button data-key="arrowright">▶</button><button data-key="arrowup">▲</button><button data-key="f">⚔</button></div>
+      <div class="survival-stats"><div class="stat-row"><span>HEALTH</span><strong id="healthValue">100</strong></div><div class="stat-bar health-bar"><i id="healthFill"></i></div><div class="stat-row"><span>HUNGER</span><strong id="hungerValue">100</strong></div><div class="stat-bar hunger-bar"><i id="hungerFill"></i></div></div>
+      <aside class="mission-card">
+        <div class="eyebrow">CURRENT MISSION</div>
+        <h1>Build your tiny world.</h1>
+        <p>Mine materials, then place them wherever you want.</p>
+        <div class="mission-progress"><span id="progressFill"></span></div>
+        <div class="mission-meta"><span id="progressText">0 / 12 blocks placed</span><span>+</span></div>
+      </aside>
+      <div class="toast" id="toast">Welcome to Blockbound</div>
+      <div class="death-panel" id="deathPanel" hidden><div class="eyebrow">YOU DIED</div><h2>The mobs got you.</h2><p>Press <kbd>R</kbd> to respawn in your world.</p><button id="respawnBtn">RESPAWN</button></div>
+      <div class="chest-panel" id="chestPanel" hidden><button class="close-help" id="closeChest">×</button><div class="eyebrow">FOUND CHEST</div><h2>Supply crate</h2><div class="loot-grid" id="lootGrid"></div><p>Click the chest again to close it.</p></div>
+      <div class="craft-panel" id="craftPanel" hidden><button class="close-help" id="closeCraft">×</button><div class="eyebrow">CRAFTING</div><h2>Make a weapon</h2><div class="recipe"><span class="sword-icon">⚔</span><div><strong>Wooden Sword</strong><small>2 wood + 1 diamond</small></div></div><button id="craftSword">CRAFT SWORD</button><p id="craftStatus">A sword makes fighting easier.</p></div>
+      <div class="help-panel" id="helpPanel" hidden>
+        <button class="close-help" id="closeHelp">×</button>
+        <div class="eyebrow">HOW TO PLAY</div>
+        <h2>Make it yours.</h2>
+        <p><kbd>A</kbd><kbd>D</kbd> move · <kbd>W</kbd> jump</p>
+        <p><kbd>F</kbd> attack nearby monsters</p>
+        <p><kbd>C</kbd> open crafting</p>
+        <p><kbd>←</kbd><kbd>→</kbd> look around</p>
+        <p><kbd>Click</kbd> mine · <kbd>Right-click</kbd> place</p>
+        <p><kbd>1</kbd>–<kbd>6</kbd> choose a block</p>
+      </div>
+    </section>
+
+    <footer class="hud">
+      <div class="hotbar" id="hotbar"></div>
+      <div class="hint"><span class="mouse-icon">◉</span><span>Click to mine</span><span class="sep">·</span><span>Right-click to place</span></div>
+    </footer>
+  </main>
+  <script src="game.js?v=8"></script>
+</body>
+</html>
