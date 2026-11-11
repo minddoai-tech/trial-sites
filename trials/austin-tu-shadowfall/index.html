@@ -1,0 +1,1930 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Shadowfall: Abandoned City</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --panel: rgba(12, 15, 18, 0.78);
+      --line: rgba(255, 255, 255, 0.15);
+      --text: #edf1ed;
+      --muted: #aab2ad;
+      --amber: #f0b35a;
+      --green: #75d889;
+      --red: #ef5f58;
+    }
+
+    * { box-sizing: border-box; }
+
+    html,
+    body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      overflow: hidden;
+      background: #0d0f11;
+      color: var(--text);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    canvas {
+      display: block;
+      width: 100vw;
+      height: 100vh;
+      background: #0d0f11;
+      cursor: crosshair;
+    }
+
+    .hud {
+      position: fixed;
+      inset: 14px 14px auto;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 12px;
+      pointer-events: none;
+    }
+
+    .panel {
+      min-width: 238px;
+      max-width: min(560px, calc(100vw - 28px));
+      padding: 12px 14px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
+      box-shadow: 0 18px 50px rgba(0, 0, 0, 0.32);
+      backdrop-filter: blur(12px);
+    }
+
+    .brand {
+      margin: 0 0 6px;
+      color: #fff7e8;
+      font-size: 15px;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .hint,
+    .status {
+      margin: 0;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.35;
+    }
+
+    .stats { width: min(430px, 42vw); }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px 14px;
+      margin-bottom: 10px;
+    }
+
+    .stat {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .stat strong {
+      color: var(--text);
+      font-variant-numeric: tabular-nums;
+      white-space: nowrap;
+    }
+
+    .bar {
+      height: 9px;
+      overflow: hidden;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.13);
+    }
+
+    .bar + .bar { margin-top: 6px; }
+
+    .bar span {
+      display: block;
+      width: 100%;
+      height: 100%;
+      transform-origin: left center;
+      transition: transform 120ms linear;
+    }
+
+    #healthBar { background: linear-gradient(90deg, var(--red), var(--amber), var(--green)); }
+    #bossBar { background: linear-gradient(90deg, #6d54ff, #c955ff, #ff6f91); }
+
+    .overlay {
+      position: fixed;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      padding: 20px;
+      background: radial-gradient(circle at 50% 40%, rgba(60, 48, 42, 0.22), rgba(4, 6, 8, 0.68) 58%, rgba(0, 0, 0, 0.86));
+    }
+
+    .card {
+      width: min(620px, 100%);
+      padding: 24px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: rgba(12, 15, 18, 0.92);
+      box-shadow: 0 28px 90px rgba(0, 0, 0, 0.48);
+      text-align: center;
+    }
+
+    h1 {
+      margin: 0 0 10px;
+      color: #fff6e2;
+      font-size: clamp(34px, 7vw, 66px);
+      line-height: 0.95;
+      letter-spacing: 0;
+    }
+
+    .card p {
+      margin: 0 auto 16px;
+      max-width: 490px;
+      color: var(--muted);
+      line-height: 1.45;
+    }
+
+    button {
+      appearance: none;
+      border: 0;
+      border-radius: 8px;
+      padding: 12px 18px;
+      background: var(--amber);
+      color: #17120a;
+      font: inherit;
+      font-weight: 850;
+      cursor: pointer;
+    }
+
+    button:focus-visible {
+      outline: 3px solid rgba(240, 179, 90, 0.45);
+      outline-offset: 3px;
+    }
+
+    .keys {
+      display: inline-grid;
+      grid-template-columns: repeat(3, 34px);
+      gap: 5px;
+      margin: 2px 0 16px;
+      color: #17120a;
+      font-weight: 850;
+    }
+
+    .key {
+      display: grid;
+      place-items: center;
+      height: 30px;
+      border-radius: 5px;
+      background: #d8dedc;
+    }
+
+    .key:first-child { grid-column: 2; }
+
+    @media (max-width: 760px) {
+      .hud {
+        inset: 10px 10px auto;
+        flex-direction: column;
+      }
+
+      .panel,
+      .stats { width: min(420px, 100%); }
+    }
+  </style>
+</head>
+<body>
+  <canvas id="game" aria-label="3D abandoned city survival game"></canvas>
+
+  <div class="hud" aria-hidden="true">
+    <section class="panel">
+      <p class="brand">Shadowfall</p>
+      <p class="hint">W A S D to move. Aim with the mouse. Click or press Space to attack. Open glowing drops for knives, guns, ammo, and med kits.</p>
+    </section>
+    <section class="panel stats">
+      <div class="grid">
+        <p class="stat"><span>Health</span><strong id="hp">100</strong></p>
+        <p class="stat"><span>Kills</span><strong id="kills">0 / 50</strong></p>
+        <p class="stat"><span>Weapon</span><strong id="weapon">Fists</strong></p>
+        <p class="stat"><span>Ammo</span><strong id="ammo">-</strong></p>
+      </div>
+      <div class="bar"><span id="healthBar"></span></div>
+      <div class="bar" id="bossBarWrap" hidden><span id="bossBar"></span></div>
+      <p class="status" id="status">Find supplies before the shadows close in.</p>
+    </section>
+  </div>
+
+  <div class="overlay" id="overlay">
+    <div class="card">
+      <h1>Shadowfall</h1>
+      <p>The abandoned city is crawling with shadow monsters. Defeat 50 of them, raid supply drops for knives and guns, then survive the final boss.</p>
+      <div class="keys" aria-hidden="true">
+        <span class="key">W</span>
+        <span class="key">A</span>
+        <span class="key">S</span>
+        <span class="key">D</span>
+      </div>
+      <p><button id="start">Start Game</button></p>
+    </div>
+  </div>
+
+  <script>
+    const canvas = document.getElementById("game");
+    const ctx = canvas.getContext("2d");
+    const overlay = document.getElementById("overlay");
+    const startButton = document.getElementById("start");
+    const hpEl = document.getElementById("hp");
+    const killsEl = document.getElementById("kills");
+    const weaponEl = document.getElementById("weapon");
+    const ammoEl = document.getElementById("ammo");
+    const statusEl = document.getElementById("status");
+    const healthBar = document.getElementById("healthBar");
+    const bossBar = document.getElementById("bossBar");
+    const bossBarWrap = document.getElementById("bossBarWrap");
+
+    const keys = new Set();
+    const world = { w: 3600, h: 3600 };
+    const camera = { x: world.w / 2, z: world.h / 2 };
+    const mouse = { x: 0, y: 0, worldX: 0, worldZ: 0, down: false, moved: false };
+
+    let width = 0;
+    let height = 0;
+    let running = false;
+    let lastTime = 0;
+    let shake = 0;
+    let flash = 0;
+    let monsterSpawnTimer = 0;
+    let dropTimer = 0;
+    let boss = null;
+    let messageTimer = 0;
+
+    const buildings = [];
+    const rubble = [];
+    const cityProps = [];
+    const groundScars = [];
+    const skyline = [];
+    const dustMotes = [];
+    const asphaltPatches = [];
+    const crawlingShadows = [];
+    const monsters = [];
+    const drops = [];
+    const projectiles = [];
+    const slashes = [];
+    const particles = [];
+
+    const player = {
+      x: world.w / 2,
+      z: world.h / 2,
+      radius: 17,
+      height: 48,
+      speed: 255,
+      hp: 100,
+      maxHp: 100,
+      invincible: 0,
+      attackCooldown: 0,
+      kills: 0,
+      weapon: "Fists",
+      ammo: 0,
+      facing: -Math.PI / 2
+    };
+
+    const weapons = {
+      Fists: { kind: "melee", range: 62, damage: 18, cooldown: 0.38, spread: 0, pellet: 1, speed: 0 },
+      Knife: { kind: "melee", range: 96, damage: 38, cooldown: 0.24, spread: 0, pellet: 1, speed: 0 },
+      Pistol: { kind: "gun", range: 620, damage: 34, cooldown: 0.32, spread: 0.05, pellet: 1, speed: 760 },
+      Shotgun: { kind: "gun", range: 430, damage: 21, cooldown: 0.72, spread: 0.24, pellet: 6, speed: 690 },
+      Rifle: { kind: "gun", range: 760, damage: 28, cooldown: 0.14, spread: 0.025, pellet: 1, speed: 900 },
+      "Machine Gun": { kind: "gun", range: 720, damage: 22, cooldown: 0.075, spread: 0.075, pellet: 1, speed: 920 },
+      "Laser Gun": { kind: "gun", range: 900, damage: 46, cooldown: 0.22, spread: 0.01, pellet: 1, speed: 1280, laser: true }
+    };
+
+    function rand(min, max) {
+      return Math.random() * (max - min) + min;
+    }
+
+    function clamp(value, min, max) {
+      return Math.max(min, Math.min(max, value));
+    }
+
+    function resize() {
+      const dpr = Math.max(1, Math.min(2, window.devicePixelRatio || 1));
+      width = window.innerWidth;
+      height = window.innerHeight;
+      canvas.width = Math.floor(width * dpr);
+      canvas.height = Math.floor(height * dpr);
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      updateMouseWorld();
+    }
+
+    function iso(x, z, y = 0) {
+      return {
+        x: width / 2 + (x - camera.x - (z - camera.z)) * 0.72,
+        y: height / 2 + (x - camera.x + z - camera.z) * 0.36 - y
+      };
+    }
+
+    function screenToWorld(sx, sy) {
+      const px = (sx - width / 2) / 0.72;
+      const py = (sy - height / 2) / 0.36;
+      return { x: camera.x + (px + py) / 2, z: camera.z + (py - px) / 2 };
+    }
+
+    function updateMouseWorld() {
+      const p = screenToWorld(mouse.x, mouse.y);
+      mouse.worldX = p.x;
+      mouse.worldZ = p.z;
+    }
+
+    function resetGame() {
+      running = false;
+      lastTime = performance.now();
+      shake = 0;
+      flash = 0;
+      monsterSpawnTimer = 0.25;
+      dropTimer = 0.65;
+      boss = null;
+      messageTimer = 0;
+      buildings.length = 0;
+      rubble.length = 0;
+      cityProps.length = 0;
+      groundScars.length = 0;
+      skyline.length = 0;
+      dustMotes.length = 0;
+      asphaltPatches.length = 0;
+      crawlingShadows.length = 0;
+      monsters.length = 0;
+      drops.length = 0;
+      projectiles.length = 0;
+      slashes.length = 0;
+      particles.length = 0;
+
+      player.x = world.w / 2;
+      player.z = world.h / 2;
+      player.hp = player.maxHp;
+      player.invincible = 1.25;
+      player.attackCooldown = 0;
+      player.kills = 0;
+      player.weapon = "Fists";
+      player.ammo = 0;
+      player.facing = -Math.PI / 2;
+
+      buildCity();
+      for (let i = 0; i < 6; i++) spawnMonster(true);
+      spawnDrop(true, "Knife");
+      spawnDrop(true, "Med Kit");
+      updateHud("Knife and med kit drops landed nearby.");
+    }
+
+    function buildCity() {
+      const plaza = { x: world.w / 2, z: world.h / 2, r: 330 };
+      for (let i = -5; i < 22; i++) {
+        skyline.push({
+          x: i * 138 + rand(-28, 24),
+          w: rand(72, 128),
+          h: rand(170, 420),
+          chip: rand(8, 48),
+          tone: rand(0, 18),
+          mast: Math.random() > 0.62
+        });
+      }
+
+      for (let i = 0; i < 90; i++) {
+        dustMotes.push({
+          x: rand(0, width || 1400),
+          y: rand(0, height || 800),
+          r: rand(0.8, 2.6),
+          drift: rand(0.08, 0.35),
+          alpha: rand(0.05, 0.18)
+        });
+      }
+
+      for (let gx = 210; gx < world.w - 170; gx += 360) {
+        for (let gz = 210; gz < world.h - 170; gz += 340) {
+          if (Math.hypot(gx - plaza.x, gz - plaza.z) < plaza.r || Math.random() < 0.23) continue;
+          const specialRoll = Math.random();
+          const type = specialRoll > 0.93 ? "grocery" : specialRoll > 0.84 ? "warehouse" : "tower";
+          buildings.push({
+            x: gx + rand(-52, 52),
+            z: gz + rand(-52, 52),
+            w: type === "warehouse" ? rand(175, 240) : type === "grocery" ? rand(145, 195) : rand(82, 140),
+            d: type === "warehouse" ? rand(145, 205) : type === "grocery" ? rand(112, 158) : rand(82, 150),
+            h: type === "warehouse" ? rand(58, 96) : type === "grocery" ? rand(54, 82) : rand(92, 260),
+            type,
+            tone: rand(-12, 20),
+            broken: Math.random() > 0.28,
+            fireEscape: Math.random() > 0.66,
+            sign: type !== "tower" || Math.random() > 0.72,
+            roofJunk: Math.random() > 0.55
+          });
+        }
+      }
+
+      for (let i = 0; i < 170; i++) {
+        const x = rand(80, world.w - 80);
+        const z = rand(80, world.h - 80);
+        if (Math.hypot(x - plaza.x, z - plaza.z) < 210) continue;
+        rubble.push({ x, z, r: rand(5, 22), h: rand(4, 18), rot: rand(0, Math.PI), shade: rand(0, 1) });
+      }
+
+      for (let i = 0; i < 110; i++) {
+        groundScars.push({
+          x: rand(80, world.w - 80),
+          z: rand(80, world.h - 80),
+          len: rand(34, 130),
+          rot: rand(0, Math.PI * 2),
+          width: rand(1, 4),
+          k1: rand(-8, 8),
+          k2: rand(-10, 10),
+          kind: Math.random() > 0.72 ? "puddle" : "crack"
+        });
+      }
+
+      for (let i = 0; i < 150; i++) {
+        asphaltPatches.push({
+          x: rand(40, world.w - 40),
+          z: rand(40, world.h - 40),
+          w: rand(18, 90),
+          h: rand(6, 28),
+          rot: rand(0, Math.PI * 2),
+          shade: rand(0.05, 0.24)
+        });
+      }
+
+      for (let i = 0; i < 34; i++) {
+        const a = rand(0, Math.PI * 2);
+        crawlingShadows.push({
+          x: clamp(plaza.x + Math.cos(a) * rand(360, world.w * 0.48), 80, world.w - 80),
+          z: clamp(plaza.z + Math.sin(a) * rand(360, world.h * 0.48), 80, world.h - 80),
+          homeX: 0,
+          homeZ: 0,
+          radius: rand(32, 76),
+          speed: rand(12, 36),
+          angle: rand(0, Math.PI * 2),
+          turn: rand(-0.9, 0.9),
+          phase: rand(0, Math.PI * 2),
+          arms: 5 + Math.floor(rand(0, 4))
+        });
+        crawlingShadows[i].homeX = crawlingShadows[i].x;
+        crawlingShadows[i].homeZ = crawlingShadows[i].z;
+      }
+
+      for (let x = 210; x < world.w; x += 360) {
+        for (let z = 210; z < world.h; z += 340) {
+          if (Math.hypot(x - plaza.x, z - plaza.z) < 210) continue;
+          if (Math.random() > 0.42) {
+            cityProps.push({ type: "car", x: x + rand(-76, 76), z: z + rand(-90, 90), rot: rand(-0.35, 0.35), color: Math.random() > 0.5 ? "#49504d" : "#5a473f", broken: Math.random() > 0.35 });
+          }
+          if (Math.random() > 0.25) {
+            cityProps.push({ type: "lamp", x: x + rand(-115, 115), z: z + rand(-120, 120), dead: Math.random() > 0.38 });
+          }
+          if (Math.random() > 0.64) {
+            cityProps.push({ type: "sign", x: x + rand(-120, 120), z: z + rand(-120, 120), rot: rand(-0.22, 0.22) });
+          }
+        }
+      }
+    }
+
+    function startGame() {
+      resetGame();
+      running = true;
+      overlay.style.display = "none";
+    }
+
+    function endGame(title, text) {
+      running = false;
+      overlay.innerHTML = `
+        <div class="card">
+          <h1>${title}</h1>
+          <p>${text}</p>
+          <p><button id="restart">Play Again</button></p>
+        </div>
+      `;
+      overlay.style.display = "grid";
+      document.getElementById("restart").addEventListener("click", startGame);
+    }
+
+    function aimAngle() {
+      if (!mouse.moved) return player.facing;
+      return Math.atan2(mouse.worldZ - player.z, mouse.worldX - player.x);
+    }
+
+    function spawnMonster(initial = false) {
+      let x;
+      let z;
+      if (initial) {
+        const a = rand(0, Math.PI * 2);
+        x = player.x + Math.cos(a) * rand(520, 820);
+        z = player.z + Math.sin(a) * rand(520, 820);
+      } else {
+        const edge = Math.floor(rand(0, 4));
+        x = edge < 2 ? camera.x + (edge === 0 ? -width * 0.85 : width * 0.85) : camera.x + rand(-width, width);
+        z = edge > 1 ? camera.z + (edge === 2 ? -height * 0.85 : height * 0.85) : camera.z + rand(-height, height);
+      }
+
+      const tough = player.kills > 25 && Math.random() < 0.32;
+      monsters.push({
+        x: clamp(x, 45, world.w - 45),
+        z: clamp(z, 45, world.h - 45),
+        radius: tough ? 22 : 18,
+        height: tough ? 62 : 49,
+        hp: tough ? 88 : 56,
+        maxHp: tough ? 88 : 56,
+        speed: tough ? rand(112, 138) : rand(132, 168),
+        aggro: tough ? 420 : 360,
+        attackRange: tough ? 36 : 31,
+        damage: tough ? 15 : 10,
+        attackCooldown: rand(0.2, 1.2),
+        state: "stalking",
+        phase: rand(0, Math.PI * 2),
+        crystals: makeCrystals(tough ? 6 : 4, tough ? 34 : 24),
+        boss: false
+      });
+    }
+
+    function makeCrystals(count, maxHeight) {
+      const crystals = [];
+      for (let i = 0; i < count; i++) {
+        crystals.push({
+          offset: rand(-0.55, 0.55),
+          lift: rand(0.12, 0.72),
+          height: rand(maxHeight * 0.45, maxHeight),
+          width: rand(6, 13),
+          lean: rand(-0.35, 0.35),
+          glow: rand(0.45, 0.95)
+        });
+      }
+      return crystals;
+    }
+
+    function spawnBoss() {
+      boss = {
+        x: world.w / 2,
+        z: world.h / 2 - 360,
+        radius: 44,
+        height: 132,
+        hp: 950,
+        maxHp: 950,
+        speed: 116,
+        aggro: 9999,
+        attackRange: 64,
+        damage: 24,
+        attackCooldown: 1.4,
+        slamCooldown: 3.2,
+        phase: 0,
+        crystals: makeCrystals(11, 62),
+        boss: true
+      };
+      monsters.push(boss);
+      spawnDrop(false, "Rifle");
+      spawnDrop(false, "Shotgun");
+      spawnDrop(false, "Machine Gun");
+      spawnDrop(false, "Laser Gun");
+      spawnDrop(false, "Med Kit");
+      updateHud("The boss has entered the city plaza.");
+      shake = 22;
+      flash = 0.45;
+    }
+
+    function spawnDrop(nearPlayer = false, forced = null) {
+      const a = rand(0, Math.PI * 2);
+      const dist = nearPlayer ? rand(140, 240) : rand(240, 620);
+      drops.push({
+        x: clamp(player.x + Math.cos(a) * dist, 70, world.w - 70),
+        z: clamp(player.z + Math.sin(a) * dist, 70, world.h - 70),
+        y: nearPlayer ? 72 : 105,
+        radius: 28,
+        type: forced || randomDropType(),
+        glow: rand(0, Math.PI * 2)
+      });
+    }
+
+    function randomDropType() {
+      const roll = Math.random();
+      if (roll < 0.12) return "Knife";
+      if (roll < 0.34) return "Pistol";
+      if (roll < 0.52) return "Shotgun";
+      if (roll < 0.66) return "Rifle";
+      if (roll < 0.78) return "Machine Gun";
+      if (roll < 0.86 && player.kills > 12) return "Laser Gun";
+      if (roll < 0.9) return "Ammo";
+      return "Med Kit";
+    }
+
+    function collectDrop(drop) {
+      if (drop.type === "Med Kit") {
+        player.hp = Math.min(player.maxHp, player.hp + 34);
+        updateHud("Med kit used. Health restored.");
+      } else if (drop.type === "Ammo") {
+        player.ammo += 18;
+        updateHud("Ammo recovered.");
+      } else {
+        player.weapon = drop.type;
+        player.ammo += ammoForDrop(drop.type);
+        updateHud(drop.type + " equipped.");
+      }
+      burst(drop.x, drop.z, "#f0b35a", 18);
+      shake = Math.max(shake, 5);
+    }
+
+    function ammoForDrop(type) {
+      if (type === "Knife") return 0;
+      if (type === "Shotgun") return 16;
+      if (type === "Rifle") return 42;
+      if (type === "Machine Gun") return 72;
+      if (type === "Laser Gun") return 30;
+      return 28;
+    }
+
+    function attack() {
+      if (!running || player.attackCooldown > 0) return;
+      const weapon = weapons[player.weapon];
+      const angle = aimAngle();
+      player.facing = angle;
+      player.attackCooldown = weapon.cooldown;
+
+      if (weapon.kind === "melee") {
+        slashes.push({ x: player.x, z: player.z, angle, age: 0, life: 0.14, range: weapon.range });
+        let hit = false;
+        monsters.forEach((monster) => {
+          const dist = Math.hypot(monster.x - player.x, monster.z - player.z);
+          const toward = Math.atan2(monster.z - player.z, monster.x - player.x);
+          if (dist < weapon.range + monster.radius && Math.abs(angleDelta(angle, toward)) < 0.95) {
+            damageMonster(monster, weapon.damage);
+            hit = true;
+          }
+        });
+        if (hit) shake = Math.max(shake, 4);
+        return;
+      }
+
+      if (player.ammo <= 0) {
+        player.weapon = "Knife";
+        updateHud("Out of ammo. Knife drawn.");
+        return;
+      }
+
+      player.ammo -= 1;
+      for (let i = 0; i < weapon.pellet; i++) {
+        const spread = rand(-weapon.spread, weapon.spread);
+        projectiles.push({
+          x: player.x + Math.cos(angle) * 30,
+          z: player.z + Math.sin(angle) * 30,
+          vx: Math.cos(angle + spread) * weapon.speed,
+          vz: Math.sin(angle + spread) * weapon.speed,
+          damage: weapon.damage,
+          range: weapon.range,
+          traveled: 0,
+          radius: weapon.laser ? 8 : 6,
+          laser: !!weapon.laser,
+          color: weapon.laser ? "#81f7ff" : "#ffe08a"
+        });
+      }
+      shake = Math.max(shake, weapon.pellet > 1 ? 8 : 3);
+    }
+
+    function angleDelta(a, b) {
+      return Math.atan2(Math.sin(a - b), Math.cos(a - b));
+    }
+
+    function damageMonster(monster, amount) {
+      monster.hp -= amount;
+      monster.state = "attacking";
+      burst(monster.x, monster.z, monster.boss ? "#ba73ff" : "#22262f", monster.boss ? 12 : 7);
+      if (monster.hp > 0) return;
+
+      const index = monsters.indexOf(monster);
+      if (index !== -1) monsters.splice(index, 1);
+      if (monster.boss) {
+        boss = null;
+        endGame("City Cleared", "The final shadow collapsed. The abandoned city is yours to walk out of.");
+        return;
+      }
+
+      player.kills += 1;
+      if (player.kills % 6 === 0) spawnDrop(false);
+      if (player.kills % 10 === 0) spawnDrop(false, "Ammo");
+      if (player.kills === 18 || player.kills === 36) spawnDrop(false, player.kills === 18 ? "Machine Gun" : "Laser Gun");
+      if (player.kills % 12 === 0 || (player.hp < 42 && Math.random() < 0.22)) spawnDrop(false, "Med Kit");
+      if (player.kills >= 50 && !boss) spawnBoss();
+    }
+
+    function burst(x, z, color, count) {
+      for (let i = 0; i < count; i++) {
+        const a = rand(0, Math.PI * 2);
+        const s = rand(50, 190);
+        particles.push({ x, z, y: rand(12, 58), vx: Math.cos(a) * s, vz: Math.sin(a) * s, vy: rand(80, 170), life: rand(0.35, 0.8), age: 0, color });
+      }
+    }
+
+    function update(delta) {
+      if (!running) return;
+      messageTimer = Math.max(0, messageTimer - delta);
+      shake = Math.max(0, shake - delta * 18);
+      flash = Math.max(0, flash - delta * 1.8);
+      player.invincible = Math.max(0, player.invincible - delta);
+      player.attackCooldown = Math.max(0, player.attackCooldown - delta);
+      updateMovement(delta);
+      updateMouseWorld();
+      updateSpawns(delta);
+      updateDrops(delta);
+      updateMonsters(delta);
+      updateCrawlingShadows(delta);
+      updateProjectiles(delta);
+      updateEffects(delta);
+
+      camera.x += (player.x - camera.x) * Math.min(1, delta * 5.4);
+      camera.z += (player.z - camera.z) * Math.min(1, delta * 5.4);
+      camera.x = clamp(camera.x, 260, world.w - 260);
+      camera.z = clamp(camera.z, 220, world.h - 220);
+
+      if ((mouse.down || keys.has(" ")) && player.attackCooldown <= 0) attack();
+      if (player.hp <= 0) endGame("Overrun", "The shadows dragged you down before the boss battle. Raid more drops and keep moving.");
+      updateHud();
+    }
+
+    function updateMovement(delta) {
+      let dx = 0;
+      let dz = 0;
+      if (keys.has("w")) dz -= 1;
+      if (keys.has("s")) dz += 1;
+      if (keys.has("a")) dx -= 1;
+      if (keys.has("d")) dx += 1;
+      if (dx || dz) {
+        const len = Math.hypot(dx, dz);
+        player.x += (dx / len) * player.speed * delta;
+        player.z += (dz / len) * player.speed * delta;
+        if (!mouse.moved) player.facing = Math.atan2(dz, dx);
+      }
+      player.x = clamp(player.x, 34, world.w - 34);
+      player.z = clamp(player.z, 34, world.h - 34);
+      resolveBuildingCollisions(player);
+    }
+
+    function updateSpawns(delta) {
+      if (boss) {
+        monsterSpawnTimer -= delta;
+        if (monsterSpawnTimer <= 0 && monsters.length < 14) {
+          spawnMonster(false);
+          monsterSpawnTimer = rand(2.6, 4.2);
+        }
+      } else if (player.kills < 50) {
+        monsterSpawnTimer -= delta;
+        const cap = 9 + Math.floor(player.kills / 8);
+        if (monsterSpawnTimer <= 0 && monsters.length < cap) {
+          spawnMonster(false);
+          monsterSpawnTimer = Math.max(0.55, 2.15 - player.kills * 0.02);
+        }
+      }
+
+      dropTimer -= delta;
+      if (dropTimer <= 0) {
+        spawnDrop(false);
+        dropTimer = boss ? rand(4.5, 7) : rand(5.5, 8.5);
+      }
+    }
+
+    function updateDrops(delta) {
+      for (let i = drops.length - 1; i >= 0; i--) {
+        const drop = drops[i];
+        drop.glow += delta * 4;
+        drop.y = Math.max(0, drop.y - delta * 145);
+        if (Math.hypot(drop.x - player.x, drop.z - player.z) < drop.radius + player.radius + 8) {
+          collectDrop(drop);
+          drops.splice(i, 1);
+        }
+      }
+    }
+
+    function updateMonsters(delta) {
+      monsters.forEach((monster) => {
+        monster.phase += delta * 6;
+        monster.attackCooldown = Math.max(0, monster.attackCooldown - delta);
+        const dx = player.x - monster.x;
+        const dz = player.z - monster.z;
+        const dist = Math.max(0.001, Math.hypot(dx, dz));
+        if (dist < monster.aggro || monster.state === "attacking") {
+          monster.state = "attacking";
+          const speed = monster.speed * (monster.boss && monster.hp < monster.maxHp * 0.45 ? 1.22 : 1);
+          monster.x += (dx / dist) * speed * delta;
+          monster.z += (dz / dist) * speed * delta;
+        } else {
+          monster.x += Math.cos(monster.phase * 0.35) * 18 * delta;
+          monster.z += Math.sin(monster.phase * 0.29) * 18 * delta;
+        }
+
+        monster.x = clamp(monster.x, 30, world.w - 30);
+        monster.z = clamp(monster.z, 30, world.h - 30);
+        resolveBuildingCollisions(monster);
+
+        if (dist < monster.attackRange + player.radius && monster.attackCooldown <= 0 && player.invincible <= 0) {
+          player.hp = Math.max(0, player.hp - monster.damage);
+          player.invincible = 0.55;
+          monster.attackCooldown = monster.boss ? 1.05 : 0.9;
+          shake = monster.boss ? 18 : 9;
+          flash = 0.22;
+          burst(player.x, player.z, "#ef5f58", 9);
+        }
+
+        if (monster.boss) {
+          monster.slamCooldown -= delta;
+          if (monster.slamCooldown <= 0) {
+            monster.slamCooldown = rand(2.6, 4);
+            bossSlam(monster);
+          }
+        }
+      });
+    }
+
+    function bossSlam(monster) {
+      const dist = Math.hypot(monster.x - player.x, monster.z - player.z);
+      burst(monster.x, monster.z, "#ba73ff", 34);
+      shake = 26;
+      flash = 0.34;
+      if (dist < 260 && player.invincible <= 0) {
+        player.hp = Math.max(0, player.hp - 18);
+        player.invincible = 0.75;
+      }
+    }
+
+    function updateProjectiles(delta) {
+      for (let i = projectiles.length - 1; i >= 0; i--) {
+        const p = projectiles[i];
+        p.x += p.vx * delta;
+        p.z += p.vz * delta;
+        p.traveled += Math.hypot(p.vx, p.vz) * delta;
+        let remove = p.traveled > p.range || p.x < 0 || p.z < 0 || p.x > world.w || p.z > world.h;
+        for (let j = monsters.length - 1; j >= 0 && !remove; j--) {
+          const monster = monsters[j];
+          if (Math.hypot(monster.x - p.x, monster.z - p.z) < monster.radius + p.radius) {
+            damageMonster(monster, p.damage);
+            remove = true;
+          }
+        }
+        if (remove) projectiles.splice(i, 1);
+      }
+    }
+
+    function updateCrawlingShadows(delta) {
+      crawlingShadows.forEach((shadow) => {
+        shadow.phase += delta * 2.8;
+        shadow.angle += shadow.turn * delta * 0.45 + Math.sin(shadow.phase * 0.7) * delta * 0.14;
+        shadow.x += Math.cos(shadow.angle) * shadow.speed * delta;
+        shadow.z += Math.sin(shadow.angle) * shadow.speed * delta;
+
+        const homeDx = shadow.homeX - shadow.x;
+        const homeDz = shadow.homeZ - shadow.z;
+        const homeDist = Math.hypot(homeDx, homeDz);
+        if (homeDist > 260) {
+          shadow.angle = Math.atan2(homeDz, homeDx) + Math.sin(shadow.phase) * 0.7;
+        }
+
+        shadow.x = clamp(shadow.x, 45, world.w - 45);
+        shadow.z = clamp(shadow.z, 45, world.h - 45);
+      });
+    }
+
+    function updateEffects(delta) {
+      for (let i = slashes.length - 1; i >= 0; i--) {
+        slashes[i].age += delta;
+        if (slashes[i].age >= slashes[i].life) slashes.splice(i, 1);
+      }
+
+      for (let i = particles.length - 1; i >= 0; i--) {
+        const p = particles[i];
+        p.age += delta;
+        p.x += p.vx * delta;
+        p.z += p.vz * delta;
+        p.y += p.vy * delta;
+        p.vy -= 380 * delta;
+        if (p.age >= p.life) particles.splice(i, 1);
+      }
+    }
+
+    function resolveBuildingCollisions(entity) {
+      for (const b of buildings) {
+        const minX = b.x - b.w / 2 - entity.radius;
+        const maxX = b.x + b.w / 2 + entity.radius;
+        const minZ = b.z - b.d / 2 - entity.radius;
+        const maxZ = b.z + b.d / 2 + entity.radius;
+        if (entity.x > minX && entity.x < maxX && entity.z > minZ && entity.z < maxZ) {
+          const left = Math.abs(entity.x - minX);
+          const right = Math.abs(maxX - entity.x);
+          const top = Math.abs(entity.z - minZ);
+          const bottom = Math.abs(maxZ - entity.z);
+          const push = Math.min(left, right, top, bottom);
+          if (push === left) entity.x = minX;
+          else if (push === right) entity.x = maxX;
+          else if (push === top) entity.z = minZ;
+          else entity.z = maxZ;
+        }
+      }
+    }
+
+    function updateHud(message) {
+      if (message) {
+        statusEl.textContent = message;
+        messageTimer = 2.8;
+      } else if (messageTimer <= 0) {
+        if (boss) statusEl.textContent = "Boss phase: keep distance, use supply drops, and fire into the glow.";
+        else if (player.kills >= 42) statusEl.textContent = "The city is shaking. The boss is close.";
+        else statusEl.textContent = "Shadow monsters attack only inside their radius. Bait them out one at a time.";
+      }
+
+      hpEl.textContent = Math.ceil(player.hp) + " / " + player.maxHp;
+      killsEl.textContent = boss ? "Boss" : Math.min(player.kills, 50) + " / 50";
+      weaponEl.textContent = player.weapon;
+      ammoEl.textContent = weapons[player.weapon].kind === "gun" ? String(player.ammo) : "-";
+      healthBar.style.transform = "scaleX(" + clamp(player.hp / player.maxHp, 0, 1) + ")";
+      bossBarWrap.hidden = !boss;
+      if (boss) bossBar.style.transform = "scaleX(" + clamp(boss.hp / boss.maxHp, 0, 1) + ")";
+    }
+
+    function draw() {
+      ctx.save();
+      if (shake > 0) ctx.translate(rand(-shake, shake), rand(-shake, shake));
+      drawSky();
+      drawGround();
+      drawWorldObjects();
+      drawAtmosphere();
+      drawVignette();
+      if (flash > 0) {
+        ctx.fillStyle = `rgba(239, 95, 88, ${flash * 0.35})`;
+        ctx.fillRect(0, 0, width, height);
+      }
+      ctx.restore();
+    }
+
+    function drawAtmosphere() {
+      ctx.save();
+      ctx.globalCompositeOperation = "screen";
+      dustMotes.forEach((mote) => {
+        const x = (mote.x + (camera.x * mote.drift) + Math.sin(performance.now() / 1900 + mote.y) * 18) % (width + 80) - 40;
+        const y = (mote.y + (camera.z * mote.drift * 0.25)) % (height + 80) - 40;
+        ctx.fillStyle = `rgba(204, 213, 198, ${mote.alpha})`;
+        ctx.beginPath();
+        ctx.arc(x, y, mote.r, 0, Math.PI * 2);
+        ctx.fill();
+      });
+      ctx.globalCompositeOperation = "source-over";
+
+      const haze = ctx.createLinearGradient(0, height * 0.12, 0, height);
+      haze.addColorStop(0, "rgba(173, 182, 166, 0.08)");
+      haze.addColorStop(0.55, "rgba(95, 102, 94, 0.04)");
+      haze.addColorStop(1, "rgba(0, 0, 0, 0.08)");
+      ctx.fillStyle = haze;
+      ctx.fillRect(0, 0, width, height);
+      ctx.restore();
+    }
+
+    function drawSky() {
+      const sky = ctx.createLinearGradient(0, 0, 0, height);
+      sky.addColorStop(0, "#111820");
+      sky.addColorStop(0.48, "#25272a");
+      sky.addColorStop(1, "#11100f");
+      ctx.fillStyle = sky;
+      ctx.fillRect(0, 0, width, height);
+
+      ctx.save();
+      ctx.translate(-(camera.x - world.w / 2) * 0.06, -(camera.z - world.h / 2) * 0.03);
+      skyline.forEach((tower) => {
+        const x = tower.x;
+        const h = tower.h;
+        ctx.fillStyle = `rgba(${29 + tower.tone}, ${34 + tower.tone}, ${38 + tower.tone}, 0.68)`;
+        ctx.fillRect(x, height * 0.16 - h * 0.3, tower.w, h);
+        ctx.fillStyle = "rgba(7, 9, 11, 0.54)";
+        ctx.beginPath();
+        ctx.moveTo(x, height * 0.16 - h * 0.3 + tower.chip);
+        ctx.lineTo(x + tower.w * 0.18, height * 0.16 - h * 0.3 + 12);
+        ctx.lineTo(x + tower.w * 0.36, height * 0.16 - h * 0.3 + tower.chip * 0.7);
+        ctx.lineTo(x + tower.w * 0.56, height * 0.16 - h * 0.3 + 4);
+        ctx.lineTo(x + tower.w, height * 0.16 - h * 0.3 + tower.chip);
+        ctx.lineTo(x + tower.w, height * 0.16 - h * 0.3 + h);
+        ctx.lineTo(x, height * 0.16 - h * 0.3 + h);
+        ctx.closePath();
+        ctx.fill();
+        if (tower.mast) {
+          ctx.strokeStyle = "rgba(174, 184, 177, 0.3)";
+          ctx.lineWidth = 1;
+          ctx.beginPath();
+          ctx.moveTo(x + tower.w * 0.5, height * 0.16 - h * 0.3 + 4);
+          ctx.lineTo(x + tower.w * 0.5, height * 0.16 - h * 0.3 - 45);
+          ctx.stroke();
+        }
+      });
+      ctx.restore();
+    }
+
+    function drawGround() {
+      const center = iso(world.w / 2, world.h / 2, 0);
+      const left = iso(0, world.h / 2, 0);
+      const right = iso(world.w, world.h / 2, 0);
+      const top = iso(world.w / 2, 0, 0);
+      const bottom = iso(world.w / 2, world.h, 0);
+      const ground = ctx.createLinearGradient(0, top.y, 0, bottom.y);
+      ground.addColorStop(0, "#30332f");
+      ground.addColorStop(0.45, "#1b1d1c");
+      ground.addColorStop(1, "#28231b");
+      ctx.fillStyle = ground;
+      ctx.beginPath();
+      ctx.moveTo(top.x, top.y);
+      ctx.lineTo(right.x, right.y);
+      ctx.lineTo(bottom.x, bottom.y);
+      ctx.lineTo(left.x, left.y);
+      ctx.closePath();
+      ctx.fill();
+      drawAsphaltTexture();
+      drawRoadGrid();
+      drawGroundScars();
+      drawBossPlaza(center);
+    }
+
+    function drawAsphaltTexture() {
+      ctx.save();
+      asphaltPatches.forEach((patch) => {
+        const p = iso(patch.x, patch.z);
+        ctx.save();
+        ctx.translate(p.x, p.y);
+        ctx.rotate(patch.rot * 0.55);
+        ctx.fillStyle = `rgba(255, 255, 255, ${patch.shade * 0.16})`;
+        ctx.fillRect(-patch.w * 0.5, -patch.h * 0.5, patch.w, patch.h);
+        ctx.fillStyle = `rgba(0, 0, 0, ${patch.shade})`;
+        ctx.fillRect(-patch.w * 0.45, -patch.h * 0.2, patch.w * 0.9, patch.h * 0.35);
+        ctx.restore();
+      });
+      ctx.restore();
+    }
+
+    function drawRoadGrid() {
+      ctx.save();
+      ctx.lineWidth = 36;
+      ctx.strokeStyle = "rgba(11, 13, 15, 0.78)";
+      for (let x = 210; x < world.w; x += 360) lineIso(x, 0, x, world.h);
+      for (let z = 230; z < world.h; z += 340) lineIso(0, z, world.w, z);
+      ctx.setLineDash([24, 32]);
+      ctx.lineWidth = 2;
+      ctx.strokeStyle = "rgba(237, 206, 120, 0.17)";
+      for (let x = 210; x < world.w; x += 360) lineIso(x, 0, x, world.h);
+      for (let z = 230; z < world.h; z += 340) lineIso(0, z, world.w, z);
+      ctx.restore();
+    }
+
+    function drawGroundScars() {
+      ctx.save();
+      groundScars.forEach((scar) => {
+        const p = iso(scar.x, scar.z);
+        ctx.save();
+        ctx.translate(p.x, p.y);
+        ctx.rotate(scar.rot * 0.55);
+        if (scar.kind === "puddle") {
+          const puddle = ctx.createRadialGradient(0, 0, 2, 0, 0, scar.len * 0.28);
+          puddle.addColorStop(0, "rgba(88, 98, 98, 0.34)");
+          puddle.addColorStop(1, "rgba(13, 15, 16, 0)");
+          ctx.fillStyle = puddle;
+          ctx.beginPath();
+          ctx.ellipse(0, 0, scar.len * 0.34, scar.len * 0.11, 0, 0, Math.PI * 2);
+          ctx.fill();
+        } else {
+          ctx.strokeStyle = "rgba(3, 5, 6, 0.42)";
+          ctx.lineWidth = scar.width;
+          ctx.beginPath();
+          ctx.moveTo(-scar.len * 0.5, 0);
+          ctx.lineTo(-scar.len * 0.18, scar.k1);
+          ctx.lineTo(scar.len * 0.1, scar.k2);
+          ctx.lineTo(scar.len * 0.5, 0);
+          ctx.stroke();
+        }
+        ctx.restore();
+      });
+      ctx.restore();
+    }
+
+    function lineIso(x1, z1, x2, z2) {
+      const a = iso(x1, z1);
+      const b = iso(x2, z2);
+      ctx.beginPath();
+      ctx.moveTo(a.x, a.y);
+      ctx.lineTo(b.x, b.y);
+      ctx.stroke();
+    }
+
+    function drawBossPlaza(center) {
+      ctx.save();
+      ctx.translate(center.x, center.y);
+      ctx.rotate(Math.PI / 4);
+      const plaza = ctx.createRadialGradient(0, 0, 20, 0, 0, 190);
+      plaza.addColorStop(0, "rgba(60, 54, 58, 0.68)");
+      plaza.addColorStop(1, "rgba(18, 16, 18, 0.18)");
+      ctx.fillStyle = plaza;
+      ctx.fillRect(-180, -180, 360, 360);
+      ctx.restore();
+    }
+
+    function drawWorldObjects() {
+      const objects = [];
+      crawlingShadows.forEach((s) => objects.push({ z: s.x + s.z - 20, draw: () => drawCrawlingShadow(s) }));
+      rubble.forEach((r) => objects.push({ z: r.x + r.z, draw: () => drawRubble(r) }));
+      cityProps.forEach((p) => objects.push({ z: p.x + p.z + 45, draw: () => drawCityProp(p) }));
+      buildings.forEach((b) => objects.push({ z: b.x + b.z + b.h * 0.1, draw: () => drawBuilding(b) }));
+      drops.forEach((d) => objects.push({ z: d.x + d.z + 40, draw: () => drawDrop(d) }));
+      monsters.forEach((m) => objects.push({ z: m.x + m.z + m.height, draw: () => drawMonster(m) }));
+      projectiles.forEach((p) => objects.push({ z: p.x + p.z + 80, draw: () => drawProjectile(p) }));
+      objects.push({ z: player.x + player.z + player.height, draw: drawPlayer });
+      slashes.forEach((s) => objects.push({ z: s.x + s.z + 90, draw: () => drawSlash(s) }));
+      particles.forEach((p) => objects.push({ z: p.x + p.z + p.y, draw: () => drawParticle(p) }));
+      objects.sort((a, b) => a.z - b.z);
+      objects.forEach((object) => object.draw());
+    }
+
+    function drawCrawlingShadow(shadow) {
+      const p = iso(shadow.x, shadow.z);
+      const pulse = 0.82 + Math.sin(shadow.phase) * 0.14;
+      ctx.save();
+      ctx.translate(p.x, p.y + 3);
+      ctx.rotate(Math.sin(shadow.phase * 0.4) * 0.35);
+
+      const body = ctx.createRadialGradient(0, 0, 4, 0, 0, shadow.radius * 1.2);
+      body.addColorStop(0, "rgba(0, 0, 0, 0.72)");
+      body.addColorStop(0.45, "rgba(0, 0, 0, 0.42)");
+      body.addColorStop(1, "rgba(0, 0, 0, 0)");
+      ctx.fillStyle = body;
+      ctx.beginPath();
+      ctx.ellipse(0, 0, shadow.radius * 1.1 * pulse, shadow.radius * 0.38, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.strokeStyle = "rgba(0, 0, 0, 0.42)";
+      ctx.lineWidth = 8;
+      ctx.lineCap = "round";
+      for (let i = 0; i < shadow.arms; i++) {
+        const a = (Math.PI * 2 * i) / shadow.arms + Math.sin(shadow.phase + i) * 0.35;
+        const len = shadow.radius * randStable(i, 0.75, 1.35) * pulse;
+        ctx.beginPath();
+        ctx.moveTo(Math.cos(a) * 14, Math.sin(a) * 5);
+        ctx.quadraticCurveTo(Math.cos(a + 0.45) * len * 0.55, Math.sin(a + 0.45) * len * 0.22, Math.cos(a) * len, Math.sin(a) * len * 0.33);
+        ctx.stroke();
+      }
+
+      ctx.restore();
+    }
+
+    function randStable(seed, min, max) {
+      const n = Math.sin(seed * 999 + 17.13) * 43758.5453;
+      return min + (n - Math.floor(n)) * (max - min);
+    }
+
+    function drawBuilding(b) {
+      const p1 = iso(b.x - b.w / 2, b.z - b.d / 2);
+      const p2 = iso(b.x + b.w / 2, b.z - b.d / 2);
+      const p3 = iso(b.x + b.w / 2, b.z + b.d / 2);
+      const p4 = iso(b.x - b.w / 2, b.z + b.d / 2);
+      const t1 = iso(b.x - b.w / 2, b.z - b.d / 2, b.h);
+      const t2 = iso(b.x + b.w / 2, b.z - b.d / 2, b.h);
+      const t3 = iso(b.x + b.w / 2, b.z + b.d / 2, b.h);
+      const t4 = iso(b.x - b.w / 2, b.z + b.d / 2, b.h);
+      const base = 45 + b.tone;
+      polygon([p1, p2, p3, p4], "rgba(0, 0, 0, 0.28)");
+      polygon([p2, p3, t3, t2], `rgb(${base - 6}, ${base - 5}, ${base - 2})`);
+      polygon([p4, p3, t3, t4], `rgb(${base - 16}, ${base - 14}, ${base - 10})`);
+      polygon([p1, p2, t2, t1], `rgb(${base + 3}, ${base + 4}, ${base + 5})`);
+      polygon([t1, t2, t3, t4], b.broken ? "#191b1e" : `rgb(${base + 8}, ${base + 8}, ${base + 8})`);
+      drawWindows(t2, t3, b, 0);
+      drawWindows(t4, t3, b, 1);
+      drawBuildingDamage(t1, t2, t3, t4, b);
+      if (b.fireEscape) drawFireEscape(t4, t3, b);
+      if (b.sign) drawHangingSign(t2, t3, b);
+      if (b.roofJunk) drawRoofJunk(t1, t2, t3, t4, b);
+      if (b.type === "warehouse") drawWarehouseDetails(p1, p2, p3, p4, t2, t3, b);
+      if (b.type === "grocery") drawGroceryDetails(p1, p2, p3, p4, t2, t3, b);
+    }
+
+    function drawWindows(a, b, building, salt) {
+      const rows = Math.max(2, Math.floor(building.h / 42));
+      const cols = Math.max(2, Math.floor((salt ? building.d : building.w) / 32));
+      for (let row = 0; row < rows; row++) {
+        for (let col = 0; col < cols; col++) {
+          if ((col * 9 + row * 5 + Math.floor(building.x) + salt) % 4 === 0) continue;
+          const edge = lerpPoint(a, b, (col + 0.5) / cols);
+          const y = edge.y + 20 + row * 29;
+          const lit = (col * 13 + row * 7 + Math.floor(building.z)) % 19 === 0;
+          ctx.fillStyle = lit ? "rgba(240, 179, 90, 0.45)" : "rgba(3, 6, 9, 0.55)";
+          ctx.fillRect(edge.x - 5, y, 10, 12);
+          if (!lit && (row + col + salt) % 6 === 0) {
+            ctx.strokeStyle = "rgba(202, 218, 216, 0.23)";
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(edge.x - 4, y + 2);
+            ctx.lineTo(edge.x + 4, y + 10);
+            ctx.moveTo(edge.x + 4, y + 2);
+            ctx.lineTo(edge.x - 4, y + 10);
+            ctx.stroke();
+          }
+        }
+      }
+    }
+
+    function drawBuildingDamage(t1, t2, t3, t4, b) {
+      ctx.strokeStyle = "rgba(4, 5, 6, 0.36)";
+      ctx.lineWidth = 2;
+      for (let i = 0; i < 3; i++) {
+        const a = lerpPoint(t4, t3, (i + 1) / 4);
+        ctx.beginPath();
+        ctx.moveTo(a.x, a.y + 22 + i * 16);
+        ctx.lineTo(a.x + 12 - i * 6, a.y + 52 + i * 24);
+        ctx.lineTo(a.x - 8, a.y + 80 + i * 18);
+        ctx.stroke();
+      }
+
+      if (b.broken) {
+        ctx.fillStyle = "rgba(0, 0, 0, 0.38)";
+        ctx.beginPath();
+        ctx.moveTo(t1.x, t1.y + 8);
+        ctx.lineTo(lerpPoint(t1, t2, 0.28).x, lerpPoint(t1, t2, 0.28).y + 28);
+        ctx.lineTo(lerpPoint(t1, t2, 0.56).x, lerpPoint(t1, t2, 0.56).y + 9);
+        ctx.lineTo(lerpPoint(t1, t2, 0.82).x, lerpPoint(t1, t2, 0.82).y + 35);
+        ctx.lineTo(t2.x, t2.y + 12);
+        ctx.lineTo(t3.x, t3.y);
+        ctx.lineTo(t4.x, t4.y);
+        ctx.closePath();
+        ctx.fill();
+      }
+    }
+
+    function drawFireEscape(a, b, building) {
+      ctx.strokeStyle = "rgba(136, 144, 140, 0.5)";
+      ctx.lineWidth = 2;
+      for (let level = 0; level < Math.min(5, building.h / 38); level++) {
+        const left = lerpPoint(a, b, 0.18);
+        const right = lerpPoint(a, b, 0.56);
+        const y = left.y + 34 + level * 34;
+        ctx.strokeRect(left.x - 4, y, right.x - left.x + 8, 9);
+        ctx.beginPath();
+        ctx.moveTo(left.x, y);
+        ctx.lineTo(left.x + 16, y + 30);
+        ctx.lineTo(left.x + 28, y + 30);
+        ctx.stroke();
+      }
+    }
+
+    function drawHangingSign(a, b) {
+      const p = lerpPoint(a, b, 0.58);
+      ctx.strokeStyle = "rgba(108, 116, 112, 0.72)";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(p.x, p.y + 36);
+      ctx.lineTo(p.x + 20, p.y + 44);
+      ctx.stroke();
+      ctx.fillStyle = "rgba(90, 40, 34, 0.86)";
+      ctx.fillRect(p.x + 17, p.y + 36, 38, 18);
+      ctx.fillStyle = "rgba(238, 182, 85, 0.75)";
+      ctx.fillRect(p.x + 22, p.y + 42, 22, 3);
+    }
+
+    function drawRoofJunk(t1, t2, t3, t4) {
+      const p = lerpPoint(lerpPoint(t1, t2, 0.5), lerpPoint(t4, t3, 0.5), 0.45);
+      ctx.fillStyle = "#111518";
+      ctx.fillRect(p.x - 12, p.y - 18, 24, 18);
+      ctx.strokeStyle = "rgba(176, 186, 180, 0.46)";
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(p.x, p.y - 18);
+      ctx.lineTo(p.x, p.y - 48);
+      ctx.moveTo(p.x - 13, p.y - 36);
+      ctx.lineTo(p.x + 13, p.y - 28);
+      ctx.stroke();
+    }
+
+    function drawWarehouseDetails(p1, p2, p3, p4, t2, t3, b) {
+      const door = lerpPoint(p4, p3, 0.5);
+      ctx.fillStyle = "#111416";
+      ctx.fillRect(door.x - 26, door.y - 52, 52, 49);
+      ctx.strokeStyle = "rgba(176, 184, 178, 0.28)";
+      ctx.lineWidth = 2;
+      for (let i = 0; i < 4; i++) {
+        ctx.beginPath();
+        ctx.moveTo(door.x - 24, door.y - 42 + i * 10);
+        ctx.lineTo(door.x + 24, door.y - 42 + i * 10);
+        ctx.stroke();
+      }
+
+      const sign = lerpPoint(t2, t3, 0.5);
+      drawFacadeSign(sign.x, sign.y + 38, "WAREHOUSE", "#2c3234", "#c4cbc7");
+
+      ctx.strokeStyle = "rgba(103, 113, 108, 0.55)";
+      ctx.lineWidth = 3;
+      const roofA = lerpPoint(t2, t3, 0.14);
+      const roofB = lerpPoint(t2, t3, 0.86);
+      ctx.beginPath();
+      ctx.moveTo(roofA.x, roofA.y - 4);
+      ctx.lineTo(roofB.x, roofB.y - 4);
+      ctx.stroke();
+    }
+
+    function drawGroceryDetails(p1, p2, p3, p4, t2, t3, b) {
+      const sign = lerpPoint(t2, t3, 0.5);
+      drawFacadeSign(sign.x, sign.y + 34, "GROCERY", "#31553d", "#e8f8d9");
+
+      const front = lerpPoint(p4, p3, 0.5);
+      ctx.fillStyle = "rgba(122, 180, 188, 0.28)";
+      ctx.fillRect(front.x - 48, front.y - 48, 34, 32);
+      ctx.fillRect(front.x + 13, front.y - 48, 34, 32);
+      ctx.strokeStyle = "rgba(221, 238, 232, 0.24)";
+      ctx.lineWidth = 2;
+      ctx.strokeRect(front.x - 48, front.y - 48, 34, 32);
+      ctx.strokeRect(front.x + 13, front.y - 48, 34, 32);
+      ctx.fillStyle = "#161b18";
+      ctx.fillRect(front.x - 10, front.y - 54, 20, 48);
+
+      ctx.fillStyle = "rgba(197, 38, 42, 0.78)";
+      ctx.fillRect(front.x - 60, front.y - 65, 120, 12);
+    }
+
+    function drawFacadeSign(x, y, text, bg, fg) {
+      ctx.save();
+      ctx.fillStyle = bg;
+      ctx.strokeStyle = "rgba(255, 255, 255, 0.18)";
+      ctx.lineWidth = 1;
+      ctx.fillRect(x - 43, y - 10, 86, 19);
+      ctx.strokeRect(x - 43, y - 10, 86, 19);
+      ctx.fillStyle = fg;
+      ctx.font = "800 9px system-ui, sans-serif";
+      ctx.textAlign = "center";
+      ctx.fillText(text, x, y + 3);
+      ctx.restore();
+    }
+
+    function drawRubble(r) {
+      const p = iso(r.x, r.z);
+      ctx.save();
+      ctx.translate(p.x, p.y);
+      ctx.rotate(r.rot);
+      const v = 58 + Math.floor(r.shade * 42);
+      ctx.fillStyle = `rgb(${v}, ${v - 2}, ${v - 10})`;
+      ctx.fillRect(-r.r, -r.r * 0.45 - r.h, r.r * 2, r.r * 0.9 + r.h);
+      ctx.restore();
+    }
+
+    function drawCityProp(prop) {
+      if (prop.type === "car") drawAbandonedCar(prop);
+      else if (prop.type === "lamp") drawStreetLamp(prop);
+      else drawStreetSign(prop);
+    }
+
+    function drawAbandonedCar(car) {
+      const p = iso(car.x, car.z);
+      ctx.save();
+      ctx.translate(p.x, p.y);
+      ctx.rotate(car.rot * 0.55);
+      ctx.fillStyle = "rgba(0, 0, 0, 0.3)";
+      ctx.beginPath();
+      ctx.ellipse(0, 9, 44, 16, 0, 0, Math.PI * 2);
+      ctx.fill();
+      polygon([{ x: -38, y: -7 }, { x: 23, y: -13 }, { x: 42, y: 4 }, { x: -22, y: 17 }], car.color, true);
+      polygon([{ x: -10, y: -22 }, { x: 18, y: -25 }, { x: 29, y: -12 }, { x: -22, y: -6 }], "#222b2e", true);
+      ctx.fillStyle = car.broken ? "rgba(185, 211, 217, 0.18)" : "rgba(151, 190, 199, 0.36)";
+      ctx.fillRect(-5, -20, 16, 8);
+      ctx.fillRect(14, -21, 10, 8);
+      ctx.fillStyle = "#111";
+      ctx.beginPath();
+      ctx.arc(-21, 14, 7, 0, Math.PI * 2);
+      ctx.arc(28, 6, 7, 0, Math.PI * 2);
+      ctx.fill();
+      if (car.broken) {
+        ctx.strokeStyle = "rgba(236, 216, 164, 0.5)";
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(-34, -4);
+        ctx.lineTo(-22, 3);
+        ctx.lineTo(-14, -5);
+        ctx.stroke();
+      }
+      ctx.restore();
+    }
+
+    function drawStreetLamp(lamp) {
+      const p = iso(lamp.x, lamp.z);
+      ctx.strokeStyle = "#252b2d";
+      ctx.lineWidth = 5;
+      ctx.beginPath();
+      ctx.moveTo(p.x, p.y);
+      ctx.lineTo(p.x, p.y - 74);
+      ctx.lineTo(p.x + 28, p.y - 83);
+      ctx.stroke();
+      ctx.fillStyle = lamp.dead ? "#2d302c" : "#f0b35a";
+      ctx.beginPath();
+      ctx.arc(p.x + 34, p.y - 84, 7, 0, Math.PI * 2);
+      ctx.fill();
+      if (!lamp.dead) {
+        const glow = ctx.createRadialGradient(p.x + 34, p.y - 84, 4, p.x + 34, p.y - 84, 78);
+        glow.addColorStop(0, "rgba(240, 179, 90, 0.23)");
+        glow.addColorStop(1, "rgba(240, 179, 90, 0)");
+        ctx.fillStyle = glow;
+        ctx.beginPath();
+        ctx.arc(p.x + 34, p.y - 84, 78, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+
+    function drawStreetSign(sign) {
+      const p = iso(sign.x, sign.z);
+      ctx.save();
+      ctx.translate(p.x, p.y);
+      ctx.rotate(sign.rot);
+      ctx.strokeStyle = "#303638";
+      ctx.lineWidth = 4;
+      ctx.beginPath();
+      ctx.moveTo(0, 0);
+      ctx.lineTo(0, -58);
+      ctx.stroke();
+      ctx.fillStyle = "#32443c";
+      ctx.fillRect(-24, -70, 48, 17);
+      ctx.fillStyle = "rgba(214, 224, 212, 0.64)";
+      ctx.fillRect(-18, -64, 28, 3);
+      ctx.restore();
+    }
+
+    function drawDrop(drop) {
+      const p = iso(drop.x, drop.z, drop.y);
+      const base = iso(drop.x, drop.z);
+      const glow = 0.55 + Math.sin(drop.glow) * 0.18;
+      const color = dropColor(drop.type);
+      ctx.fillStyle = color.halo.replace("ALPHA", 0.22 * glow);
+      ctx.beginPath();
+      ctx.ellipse(base.x, base.y, 58, 24, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      if (weapons[drop.type] && weapons[drop.type].kind === "gun") {
+        const beam = ctx.createLinearGradient(base.x, base.y - 118, base.x, base.y + 10);
+        beam.addColorStop(0, color.halo.replace("ALPHA", 0));
+        beam.addColorStop(0.45, color.halo.replace("ALPHA", 0.22));
+        beam.addColorStop(1, color.halo.replace("ALPHA", 0));
+        ctx.fillStyle = beam;
+        ctx.beginPath();
+        ctx.moveTo(base.x - 20, base.y);
+        ctx.lineTo(base.x - 5, base.y - 118);
+        ctx.lineTo(base.x + 5, base.y - 118);
+        ctx.lineTo(base.x + 20, base.y);
+        ctx.closePath();
+        ctx.fill();
+      }
+
+      if (drop.y > 8) {
+        ctx.strokeStyle = "rgba(224, 224, 214, 0.48)";
+        ctx.beginPath();
+        ctx.moveTo(p.x - 34, p.y - 38);
+        ctx.lineTo(p.x - 12, p.y + 2);
+        ctx.moveTo(p.x + 34, p.y - 38);
+        ctx.lineTo(p.x + 12, p.y + 2);
+        ctx.stroke();
+        ctx.fillStyle = "rgba(198, 205, 199, 0.7)";
+        ctx.beginPath();
+        ctx.ellipse(p.x, p.y - 42, 48, 16, 0, Math.PI, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.save();
+      ctx.translate(p.x, p.y);
+      polygon([{ x: -24, y: -10 }, { x: 24, y: -10 }, { x: 31, y: 8 }, { x: -17, y: 16 }], color.top, true);
+      polygon([{ x: 24, y: -10 }, { x: 31, y: 8 }, { x: 11, y: 26 }, { x: 4, y: 7 }], color.side, true);
+      polygon([{ x: -17, y: 16 }, { x: 31, y: 8 }, { x: 11, y: 26 }, { x: -31, y: 26 }], color.front, true);
+      ctx.fillStyle = color.trim;
+      ctx.fillRect(-9, 1, 18, 6);
+      if (weapons[drop.type] && weapons[drop.type].kind === "gun") {
+        ctx.strokeStyle = color.trim;
+        ctx.lineWidth = 2;
+        ctx.strokeRect(-26, -12, 52, 39);
+      }
+      drawDropIcon(drop.type);
+      ctx.restore();
+      ctx.fillStyle = color.label;
+      ctx.font = "700 12px system-ui, sans-serif";
+      ctx.textAlign = "center";
+      ctx.fillText(drop.type, base.x, base.y - 50);
+    }
+
+    function dropColor(type) {
+      if (type === "Laser Gun") return { top: "#27596a", side: "#173541", front: "#1f4754", trim: "#81f7ff", label: "#d8feff", halo: "rgba(129, 247, 255, ALPHA)" };
+      if (type === "Machine Gun") return { top: "#4f4f4a", side: "#252927", front: "#353a35", trim: "#f0b35a", label: "#fff2bf", halo: "rgba(240, 179, 90, ALPHA)" };
+      if (type === "Rifle" || type === "Shotgun" || type === "Pistol") return { top: "#4a5960", side: "#243038", front: "#33434a", trim: "#78d3e1", label: "#d8fbff", halo: "rgba(120, 211, 225, ALPHA)" };
+      if (type === "Med Kit") return { top: "#c9d1cb", side: "#7f8580", front: "#aeb8b1", trim: "#d84543", label: "#ffe6e6", halo: "rgba(216, 69, 67, ALPHA)" };
+      if (type === "Ammo") return { top: "#8d6a2e", side: "#4f3b1d", front: "#6d5126", trim: "#f3d38a", label: "#fff2bf", halo: "rgba(243, 211, 138, ALPHA)" };
+      return { top: "#b57636", side: "#70411f", front: "#8d5728", trim: "#f0b35a", label: "#fff2bf", halo: "rgba(240, 179, 90, ALPHA)" };
+    }
+
+    function drawDropIcon(type) {
+      ctx.save();
+      ctx.translate(0, -22);
+      ctx.lineCap = "round";
+      ctx.lineJoin = "round";
+      if (type === "Med Kit") {
+        ctx.fillStyle = "#f7f1e6";
+        ctx.strokeStyle = "#a93d3c";
+        ctx.lineWidth = 2;
+        ctx.fillRect(-15, -10, 30, 21);
+        ctx.strokeRect(-15, -10, 30, 21);
+        ctx.fillStyle = "#d84543";
+        ctx.fillRect(-4, -7, 8, 15);
+        ctx.fillRect(-10, -1, 20, 5);
+      } else if (type === "Ammo") {
+        ctx.fillStyle = "#d3a44d";
+        for (let i = -1; i <= 1; i++) {
+          ctx.fillRect(i * 8 - 3, -11, 6, 21);
+          ctx.fillStyle = "#f3d38a";
+          ctx.fillRect(i * 8 - 3, -14, 6, 4);
+          ctx.fillStyle = "#d3a44d";
+        }
+      } else {
+        drawWeaponSprite(type, 0, 0, -0.22, 0.8);
+      }
+      ctx.restore();
+    }
+
+    function drawMonster(monster) {
+      const p = iso(monster.x, monster.z);
+      const top = iso(monster.x, monster.z, monster.height);
+      const pulse = 1 + Math.sin(monster.phase) * 0.07;
+      const radius = monster.radius * pulse;
+      ctx.fillStyle = monster.boss ? "rgba(101, 47, 148, 0.28)" : "rgba(0, 0, 0, 0.28)";
+      ctx.beginPath();
+      ctx.ellipse(p.x, p.y + 8, radius * 1.7, radius * 0.62, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = monster.boss ? "rgba(185, 96, 255, 0.16)" : "rgba(239, 95, 88, 0.12)";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.ellipse(p.x, p.y, monster.aggro * 0.72, monster.aggro * 0.36, 0, 0, Math.PI * 2);
+      ctx.stroke();
+      const body = ctx.createLinearGradient(top.x, top.y, p.x, p.y);
+      body.addColorStop(0, monster.boss ? "#261235" : "#111318");
+      body.addColorStop(1, monster.boss ? "#07030d" : "#030405");
+      ctx.fillStyle = body;
+      ctx.beginPath();
+      ctx.moveTo(top.x, top.y);
+      ctx.bezierCurveTo(top.x + radius * 1.2, top.y + monster.height * 0.38, p.x + radius, p.y - 4, p.x, p.y + 14);
+      ctx.bezierCurveTo(p.x - radius, p.y - 4, top.x - radius * 1.2, top.y + monster.height * 0.38, top.x, top.y);
+      ctx.fill();
+
+      drawMonsterCrystals(monster, top, radius);
+
+      ctx.fillStyle = monster.boss ? "#ff77bf" : "#ef5f58";
+      ctx.beginPath();
+      ctx.arc(top.x - radius * 0.26, top.y + monster.height * 0.42, monster.boss ? 6 : 3.5, 0, Math.PI * 2);
+      ctx.arc(top.x + radius * 0.26, top.y + monster.height * 0.42, monster.boss ? 6 : 3.5, 0, Math.PI * 2);
+      ctx.fill();
+      if (monster.hp < monster.maxHp) {
+        ctx.fillStyle = "rgba(0, 0, 0, 0.48)";
+        ctx.fillRect(top.x - 28, top.y - 16, 56, 5);
+        ctx.fillStyle = monster.boss ? "#ba73ff" : "#ef5f58";
+        ctx.fillRect(top.x - 28, top.y - 16, 56 * clamp(monster.hp / monster.maxHp, 0, 1), 5);
+      }
+    }
+
+    function drawMonsterCrystals(monster, top, radius) {
+      const pulse = 0.72 + Math.sin(monster.phase * 1.4) * 0.18;
+      monster.crystals.forEach((crystal, index) => {
+        const rootX = top.x + crystal.offset * radius * 1.25;
+        const rootY = top.y + monster.height * crystal.lift;
+        const h = crystal.height * (monster.boss ? 1.2 : 1);
+        const w = crystal.width * (monster.boss ? 1.25 : 1);
+        const tipX = rootX + crystal.lean * h;
+        const tipY = rootY - h;
+        const colorA = monster.boss ? `rgba(204, 98, 255, ${crystal.glow})` : `rgba(88, 196, 221, ${crystal.glow})`;
+        const colorB = monster.boss ? `rgba(83, 34, 132, ${0.72 + pulse * 0.2})` : `rgba(28, 72, 92, ${0.62 + pulse * 0.18})`;
+
+        ctx.fillStyle = colorA;
+        ctx.beginPath();
+        ctx.moveTo(rootX - w, rootY);
+        ctx.lineTo(tipX, tipY);
+        ctx.lineTo(rootX + w, rootY - 2);
+        ctx.closePath();
+        ctx.fill();
+
+        ctx.fillStyle = colorB;
+        ctx.beginPath();
+        ctx.moveTo(tipX, tipY);
+        ctx.lineTo(rootX + w, rootY - 2);
+        ctx.lineTo(rootX + w * 0.15, rootY - h * 0.28);
+        ctx.closePath();
+        ctx.fill();
+
+        if (index % 2 === 0) {
+          ctx.strokeStyle = monster.boss ? `rgba(255, 159, 238, ${0.35 + pulse * 0.25})` : `rgba(140, 235, 255, ${0.28 + pulse * 0.25})`;
+          ctx.lineWidth = monster.boss ? 2 : 1;
+          ctx.beginPath();
+          ctx.moveTo(tipX, tipY + 2);
+          ctx.lineTo(rootX, rootY - h * 0.25);
+          ctx.stroke();
+        }
+      });
+    }
+
+    function drawPlayer() {
+      const p = iso(player.x, player.z);
+      const top = iso(player.x, player.z, player.height);
+      const angle = player.facing;
+      const weapon = weapons[player.weapon];
+      ctx.fillStyle = "rgba(0, 0, 0, 0.3)";
+      ctx.beginPath();
+      ctx.ellipse(p.x, p.y + 9, 34, 13, 0, 0, Math.PI * 2);
+      ctx.fill();
+      const glow = ctx.createRadialGradient(p.x, p.y, 8, p.x, p.y, 78);
+      glow.addColorStop(0, "rgba(117, 216, 137, 0.28)");
+      glow.addColorStop(1, "rgba(117, 216, 137, 0)");
+      ctx.fillStyle = glow;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, 78, 0, Math.PI * 2);
+      ctx.fill();
+      if (player.invincible > 0) {
+        ctx.strokeStyle = "rgba(255, 255, 255, 0.44)";
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.ellipse(p.x, p.y, 42, 17, 0, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+      ctx.strokeStyle = "#16201c";
+      ctx.lineWidth = 15;
+      ctx.lineCap = "round";
+      ctx.beginPath();
+      ctx.moveTo(p.x, p.y - 4);
+      ctx.lineTo(top.x, top.y + 10);
+      ctx.stroke();
+      ctx.fillStyle = "#75d889";
+      ctx.beginPath();
+      ctx.arc(top.x, top.y, 14, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = "#eaf8ef";
+      ctx.fillRect(top.x - 4, top.y - 4, 8, 5);
+      const hand = iso(player.x + Math.cos(angle) * 17, player.z + Math.sin(angle) * 17, player.height * 0.62);
+      const muzzle = iso(player.x + Math.cos(angle) * 58, player.z + Math.sin(angle) * 58, player.height * 0.66);
+      const screenAngle = Math.atan2(muzzle.y - hand.y, muzzle.x - hand.x);
+      drawWeaponSprite(player.weapon, hand.x, hand.y, screenAngle, 1.05);
+    }
+
+    function drawWeaponSprite(name, x, y, angle, scale) {
+      ctx.save();
+      ctx.translate(x, y);
+      ctx.rotate(angle);
+      ctx.scale(scale, scale);
+      ctx.lineCap = "round";
+      ctx.lineJoin = "round";
+
+      if (name === "Fists") {
+        ctx.fillStyle = "#26342e";
+        ctx.strokeStyle = "#75d889";
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(9, -5, 6, 0, Math.PI * 2);
+        ctx.arc(16, 4, 6, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+      } else if (name === "Knife") {
+        ctx.strokeStyle = "#2b352f";
+        ctx.lineWidth = 6;
+        ctx.beginPath();
+        ctx.moveTo(-8, 2);
+        ctx.lineTo(13, 2);
+        ctx.stroke();
+        const blade = ctx.createLinearGradient(10, -7, 42, 0);
+        blade.addColorStop(0, "#e5ece8");
+        blade.addColorStop(1, "#87938e");
+        ctx.fillStyle = blade;
+        ctx.beginPath();
+        ctx.moveTo(10, -7);
+        ctx.lineTo(45, 0);
+        ctx.lineTo(10, 8);
+        ctx.closePath();
+        ctx.fill();
+        ctx.strokeStyle = "rgba(255,255,255,0.6)";
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(15, -2);
+        ctx.lineTo(38, 0);
+        ctx.stroke();
+      } else if (name === "Pistol") {
+        ctx.fillStyle = "#20272c";
+        ctx.strokeStyle = "#c8d0d0";
+        ctx.lineWidth = 2;
+        roundRect(-7, -8, 38, 13, 3);
+        ctx.fill();
+        ctx.stroke();
+        ctx.fillStyle = "#15191c";
+        ctx.fillRect(4, 3, 10, 16);
+        ctx.fillStyle = "#d5aa58";
+        ctx.fillRect(30, -5, 13, 5);
+        ctx.fillStyle = "#78d3e1";
+        ctx.fillRect(12, -5, 8, 3);
+      } else if (name === "Shotgun") {
+        ctx.fillStyle = "#4f2e1d";
+        ctx.fillRect(-14, -5, 23, 10);
+        ctx.strokeStyle = "#1d2226";
+        ctx.lineWidth = 7;
+        ctx.beginPath();
+        ctx.moveTo(2, -3);
+        ctx.lineTo(55, -3);
+        ctx.moveTo(2, 5);
+        ctx.lineTo(55, 5);
+        ctx.stroke();
+        ctx.strokeStyle = "#c7d0d1";
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(7, -7);
+        ctx.lineTo(50, -7);
+        ctx.stroke();
+        ctx.fillStyle = "#28170e";
+        ctx.fillRect(-21, -9, 10, 18);
+      } else if (name === "Rifle") {
+        ctx.fillStyle = "#27302d";
+        ctx.fillRect(-20, -6, 32, 12);
+        ctx.fillStyle = "#151b1d";
+        ctx.fillRect(8, -5, 62, 10);
+        ctx.fillStyle = "#8b5b2c";
+        ctx.fillRect(-26, -10, 14, 20);
+        ctx.strokeStyle = "#bfc9c8";
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(18, -10);
+        ctx.lineTo(37, -10);
+        ctx.stroke();
+        ctx.fillStyle = "#78d3e1";
+        ctx.fillRect(27, -14, 12, 5);
+        ctx.fillStyle = "#d5aa58";
+        ctx.fillRect(70, -3, 13, 6);
+      } else if (name === "Machine Gun") {
+        ctx.fillStyle = "#1a2023";
+        ctx.fillRect(-24, -7, 42, 14);
+        ctx.fillStyle = "#101416";
+        ctx.fillRect(13, -5, 72, 10);
+        ctx.fillStyle = "#293034";
+        ctx.fillRect(32, -10, 28, 5);
+        ctx.fillStyle = "#6a4630";
+        ctx.fillRect(-31, -11, 15, 22);
+        ctx.fillStyle = "#3b4244";
+        ctx.beginPath();
+        ctx.arc(12, 10, 11, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = "#bbc5c4";
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(22, 9);
+        ctx.lineTo(47, 22);
+        ctx.moveTo(86, -4);
+        ctx.lineTo(100, -4);
+        ctx.stroke();
+        ctx.fillStyle = "#f0b35a";
+        ctx.fillRect(84, 0, 15, 5);
+      } else if (name === "Laser Gun") {
+        const glow = ctx.createLinearGradient(-20, 0, 94, 0);
+        glow.addColorStop(0, "#1b3038");
+        glow.addColorStop(0.55, "#23596a");
+        glow.addColorStop(1, "#81f7ff");
+        ctx.fillStyle = glow;
+        roundRect(-24, -9, 72, 18, 5);
+        ctx.fill();
+        ctx.strokeStyle = "#b9fbff";
+        ctx.lineWidth = 2;
+        ctx.stroke();
+        ctx.fillStyle = "#101719";
+        ctx.fillRect(-31, -12, 14, 24);
+        ctx.fillStyle = "#6feeff";
+        ctx.beginPath();
+        ctx.arc(7, 0, 8, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = "rgba(129, 247, 255, 0.7)";
+        ctx.lineWidth = 4;
+        ctx.beginPath();
+        ctx.moveTo(47, 0);
+        ctx.lineTo(89, 0);
+        ctx.stroke();
+        ctx.fillStyle = "#dffcff";
+        ctx.fillRect(89, -4, 12, 8);
+      }
+
+      ctx.restore();
+    }
+
+    function roundRect(x, y, w, h, r) {
+      ctx.beginPath();
+      ctx.moveTo(x + r, y);
+      ctx.lineTo(x + w - r, y);
+      ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+      ctx.lineTo(x + w, y + h - r);
+      ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+      ctx.lineTo(x + r, y + h);
+      ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+      ctx.lineTo(x, y + r);
+      ctx.quadraticCurveTo(x, y, x + r, y);
+      ctx.closePath();
+    }
+
+    function drawProjectile(p) {
+      const a = iso(p.x, p.z, 36);
+      const b = iso(p.x - p.vx * 0.025, p.z - p.vz * 0.025, 36);
+      if (p.laser) {
+        ctx.strokeStyle = "rgba(129, 247, 255, 0.28)";
+        ctx.lineWidth = 10;
+        ctx.beginPath();
+        ctx.moveTo(a.x, a.y);
+        ctx.lineTo(b.x, b.y);
+        ctx.stroke();
+      }
+      ctx.strokeStyle = p.color || "#ffe08a";
+      ctx.lineWidth = p.laser ? 4 : 3;
+      ctx.beginPath();
+      ctx.moveTo(a.x, a.y);
+      ctx.lineTo(b.x, b.y);
+      ctx.stroke();
+    }
+
+    function drawSlash(s) {
+      const p = iso(s.x, s.z, 42);
+      const alpha = 1 - s.age / s.life;
+      ctx.save();
+      ctx.translate(p.x, p.y);
+      ctx.rotate(s.angle * 0.55);
+      ctx.strokeStyle = `rgba(220, 229, 224, ${alpha})`;
+      ctx.lineWidth = 5;
+      ctx.beginPath();
+      ctx.arc(0, 0, s.range * 0.55, -0.55, 0.55);
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    function drawParticle(particle) {
+      const p = iso(particle.x, particle.z, Math.max(0, particle.y));
+      const alpha = 1 - particle.age / particle.life;
+      ctx.fillStyle = particle.color.replace(")", `, ${alpha})`).replace("rgb", "rgba");
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, 3.5 * alpha + 1, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    function drawVignette() {
+      const fog = ctx.createLinearGradient(0, 0, width, height);
+      fog.addColorStop(0, "rgba(132, 151, 144, 0.08)");
+      fog.addColorStop(0.55, "rgba(0, 0, 0, 0.02)");
+      fog.addColorStop(1, "rgba(0, 0, 0, 0.22)");
+      ctx.fillStyle = fog;
+      ctx.fillRect(0, 0, width, height);
+      const vignette = ctx.createRadialGradient(width / 2, height / 2, Math.min(width, height) * 0.18, width / 2, height / 2, Math.max(width, height) * 0.76);
+      vignette.addColorStop(0, "rgba(0, 0, 0, 0)");
+      vignette.addColorStop(1, "rgba(0, 0, 0, 0.62)");
+      ctx.fillStyle = vignette;
+      ctx.fillRect(0, 0, width, height);
+    }
+
+    function polygon(points, color, local = false) {
+      ctx.fillStyle = color;
+      ctx.beginPath();
+      ctx.moveTo(points[0].x, points[0].y);
+      for (let i = 1; i < points.length; i++) ctx.lineTo(points[i].x, points[i].y);
+      ctx.closePath();
+      ctx.fill();
+      if (!local) {
+        ctx.strokeStyle = "rgba(255, 255, 255, 0.045)";
+        ctx.lineWidth = 1;
+        ctx.stroke();
+      }
+    }
+
+    function lerpPoint(a, b, t) {
+      return { x: a.x + (b.x - a.x) * t, y: a.y + (b.y - a.y) * t };
+    }
+
+    function loop(time) {
+      const delta = Math.min(0.033, (time - lastTime) / 1000 || 0);
+      lastTime = time;
+      update(delta);
+      draw();
+      requestAnimationFrame(loop);
+    }
+
+    window.addEventListener("resize", resize);
+    window.addEventListener("keydown", (event) => {
+      const key = event.key.toLowerCase();
+      if (["w", "a", "s", "d", " "].includes(key)) {
+        keys.add(key);
+        event.preventDefault();
+      }
+    });
+    window.addEventListener("keyup", (event) => keys.delete(event.key.toLowerCase()));
+    window.addEventListener("mousemove", (event) => {
+      mouse.x = event.clientX;
+      mouse.y = event.clientY;
+      mouse.moved = true;
+      updateMouseWorld();
+    });
+    window.addEventListener("mousedown", () => {
+      mouse.down = true;
+      attack();
+    });
+    window.addEventListener("mouseup", () => { mouse.down = false; });
+    startButton.addEventListener("click", startGame);
+
+    resize();
+    resetGame();
+    requestAnimationFrame(loop);
+  </script>
+</body>
+</html>
