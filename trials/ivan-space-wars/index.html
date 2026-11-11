@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Space Wars</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <main class="game-shell">
+    <section class="game-card" aria-label="Space Wars game">
+      <header class="topbar">
+        <div class="brand-lockup">
+          <div class="brand-mark" aria-hidden="true"><span></span><span></span><span></span></div>
+          <div>
+            <p class="eyebrow">ARCADE COMMAND // 07</p>
+            <h1>SPACE <em>WARS</em></h1>
+          </div>
+        </div>
+        <div class="mission-tag"><span class="status-dot"></span>LIVE MISSION</div>
+      </header>
+
+      <section class="hud" aria-label="Mission status">
+        <div class="hud-block">
+          <div class="hud-label"><span>PLAYER HULL</span><strong id="livesText">3 LIVES</strong></div>
+          <div class="bar-track"><div id="playerBar" class="bar-fill player-fill"></div></div>
+        </div>
+        <div class="hud-block hud-block-center">
+          <div class="hud-label"><span>ENEMY CORE</span><strong id="enemyHealthText">100%</strong></div>
+          <div class="bar-track"><div id="enemyBar" class="bar-fill enemy-fill"></div></div>
+        </div>
+        <div class="hud-stats">
+          <div><span class="stat-caption">LEVEL</span><strong id="levelText">01 / 03</strong></div>
+          <div><span class="stat-caption">CORE BREAKS</span><strong id="killsText">0 / 3</strong></div>
+          <div class="shield-stat"><span class="stat-caption">SHIELD</span><strong id="shieldText">READY</strong></div>
+        </div>
+      </section>
+
+      <section class="arena-wrap">
+        <canvas id="gameCanvas" width="960" height="560" aria-label="Space Wars game arena"></canvas>
+        <div class="arena-vignette" aria-hidden="true"></div>
+        <div class="game-overlay" id="gameOverlay">
+          <div class="overlay-panel">
+            <p class="eyebrow" id="overlayEyebrow">DEEP SPACE // SECTOR 9</p>
+            <h2 id="overlayTitle">BREAK THE SIEGE</h2>
+            <p id="overlayCopy">Destroy the enemy core three times before your three lives burn out.</p>
+            <div class="ship-customizer" id="shipCustomizer">
+              <div class="customizer-label"><span>SHIP COLOR</span><strong id="shipColorValue">#4DE4FF</strong></div>
+              <div class="color-controls">
+                <div class="color-swatches" id="colorSwatches" role="group" aria-label="Choose a ship color">
+                  <button class="color-swatch is-selected" type="button" data-color="#4de4ff" style="--swatch: #4de4ff" aria-label="Cyan ship" title="Cyan"></button>
+                  <button class="color-swatch" type="button" data-color="#ff9363" style="--swatch: #ff9363" aria-label="Orange ship" title="Orange"></button>
+                  <button class="color-swatch" type="button" data-color="#b98cff" style="--swatch: #b98cff" aria-label="Violet ship" title="Violet"></button>
+                  <button class="color-swatch" type="button" data-color="#7dffb2" style="--swatch: #7dffb2" aria-label="Lime ship" title="Lime"></button>
+                </div>
+                <label class="custom-color" title="Choose a custom ship color">
+                  <span>CUSTOM</span>
+                  <input id="shipColorInput" type="color" value="#4de4ff" aria-label="Custom ship color" />
+                </label>
+              </div>
+            </div>
+            <button id="overlayButton" type="button">Launch mission <span>↗</span></button>
+            <div class="powerup-options" id="powerupOptions" role="group" aria-label="Choose a powerup" hidden>
+              <button class="powerup-card" type="button" data-powerup="shield">
+                <span class="powerup-icon">◇</span>
+                <span class="powerup-name">Shield Recharge</span>
+                <span class="powerup-description">Restore your one-hit shield before the next level.</span>
+                <span class="choice-tag">SELECT</span>
+              </button>
+              <button class="powerup-card" type="button" data-powerup="rapid">
+                <span class="powerup-icon">✦</span>
+                <span class="powerup-name">Rapid Fire</span>
+                <span class="powerup-description">Load 10 seconds of high-speed automatic fire.</span>
+                <span class="choice-tag">SELECT</span>
+              </button>
+            </div>
+            <div class="control-strip">
+              <span><kbd>←</kbd><kbd>→</kbd> MOVE</span>
+              <span><kbd>SPACE</kbd> FIRE / RAPID FIRE</span>
+              <span><kbd>R</kbd> RESTART</span>
+            </div>
+          </div>
+        </div>
+        <div class="floating-status" id="floatingStatus" aria-live="polite">SYSTEMS READY</div>
+      </section>
+
+      <footer class="bottom-bar">
+        <p><span class="signal-icon">✦</span> Hold <strong>SPACE</strong> for automatic fire. Catch the cyan power core for temporary rapid fire.</p>
+        <p class="difficulty-note"><span></span>ENEMY FIRE RATE INCREASES EACH LEVEL</p>
+      </footer>
+    </section>
+  </main>
+  <script src="game.js"></script>
+</body>
+</html>
