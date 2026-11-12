@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Blockbound: The Ender Dragon</title>
+  <style>
+    :root { --ink:#182338; --cream:#f9f3e3; --gold:#ffc857; --panel:#15233b; }
+    * { box-sizing:border-box; }
+    body { margin:0; min-height:100vh; display:grid; place-items:center; background:radial-gradient(circle at 50% 15%,#40587b 0,#18243b 55%,#0c1220 100%); color:var(--cream); font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; }
+    .shell { width:min(100vw,1060px); padding:18px; }
+    .topbar { display:flex; justify-content:space-between; align-items:center; gap:16px; margin-bottom:10px; }
+    h1 { margin:0; font-size:clamp(18px,3vw,28px); letter-spacing:2px; text-transform:uppercase; color:var(--gold); text-shadow:3px 3px #513e48; }
+    .subtitle { color:#bac7d9; font-size:11px; margin-top:5px; }
+    button { font:inherit; font-weight:800; border:3px solid #6e4b32; background:var(--gold); color:#422d2b; padding:10px 14px; cursor:pointer; box-shadow:0 4px 0 #4d352e; }
+    button:hover { filter:brightness(1.1); transform:translateY(-1px); }
+    .frame { position:relative; border:8px solid #2a3a53; outline:3px solid #111a29; background:#18243a; box-shadow:0 12px 0 #0a0e18,0 20px 35px #0008; }
+    canvas { display:block; width:100%; height:auto; image-rendering:pixelated; background:#253c59; }
+    .hud { pointer-events:none; position:absolute; inset:0; padding:14px; display:flex; justify-content:space-between; align-items:flex-start; }
+    .card { background:#132038dd; border:3px solid #3a4d6a; padding:8px 10px; box-shadow:3px 3px 0 #0d1422; }
+    .health { min-width:205px; }
+    .label { font-size:11px; color:#d5e0ef; margin-bottom:6px; }
+    .hearts { display:flex; gap:3px; }
+    .heart { width:16px; height:15px; position:relative; background:#ec515e; transform:rotate(-45deg); margin:4px 4px 3px 3px; box-shadow:2px 2px 0 #832d47; }
+    .heart:before,.heart:after { content:""; position:absolute; width:16px; height:15px; border-radius:50%; background:#ec515e; }
+    .heart:before { top:-8px; left:0; } .heart:after { left:8px; top:0; }
+    .heart.empty,.heart.empty:before,.heart.empty:after { background:#4a3045; box-shadow:none; }
+    .bossbar { display:none; width:min(330px,48vw); text-align:center; }
+    .bossbar.visible { display:block; }
+    .bossname { color:#d49cff; font-weight:bold; font-size:12px; margin-bottom:6px; }
+    .bar { height:13px; background:#241c35; border:2px solid #9270af; } .bar > i { display:block; height:100%; background:linear-gradient(90deg,#d56cff,#7035b6); }
+    .hint { position:absolute; bottom:12px; left:50%; transform:translateX(-50%); width:max-content; max-width:calc(100% - 24px); background:#132038e8; padding:8px 11px; border:2px solid #536985; font-size:11px; color:#eff4ff; text-align:center; }
+    .legend { display:flex; justify-content:space-between; gap:15px; margin-top:13px; color:#abb9cc; font-size:11px; line-height:1.5; }
+    .legend b { color:#fff; } .legend span { color:#ffc857; }
+    .overlay { position:absolute; inset:0; display:grid; place-items:center; background:#0b1220b8; backdrop-filter:blur(3px); }
+    .modal { width:min(460px,90%); text-align:center; background:#172740; border:4px solid #526884; padding:28px 22px; box-shadow:8px 8px 0 #0b1220; }
+    .modal h2 { margin:0 0 12px; font-size:25px; color:var(--gold); text-transform:uppercase; } .modal p { color:#d4dceb; font-size:13px; line-height:1.6; }
+    @media(max-width:620px){ .shell{padding:8px}.legend{font-size:9px}.hint{font-size:9px}.hud{padding:8px}.health{min-width:155px}.heart{width:12px;height:11px}.heart:before,.heart:after{width:12px;height:11px}.heart:before{top:-6px}.heart:after{left:6px} }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <div class="topbar"><div><h1>Blockbound</h1><div class="subtitle">A tiny pixel quest beneath the obsidian sky</div></div><button id="restartTop">RESTART</button></div>
+    <div class="frame">
+      <canvas id="game" width="960" height="540" aria-label="Blockbound browser game"></canvas>
+      <div class="hud">
+        <div class="card health"><div class="label">HEALTH · <span id="healthText">10 / 10</span></div><div class="hearts" id="hearts"></div></div>
+        <div class="card bossbar" id="bossCard"><div class="bossname">ENDER DRAGON</div><div class="bar"><i id="bossFill" style="width:100%"></i></div></div>
+      </div>
+      <div class="hint" id="hint">Find the obsidian portal → defeat the dragon with <b>X</b> or <b>J</b></div>
+      <div class="overlay" id="overlay"><div class="modal"><h2>Blockbound</h2><p>Mine your way across the overworld, collect Totems of Undying, and face the Ender Dragon.</p><p><b>← →</b> move &nbsp; <b>↑ / SPACE</b> jump &nbsp; <b>↓</b> fast-fall &nbsp; <b>X / J</b> attack</p><button id="startBtn">ENTER THE WORLD</button></div></div>
+    </div>
+    <div class="legend"><div><b>Goal:</b> Reach the purple portal and defeat the dragon.</div><div><span>♥</span> Totems restore 2 hearts · Tools deal 1 heart</div></div>
+  </main>
+  <script>
+  (()=>{
+    const c=document.getElementById('game'),ctx=c.getContext('2d'),W=c.width,H=c.height;
+    const keys={}; let state='menu',last=0,cam=0,shake=0,particles=[];
+    const worldW=3000, ground=438;
+    const player={x:120,y:360,w:28,h:48,vx:0,vy:0,onGround:false,health:10,attack:0,inv:0,dir:1};
+    const enemies=[
+      {x:480,y:384,w:30,h:54,tool:'PICKAXE',color:'#d17843',hp:2,dir:-1,phase:0},
+      {x:820,y:388,w:30,h:50,tool:'SHOVEL',color:'#c18b52',hp:2,dir:1,phase:1},
+      {x:1280,y:378,w:32,h:60,tool:'AXE',color:'#b95757',hp:3,dir:-1,phase:2},
+      {x:1720,y:386,w:30,h:52,tool:'HOE',color:'#78a45b',hp:2,dir:1,phase:3},
+      {x:1980,y:384,w:30,h:54,tool:'PICKAXE',color:'#c1784d',hp:3,dir:-1,phase:4}
+    ];
+    const totems=[{x:620,y:402,got:false},{x:1460,y:402,got:false},{x:1880,y:402,got:false}];
+    const dragon={x:2530,y:180,w:108,h:88,hp:12,max:12,active:false,fire:2.4,flap:0};
+    const portal={x:2260,y:350,w:84,h:88};
+    const clouds=Array.from({length:16},(_,i)=>({x:i*230+40,y:45+(i%4)*28,s:0.7+(i%3)*.18}));
+    function reset(){ Object.assign(player,{x:120,y:360,vx:0,vy:0,health:10,attack:0,inv:0,dir:1}); enemies.forEach((e,i)=>Object.assign(e,{hp:[2,2,3,2,3][i],x:[480,820,1280,1720,1980][i],y:380,dead:false})); totems.forEach(t=>t.got=false); Object.assign(dragon,{x:2530,y:180,hp:12,active:false,fire:2.4}); particles=[];cam=0;state='playing';document.getElementById('overlay').style.display='none'; }
+    function hit(a,b){return a.x<b.x+b.w&&a.x+a.w>b.x&&a.y<b.y+b.h&&a.y+a.h>b.y}
+    function hurt(n){ if(player.inv>0||state!=='playing')return; player.health-=n;player.inv=1.1;shake=.25; burst(player.x+14,player.y+20,'#ec515e',8); if(player.health<=0)end(false); }
+    function burst(x,y,color,n){for(let i=0;i<n;i++)particles.push({x,y,vx:(Math.random()-.5)*150,vy:(Math.random()-.8)*160,life:.5+Math.random()*.4,color});}
+    function update(dt){
+      if(state!=='playing')return; player.inv-=dt;player.attack-=dt;shake=Math.max(0,shake-dt);
+      let move=(keys.ArrowRight?1:0)-(keys.ArrowLeft?1:0); player.vx += move*900*dt; player.vx*=Math.pow(.0005,dt); if(Math.abs(player.vx)<5)player.vx=0; if(move)player.dir=move;
+      if((keys[' ']||keys.Space||keys.ArrowUp)&&player.onGround){player.vy=-540;player.onGround=false; keys[' ']=false; keys.Space=false; keys.ArrowUp=false;}
+      if(keys.ArrowDown&&!player.onGround) player.vy+=900*dt;
+      player.vy+=1300*dt;player.x+=player.vx*dt;player.y+=player.vy*dt;player.x=Math.max(20,Math.min(worldW-player.w-20,player.x)); if(player.y+player.h>=ground){player.y=ground-player.h;player.vy=0;player.onGround=true;}
+      if(player.attack>0 && player.attack<.24){let box={x:player.x+(player.dir>0?20:-48),y:player.y+6,w:48,h:38}; enemies.forEach(e=>{if(!e.dead&&hit(box,e)){e.hp--;e.dir=player.dir*-1;burst(e.x+15,e.y+20,'#ffc857',5);if(e.hp<=0){e.dead=true;totems.push({x:e.x+4,y:402,got:false});}}});if(dragon.active&&hit(box,dragon)){dragon.hp--;dragon.x+=player.dir*18;burst(dragon.x+50,dragon.y+35,'#d891ff',7);if(dragon.hp<=0)end(true);}}
+      enemies.forEach(e=>{if(e.dead)return;e.x+=e.dir*(32+e.phase*2)*dt;if(e.x<40||e.x>worldW-200)e.dir*=-1;if(hit(player,{x:e.x-4,y:e.y,w:e.w+8,h:e.h})){hurt(1);player.x-=e.dir*70;}});
+      totems.forEach(t=>{if(!t.got&&hit(player,{x:t.x,y:t.y,w:25,h:32})){t.got=true;player.health=Math.min(10,player.health+2);burst(t.x+12,t.y+12,'#f4df64',15);}});
+      if(player.x>portal.x-170)dragon.active=true; if(dragon.active){dragon.flap+=dt*8;dragon.y=170+Math.sin(dragon.flap)*38;dragon.fire-=dt;if(dragon.fire<=0){dragon.fire=2.1;particles.push({x:dragon.x,y:dragon.y+45,vx:-280,vy:35,life:3,color:'#b566f3',fire:true});} if(hit(player,dragon))hurt(2);}
+      particles.forEach(p=>{p.x+=p.vx*dt;p.y+=p.vy*dt;if(!p.fire)p.vy+=250*dt;p.life-=dt;if(p.fire&&hit(player,{x:p.x-11,y:p.y-11,w:22,h:22})){p.life=0;hurt(1);}});particles=particles.filter(p=>p.life>0);
+      cam+=(Math.max(0,Math.min(worldW-W,player.x-W*.34))-cam)*Math.min(1,dt*5);
+      document.getElementById('bossCard').classList.toggle('visible',dragon.active);document.getElementById('bossFill').style.width=(dragon.hp/dragon.max*100)+'%';
+      document.getElementById('hint').innerHTML=dragon.active?'The dragon is awake! Strike it with <b>X</b> or <b>J</b>':'Find the obsidian portal → defeat the dragon with <b>X</b> or <b>J</b>';
+      draw();
+    }
+    function draw(){ctx.save();let sx=shake?((Math.random()-.5)*shake*30):0;ctx.translate(sx,-(shake?Math.random()*shake*12:0));drawSky();ctx.translate(-cam,0);drawWorld();drawPlayer();ctx.restore();}
+    function drawSky(){let g=ctx.createLinearGradient(0,0,0,H);g.addColorStop(0,'#172a4b');g.addColorStop(1,'#6b6282');ctx.fillStyle=g;ctx.fillRect(0,0,W,H);ctx.fillStyle='#ffd279';ctx.fillRect(740,75,42,42);ctx.fillStyle='#ffe7a7';ctx.fillRect(748,83,26,26);clouds.forEach(cl=>{ctx.fillStyle='#97a9ba55';ctx.fillRect(cl.x,cl.y,70*cl.s,14);ctx.fillRect(cl.x+15,cl.y-9,40*cl.s,20);});}
+    function drawWorld(){
+      for(let x=0;x<worldW;x+=32){ctx.fillStyle=(x/32%2?'#6aa15d':'#76af62');ctx.fillRect(x,ground,32,12);ctx.fillStyle='#60452f';ctx.fillRect(x,ground+12,32,H-ground-12);ctx.fillStyle='#4d382a';ctx.fillRect(x,ground+32,32,4);}
+      for(let x=0;x<worldW;x+=64){ctx.fillStyle='#2d4a34';ctx.fillRect(x+10,ground-18,8,18);ctx.fillStyle='#3b7044';ctx.fillRect(x,ground-25,30,12);}
+      for(let i=0;i<15;i++){let x=160+i*190;ctx.fillStyle='#b5b8ad';ctx.fillRect(x,ground-10,18,10);ctx.fillStyle='#d0d1c4';ctx.fillRect(x+3,ground-15,11,5);}
+      ctx.fillStyle='#251b3b';ctx.fillRect(portal.x,portal.y,portal.w,portal.h);ctx.fillStyle='#8f49bc';for(let y=portal.y+8;y<portal.y+portal.h-4;y+=15)ctx.fillRect(portal.x+8+(y%2?5:0),y,portal.w-16,7);ctx.fillStyle='#e3a5ff';ctx.fillRect(portal.x+27,portal.y+10,4,portal.h-20);ctx.fillRect(portal.x+49,portal.y+10,4,portal.h-20);
+      totems.forEach(t=>{if(t.got)return;ctx.fillStyle='#e5c84d';ctx.fillRect(t.x+7,t.y+4,12,24);ctx.fillStyle='#8151a0';ctx.fillRect(t.x+3,t.y+11,20,8);ctx.fillStyle='#75c175';ctx.fillRect(t.x+10,t.y+7,6,17);});
+      enemies.forEach(e=>{if(!e.dead)drawEnemy(e);}); if(dragon.active)drawDragon(); particles.forEach(p=>{ctx.fillStyle=p.color;ctx.fillRect(p.x-4,p.y-4,p.fire?12:7,p.fire?12:7);});
+    }
+    function drawEnemy(e){ctx.fillStyle='#26334a';ctx.fillRect(e.x+5,e.y+17,e.w-10,e.h-17);ctx.fillStyle=e.color;ctx.fillRect(e.x+5,e.y,e.w-10,22);ctx.fillStyle='#f1d0a4';ctx.fillRect(e.x+9,e.y+5,14,12);ctx.fillStyle='#1d2738';ctx.fillRect(e.x+11,e.y+10,3,3);ctx.fillRect(e.x+19,e.y+10,3,3);ctx.fillStyle='#8f674a';ctx.fillRect(e.x+3,e.y+22,5,27);ctx.fillRect(e.x+e.w-8,e.y+22,5,27);ctx.fillStyle='#806045';ctx.fillRect(e.x+e.w-2,e.y+25,6,4);ctx.fillStyle=e.tool==='SHOVEL'?'#b9c5ca':e.tool==='AXE'?'#ce654c':e.tool==='HOE'?'#c7d1d6':'#aab6bc';ctx.fillRect(e.x+e.w-2,e.y+18,9,5);ctx.fillRect(e.x+e.w+5,e.y+14,4,9);}
+    function drawDragon(){let x=dragon.x,y=dragon.y;ctx.fillStyle='#281d3f';ctx.fillRect(x+22,y+23,65,48);ctx.fillStyle='#57327f';ctx.fillRect(x+30,y+16,50,55);ctx.fillStyle='#8c4eb2';ctx.fillRect(x+57,y+35,54,26);ctx.fillStyle='#2d1d44';ctx.fillRect(x+78,y+25,35,24);ctx.fillStyle='#ce5ada';ctx.fillRect(x+101,y+31,6,6);ctx.fillRect(x+88,y+24,7,7);ctx.fillStyle='#a95be1';ctx.fillRect(x-2,y+10,35,10);ctx.fillRect(x-15,y+1,15,35);ctx.fillRect(x+65,y+68,10,22);ctx.fillRect(x+86,y+62,10,26);ctx.fillStyle='#6e3c97';ctx.fillRect(x+24,y+3,22,18);ctx.fillRect(x+39,y-3,12,19);}
+    function drawPlayer(){let x=player.x,y=player.y;ctx.globalAlpha=player.inv>0&&Math.floor(player.inv*14)%2?0.4:1;ctx.fillStyle='#26334a';ctx.fillRect(x+4,y+20,20,28);ctx.fillStyle='#4b82bd';ctx.fillRect(x+3,y+18,22,20);ctx.fillStyle='#b97955';ctx.fillRect(x+6,y+3,18,19);ctx.fillStyle='#8b513d';ctx.fillRect(x+6,y+3,18,6);ctx.fillStyle='#d8e8f1';ctx.fillRect(x+10,y+12,4,4);ctx.fillRect(x+19,y+12,4,4);ctx.fillStyle='#34445d';ctx.fillRect(x+4,y+39,8,9);ctx.fillRect(x+17,y+39,8,9);if(player.attack>0){ctx.fillStyle='#dce8ed';ctx.fillRect(x+(player.dir>0?28:-34),y+9,38,5);ctx.fillStyle='#8b5a38';ctx.fillRect(x+(player.dir>0?24:-6),y+4,8,18);}ctx.globalAlpha=1;}
+    function end(win){state=win?'win':'lose';document.getElementById('overlay').style.display='grid';document.querySelector('.modal h2').textContent=win?'DRAGON DEFEATED!':'YOU FELL IN BATTLE';document.querySelector('.modal p').innerHTML=win?'The End is safe… for now. You are a true blockbound hero.':'The tools proved too strong. Find Totems of Undying and try again.';document.getElementById('startBtn').textContent='PLAY AGAIN';}
+    function keydown(e){if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight',' ','Spacebar','x','X','j','J'].includes(e.key))e.preventDefault();keys[e.key]=true;if((e.key==='x'||e.key==='X'||e.key==='j'||e.key==='J')&&state==='playing')player.attack=.34;}
+    window.addEventListener('keydown',keydown);window.addEventListener('keyup',e=>keys[e.key]=false);document.getElementById('startBtn').onclick=reset;document.getElementById('restartTop').onclick=reset;
+    function loop(t){let dt=Math.min(.033,(t-last)/1000||0);last=t;update(dt);requestAnimationFrame(loop);} draw();requestAnimationFrame(loop);
+  })();
+  </script>
+</body>
+</html>
