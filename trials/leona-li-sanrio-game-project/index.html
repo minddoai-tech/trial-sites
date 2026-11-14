@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sanrio Island Friends — tropical town helper</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <main class="game-shell">
+    <header class="topbar">
+      <div class="brand"><span class="brand-mark">♡</span><div><strong>Sanrio Island</strong><small>friendship town helper</small></div></div>
+      <div class="stats" aria-live="polite">
+        <div><span class="label">LEVEL</span><b id="levelValue">1</b></div>
+        <div class="points-wrap"><span class="label">POINTS</span><b><span id="pointsValue">0</span><i>/ 20</i></b><span class="progress"><span id="progressBar"></span></span></div>
+        <div><span class="label">SHELLS</span><b id="shellValue">12</b></div>
+      </div>
+      <button class="restart-button" id="restartButton" type="button">↻ Restart</button>
+    </header>
+
+    <section class="game-area">
+      <canvas id="gameCanvas" aria-label="Playable top-down tropical island town"></canvas>
+      <div class="hud-card instructions"><div class="card-title">HOW TO PLAY</div><p><kbd>← ↑ ↓ →</kbd> Explore the island</p><p><kbd>SPACE</kbd> Jump</p><p><kbd>E</kbd> Help / build nearby</p><div class="tip">Find the <strong>✦</strong> sparkle to start a new quest.</div></div>
+      <div class="hud-card quest-card"><div class="card-title">CURRENT QUEST</div><div id="questText">Walk up to a neighbor with a ✦ to help them.</div><div class="quest-reward"><span>REWARD</span><b id="questReward">+1 point</b></div></div>
+      <div class="toast" id="toast" role="status"></div>
+      <div class="level-banner" id="levelBanner"><span>NEW PLACE UNLOCKED</span><strong id="bannerPlace">Sunset Boardwalk</strong></div>
+      <div class="start-overlay" id="startOverlay"><div class="start-panel"><div class="sanrio-badge">♡</div><p class="eyebrow">WELCOME TO</p><h1>Sanrio Island</h1><p>Hello Kitty and friends need your help. Make the island sparkle, one good deed at a time.</p><button id="startButton" type="button">Start exploring <span>→</span></button></div></div>
+    </section>
+    <footer><span><i class="legend-dot pink"></i>neighbors need help</span><span><i class="legend-dot yellow"></i>building spot</span><span class="footer-right">A tiny tropical town with a big heart.</span></footer>
+  </main>
+  <script src="game.js"></script>
+</body>
+</html>
