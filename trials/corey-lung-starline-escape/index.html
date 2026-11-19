@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Starline Escape</title>
+  <style>
+    :root { --ink:#edf4ff; --muted:#9fb2cf; --panel:rgba(11,19,39,.82); --line:rgba(185,214,255,.16); --accent:#78e5ff; }
+    * { box-sizing:border-box; }
+    body { margin:0; min-height:100vh; background:#08101f; color:var(--ink); font-family:Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; display:grid; place-items:center; padding:24px; }
+    .shell { width:min(1120px, 100%); }
+    .topbar { display:flex; justify-content:space-between; align-items:flex-end; gap:20px; margin-bottom:16px; }
+    .eyebrow { color:var(--accent); text-transform:uppercase; letter-spacing:.16em; font-size:11px; font-weight:800; }
+    h1 { margin:6px 0 0; font-size:clamp(30px, 5vw, 54px); letter-spacing:-.055em; line-height:.95; }
+    .tagline { color:var(--muted); max-width:470px; margin:10px 0 0; font-size:14px; }
+    .scoreboard { display:flex; gap:10px; }
+    .stat { min-width:92px; padding:11px 14px; border:1px solid var(--line); border-radius:14px; background:var(--panel); }
+    .stat small { display:block; color:var(--muted); font-size:10px; text-transform:uppercase; letter-spacing:.13em; }
+    .stat strong { display:block; margin-top:4px; font-size:23px; }
+    .game-card { position:relative; border:1px solid var(--line); border-radius:24px; overflow:hidden; box-shadow:0 24px 70px rgba(0,0,0,.32); background:#0d1730; }
+    canvas { display:block; width:100%; height:auto; aspect-ratio:16/9; background:#0d1730; }
+    .overlay { position:absolute; inset:0; display:grid; place-items:center; padding:24px; background:rgba(4,8,19,.55); backdrop-filter:blur(7px); }
+    .overlay[hidden] { display:none; }
+    .modal { width:min(440px,100%); text-align:center; padding:28px; border:1px solid rgba(190,224,255,.22); border-radius:22px; background:rgba(10,18,37,.92); box-shadow:0 15px 50px rgba(0,0,0,.35); }
+    .modal h2 { margin:0 0 10px; font-size:31px; letter-spacing:-.04em; }
+    .modal p { color:var(--muted); line-height:1.55; margin:0 0 20px; }
+    button, select { font:inherit; color:var(--ink); border:1px solid rgba(171,222,255,.25); background:#152642; border-radius:11px; padding:10px 13px; cursor:pointer; }
+    button:hover, select:hover { border-color:var(--accent); background:#1a3456; }
+    .primary { color:#06131a; background:var(--accent); border-color:var(--accent); font-weight:800; min-width:150px; }
+    .primary:hover { background:#a5f0ff; }
+    .controls { display:grid; grid-template-columns:1.2fr 1fr; gap:14px; margin-top:14px; }
+    .panel { padding:16px; border:1px solid var(--line); border-radius:17px; background:var(--panel); }
+    .panel h3 { margin:0 0 12px; font-size:12px; text-transform:uppercase; letter-spacing:.13em; color:var(--muted); }
+    .choices { display:flex; flex-wrap:wrap; gap:10px; align-items:center; }
+    label { color:var(--muted); font-size:13px; display:flex; align-items:center; gap:8px; }
+    .help { color:var(--muted); font-size:13px; line-height:1.55; margin:0; }
+    kbd { padding:3px 7px; border:1px solid #536684; border-bottom-width:2px; border-radius:5px; color:#fff; background:#182b49; font-size:11px; }
+    @media (max-width:700px) { body { padding:14px; } .topbar { display:block; } .scoreboard { margin-top:18px; } .controls { grid-template-columns:1fr; } .stat { flex:1; } }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <header class="topbar">
+      <div><div class="eyebrow">Arcade / 01</div><h1>Starline Escape</h1><p class="tagline">Dodge the falling attackers, blast a path, and catch the star when it finally appears.</p></div>
+      <div class="scoreboard"><div class="stat"><small>Points</small><strong id="score">0</strong></div><div class="stat"><small>Level</small><strong id="level">1</strong></div><div class="stat"><small>Stars</small><strong id="stars">0/1</strong></div><div class="stat"><small>Time</small><strong id="time">0:00</strong></div><div class="stat"><small>Lives</small><strong id="lives">3</strong></div></div>
+    </header>
+    <section class="game-card">
+      <canvas id="game" width="960" height="540" aria-label="Starline Escape game area"></canvas>
+      <div id="overlay" class="overlay">
+        <div class="modal"><h2 id="modalTitle">Reach the star.</h2><p id="modalText">The star unlocks after 18 seconds. Use the arrow keys to move and press Space to fire. Do not let the attackers touch you.</p><button id="startButton" class="primary">Start mission</button></div>
+      </div>
+    </section>
+    <section class="controls">
+      <div class="panel"><h3>Customize your run</h3><div class="choices">
+        <label>Background <select id="backgroundSelect"><option value="nebula">Nebula</option><option value="ocean">Ocean</option><option value="sunset">Sunset</option></select></label>
+        <label>Player <select id="playerSelect"><option value="ship">Comet ship</option><option value="orb">Energy orb</option><option value="bot">Tiny bot</option></select></label>
+        <label>Attackers <select id="attackerSelect"><option value="spike">Spikes</option><option value="drone">Drones</option><option value="ghost">Ghosts</option></select></label>
+        <button id="stopButton">Stop</button><button id="restartButton">Restart</button>
+      </div></div>
+      <div class="panel"><h3>How to play</h3><p class="help"><kbd>←</kbd> <kbd>↑</kbd> <kbd>↓</kbd> <kbd>→</kbd> move &nbsp; <kbd>Space</kbd> attack &nbsp; <kbd>R</kbd> restart<br>Clear 3 levels. Each level adds faster attackers and requires one more star.</p></div>
+    </section>
+  </main>
+  <script>
+    const canvas = document.getElementById('game'), ctx = canvas.getContext('2d');
+    const W = canvas.width, H = canvas.height, keys = new Set();
+    const ui = { score:document.getElementById('score'), level:document.getElementById('level'), stars:document.getElementById('stars'), time:document.getElementById('time'), lives:document.getElementById('lives'), overlay:document.getElementById('overlay'), title:document.getElementById('modalTitle'), text:document.getElementById('modalText'), start:document.getElementById('startButton') };
+    const options = { background:'nebula', player:'ship', attacker:'spike' };
+    const backgrounds = { nebula:['#07132e','#213260','#0b1024'], ocean:['#062b3b','#087d8d','#041a2d'], sunset:['#30122b','#ad4c4a','#20132f'] };
+    let state;
+    function reset() { state = { running:false, over:false, won:false, score:0, lives:3, level:1, stars:0, starsRequired:1, started:0, levelStarted:0, starReadyAt:18, last:0, spawn:0, shot:0, shotDirection:{x:0,y:-1}, star:null, flash:0, player:{x:W/2,y:H-82,r:18}, attackers:[] }; updateHud(); }
+    function makeAttacker(offset=0) { const difficulty=state.level-1; return { x:30+Math.random()*(W-60), y:-30-offset, r:17+Math.random()*5+difficulty*1.5, speed:55+Math.random()*48+difficulty*28, drift:(Math.random()-.5)*(16+difficulty*8), phase:Math.random()*7, alive:true }; }
+    function beginLevel(level) { state.level=level; state.stars=0; state.starsRequired=level; state.star=null; state.starReadyAt=level===1?18:12; state.levelStarted=performance.now(); state.attackers=[]; for(let i=0;i<6+level*2;i++) state.attackers.push(makeAttacker(-i*70)); updateHud(); }
+    function start() { reset(); state.running=true; state.started=performance.now(); state.last=state.started; beginLevel(1); ui.overlay.hidden=true; requestAnimationFrame(loop); }
+    function resume() { if(state.running || state.over)return; state.running=true; state.last=performance.now(); ui.overlay.hidden=true; requestAnimationFrame(loop); }
+    function pause() { if(!state.running)return; state.running=false; ui.title.textContent='Game paused'; ui.text.textContent='Your run is paused. Resume when you are ready, or restart for a fresh mission.'; ui.start.textContent='Resume mission'; ui.overlay.hidden=false; }
+    function end(won) { state.running=false; state.over=true; state.won=won; ui.title.textContent=won?'All levels cleared!':'Mission failed'; ui.text.textContent=won?'You collected every star across all 3 levels. Nice flying.':'An attacker got too close. Restart and try blasting a path through the swarm.'; ui.start.textContent='Play again'; ui.overlay.hidden=false; }
+    function updateHud() { ui.score.textContent=state.score; ui.level.textContent=state.level; ui.stars.textContent=state.stars+'/'+state.starsRequired; ui.lives.textContent=state.lives; const elapsed=state.started?Math.floor((performance.now()-state.started)/1000):0; ui.time.textContent=Math.floor(elapsed/60)+':'+String(elapsed%60).padStart(2,'0'); }
+    function drawBackground(t) { const c=backgrounds[options.background], g=ctx.createLinearGradient(0,0,W,H); g.addColorStop(0,c[0]); g.addColorStop(.54,c[1]); g.addColorStop(1,c[2]); ctx.fillStyle=g; ctx.fillRect(0,0,W,H); ctx.globalAlpha=.24; for(let i=0;i<48;i++){ const x=(i*137+31)%W, y=(i*71+(t*.012*(i%3+1)))%H; ctx.fillStyle=i%4===0?'#fff3b0':'#a5ddff'; ctx.fillRect(x,y,1.5+(i%3),1.5+(i%3)); } ctx.globalAlpha=1; }
+    function drawLine() { const y=H-52; ctx.save(); ctx.setLineDash([8,10]); ctx.strokeStyle='rgba(255,230,132,.7)'; ctx.shadowColor='#ffd76b'; ctx.shadowBlur=12; ctx.lineWidth=2; ctx.beginPath(); ctx.moveTo(18,y); ctx.lineTo(W-18,y); ctx.stroke(); ctx.restore(); ctx.fillStyle='rgba(255,231,150,.75)'; ctx.font='11px system-ui'; ctx.fillText('DESCENT LINE',24,y-9); }
+    function drawPlayer(p) { ctx.save(); ctx.translate(p.x,p.y); ctx.shadowColor='#69e5ff'; ctx.shadowBlur=18; if(options.player==='orb'){ ctx.fillStyle='#7ef4ff'; ctx.beginPath();ctx.arc(0,0,p.r,0,Math.PI*2);ctx.fill(); ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(-5,-5,5,0,Math.PI*2);ctx.fill(); } else if(options.player==='bot'){ ctx.fillStyle='#c8d8ef'; ctx.fillRect(-15,-13,30,25); ctx.fillStyle='#44e0e9';ctx.fillRect(-7,-4,14,8); ctx.fillStyle='#f5c76b';ctx.fillRect(-22,-4,7,5);ctx.fillRect(15,-4,7,5); } else { ctx.fillStyle='#8cf0ff';ctx.beginPath();ctx.moveTo(0,-23);ctx.lineTo(18,14);ctx.lineTo(0,9);ctx.lineTo(-18,14);ctx.closePath();ctx.fill();ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(0,-4,5,0,Math.PI*2);ctx.fill(); } ctx.restore(); }
+    function drawAttacker(a) { ctx.save(); ctx.translate(a.x,a.y); ctx.rotate(Math.sin(a.phase)*.2); ctx.shadowBlur=14; if(options.attacker==='drone'){ctx.shadowColor='#ff7c99';ctx.fillStyle='#ff708c';ctx.beginPath();ctx.arc(0,0,a.r,0,Math.PI*2);ctx.fill();ctx.fillStyle='#30182c';ctx.beginPath();ctx.arc(0,0,5,0,Math.PI*2);ctx.fill();ctx.strokeStyle='#ffb2b9';ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(-24,0);ctx.lineTo(24,0);ctx.stroke();} else if(options.attacker==='ghost'){ctx.shadowColor='#be8cff';ctx.fillStyle='#b98dff';ctx.beginPath();ctx.arc(0,-3,a.r,Math.PI,0);ctx.lineTo(a.r,14);ctx.lineTo(6,9);ctx.lineTo(0,15);ctx.lineTo(-7,9);ctx.lineTo(-a.r,14);ctx.closePath();ctx.fill();ctx.fillStyle='#271940';ctx.beginPath();ctx.arc(-6,-4,3,0,Math.PI*2);ctx.arc(6,-4,3,0,Math.PI*2);ctx.fill();} else {ctx.shadowColor='#ff746f';ctx.fillStyle='#ff706d';ctx.beginPath();ctx.moveTo(0,-a.r-5);ctx.lineTo(a.r, a.r);ctx.lineTo(0,a.r-3);ctx.lineTo(-a.r,a.r);ctx.closePath();ctx.fill();ctx.fillStyle='#fff2b0';ctx.beginPath();ctx.arc(0,3,3,0,Math.PI*2);ctx.fill();} ctx.restore(); }
+    function drawStar(s) { if(!s)return; ctx.save();ctx.translate(s.x,s.y);ctx.rotate(s.spin);ctx.shadowColor='#ffd85e';ctx.shadowBlur=25;ctx.fillStyle='#ffe071';ctx.beginPath(); for(let i=0;i<10;i++){let r=i%2?10:23,a=-Math.PI/2+i*Math.PI/5;ctx.lineTo(Math.cos(a)*r,Math.sin(a)*r);}ctx.closePath();ctx.fill();ctx.restore(); }
+    function getAttackDirection() { const directions={ArrowUp:{x:0,y:-1},ArrowDown:{x:0,y:1},ArrowLeft:{x:-1,y:0},ArrowRight:{x:1,y:0}}; for(const key of ['ArrowUp','ArrowDown','ArrowLeft','ArrowRight']) if(keys.has(key)) return directions[key]; return {x:0,y:-1}; }
+    function fire(direction=getAttackDirection()) { if(!state.running || state.shot>0)return; state.shot=.28; state.shotDirection=direction; let hit=-1, best=150; state.attackers.forEach((a,i)=>{ const vx=a.x-state.player.x, vy=a.y-state.player.y, forward=vx*direction.x+vy*direction.y, side=Math.abs(vx*direction.y-vy*direction.x); if(forward>0 && forward<best && side<28){best=forward;hit=i;} }); if(hit>=0){ state.attackers.splice(hit,1); state.attackers.push(makeAttacker()); state.score+=50; state.flash=.16; } }
+    function update(dt,now) { const p=state.player, speed=250; let dx=(keys.has('ArrowRight')?1:0)-(keys.has('ArrowLeft')?1:0), dy=(keys.has('ArrowDown')?1:0)-(keys.has('ArrowUp')?1:0); p.x=Math.max(24,Math.min(W-24,p.x+dx*speed*dt)); p.y=Math.max(38,Math.min(H-72,p.y+dy*speed*dt)); state.shot=Math.max(0,state.shot-dt); state.flash=Math.max(0,state.flash-dt); const elapsed=(now-state.levelStarted)/1000; if(elapsed>=state.starReadyAt && !state.star) state.star={x:45+Math.random()*(W-90),y:78,spin:0}; if(state.star){state.star.spin+=dt*2.5;if(Math.hypot(p.x-state.star.x,p.y-state.star.y)<31){state.stars++;state.score+=100;if(state.stars>=state.starsRequired){if(state.level>=3)end(true);else{state.running=false;state.level++;beginLevel(state.level);ui.title.textContent='Level '+state.level+' unlocked!';ui.text.textContent='The attackers are faster now. Collect '+state.starsRequired+' stars to clear this level.';ui.start.textContent='Start level '+state.level;ui.overlay.hidden=false;}}else{state.star=null;state.starReadyAt=elapsed+4;}}} state.attackers.forEach(a=>{a.y+=a.speed*dt;a.x+=Math.sin(elapsed*1.8+a.phase)*a.drift*dt;if(a.y>H-52){Object.assign(a,makeAttacker());state.score+=5;}if(Math.hypot(p.x-a.x,p.y-a.y)<p.r+a.r){Object.assign(a,makeAttacker());state.lives--;state.flash=.3;if(state.lives<=0)end(false);}}); }
+    function render(now) { drawBackground(now);drawLine();drawStar(state.star);state.attackers.forEach(drawAttacker);drawPlayer(state.player);if(state.shot>0){const d=state.shotDirection;ctx.strokeStyle='#d5fbff';ctx.lineWidth=3;ctx.globalAlpha=state.shot/.28;ctx.beginPath();ctx.moveTo(state.player.x+d.x*15,state.player.y+d.y*15);ctx.lineTo(state.player.x+d.x*125,state.player.y+d.y*125);ctx.stroke();ctx.globalAlpha=1;} if(state.flash>0){ctx.fillStyle='rgba(255,100,100,.18)';ctx.fillRect(0,0,W,H);} }
+    function loop(now){ if(!state.running)return; const dt=Math.min(.035,(now-state.last)/1000); state.last=now; update(dt,now);render(now);updateHud();if(state.running)requestAnimationFrame(loop); }
+    addEventListener('keydown',e=>{if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight',' '].includes(e.key))e.preventDefault();keys.add(e.key);if(e.key===' ')fire();if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.key) && keys.has(' '))fire(getAttackDirection());if(e.key.toLowerCase()==='r')start();}); addEventListener('keyup',e=>keys.delete(e.key));
+    ui.start.addEventListener('click',()=>{if(state.started && !state.over)resume();else start();}); document.getElementById('stopButton').addEventListener('click',pause); document.getElementById('restartButton').addEventListener('click',start); ['background','player','attacker'].forEach(k=>document.getElementById(k+'Select').addEventListener('change',e=>{options[k]=e.target.value;render(performance.now());})); reset(); render(performance.now());
+  </script>
+</body>
+</html>
