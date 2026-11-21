@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#070b1f" />
+    <meta name="description" content="Planet Breaker — a smooth space shooter with ship upgrades." />
+    <title>Planet Breaker — Space Shooter</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="site-shell">
+      <header class="topbar">
+        <a class="brand" href="../index.html"><span class="brand-mark"><i></i><i></i><i></i><i></i></span> PIXEL PARTY <span class="brand-slash">/</span> PLANET BREAKER</a>
+        <div class="top-status"><span class="status-light"></span> MISSION ONLINE <span class="top-code">PB // 001</span></div>
+      </header>
+
+      <main>
+        <section class="intro">
+          <div>
+            <p class="eyebrow">// DEEP SPACE BLASTER</p>
+            <h1>Break planets.<br /><span>Build power.</span></h1>
+            <p class="lede">Pilot through a living asteroid field, turn planets into points, and reinvest your haul in a faster, stronger ship.</p>
+          </div>
+          <div class="intro-note"><span>01</span><p>Survive the descent<br />and chase your best run.</p></div>
+        </section>
+
+        <section class="game-layout" aria-label="Planet Breaker game">
+          <div class="game-column">
+            <div class="canvas-frame">
+              <canvas id="gameCanvas" width="960" height="600" aria-label="Planet Breaker game canvas"></canvas>
+              <div class="game-overlay" id="gameOverlay">
+                <div class="overlay-card">
+                  <p class="overlay-kicker" id="overlayKicker">READY FOR LAUNCH</p>
+                  <h2 id="overlayTitle">BREAK PLANETS</h2>
+                  <p id="overlayText">Move with A / D or the arrow keys. Hold Space or click to fire. Spend points on upgrades between waves.</p>
+                  <button class="button button-accent" id="overlayButton" type="button">START MISSION <span>→</span></button>
+                </div>
+              </div>
+            </div>
+            <div class="game-footer"><span>WASD / ARROWS MOVE</span><span>SPACE / CLICK FIRE</span><span>BREAK THE LINE</span></div>
+          </div>
+
+          <aside class="sidebar">
+            <div class="stat-grid">
+              <div class="stat-card stat-score"><span>POINTS</span><strong id="scoreOutput">0000</strong></div>
+              <div class="stat-card"><span>SHIP LEVEL</span><strong id="levelOutput">01</strong></div>
+              <div class="stat-card"><span>MISSES / 5</span><strong id="shieldOutput">00</strong></div>
+              <div class="stat-card"><span>COMBO</span><strong id="comboOutput">x1</strong></div>
+            </div>
+
+            <div class="panel upgrade-panel">
+              <div class="panel-heading"><p class="eyebrow">// HANGAR</p><span id="upgradeHint">EARN POINTS TO UPGRADE</span></div>
+              <div class="upgrade-list">
+                <button class="upgrade-card" data-upgrade="engine" type="button">
+                  <span class="upgrade-icon">↯</span><span class="upgrade-copy"><b>ION ENGINES</b><small>Sharper side-to-side movement</small></span><strong class="upgrade-cost" id="engineCost">150 ◆</strong>
+                </button>
+                <button class="upgrade-card" data-upgrade="cannon" type="button">
+                  <span class="upgrade-icon">✦</span><span class="upgrade-copy"><b>DUAL CANNONS</b><small>Faster fire and wider spread</small></span><strong class="upgrade-cost" id="cannonCost">250 ◆</strong>
+                </button>
+                <button class="upgrade-card" data-upgrade="reactor" type="button">
+                  <span class="upgrade-icon">◈</span><span class="upgrade-copy"><b>CORE REACTOR</b><small>More points per planet</small></span><strong class="upgrade-cost" id="reactorCost">350 ◆</strong>
+                </button>
+              </div>
+            </div>
+
+            <button class="restart-button" id="restartButton" type="button">RESTART MISSION <span>↻</span></button>
+          </aside>
+        </section>
+
+        <section class="how-to-play">
+          <p class="eyebrow">// FLIGHT NOTES</p>
+          <div class="note-grid">
+            <div><span>01</span><h3>TRACK THE GLOW</h3><p>Incoming planets pulse before they cross your lane. Small planets are quick; violet planets take two hits.</p></div>
+            <div><span>02</span><h3>SPEND WITH INTENT</h3><p>Engine, cannon, and reactor upgrades stack across the mission. More power means more points per break.</p></div>
+            <div><span>03</span><h3>KEEP THE COMBO</h3><p>Break planets in a row to build your multiplier. Missing five planets costs 500 points and resets the streak.</p></div>
+          </div>
+        </section>
+      </main>
+
+      <footer class="footer"><span>PLANET BREAKER // SPACE SHOOTER</span><a href="../index.html">BACK TO PIXEL PARTY ↗</a></footer>
+    </div>
+    <script src="game.js"></script>
+  </body>
+</html>

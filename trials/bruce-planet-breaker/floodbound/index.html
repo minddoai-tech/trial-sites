@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Floodbound: The Last Road</title>
+  <link rel="stylesheet" href="styles.css?v=relic-guardians" />
+</head>
+<body>
+  <main id="game-shell">
+    <canvas id="game-canvas" aria-label="Floodbound game canvas"></canvas>
+
+    <div class="vignette"></div>
+
+    <section id="hud" class="hud hidden">
+      <div class="hud-top">
+        <div class="brand-lockup">
+          <div class="brand-mark">✦</div>
+          <div>
+            <p class="eyebrow">THE LAST ROAD</p>
+            <h1>FLOODBOUND</h1>
+          </div>
+        </div>
+        <div class="objective-card">
+          <span class="objective-label">CURRENT OBJECTIVE</span>
+          <strong id="objective-text">Reach high ground</strong>
+          <span id="objective-progress">0 / 3 relics recovered</span>
+        </div>
+        <div class="score-card"><span class="objective-label">ROAD SCORE</span><strong id="score-value">0000</strong></div>
+        <div class="hud-actions">
+          <button class="icon-button" id="save-button" title="Save game">▣</button>
+          <button class="icon-button" id="menu-button" title="Open menu">☰</button>
+        </div>
+      </div>
+
+      <div class="hud-bottom">
+        <div class="status-cluster">
+          <div class="mode-panel"><span class="eyebrow">RIG CONFIGURATION</span><strong id="mode-label">ARMOURED</strong><small id="mode-bonus">0.5X DAMAGE TAKEN // 1.5X DAMAGE</small><div class="mode-switcher"><button id="boat-button">BOAT <span>1</span></button><button class="selected" id="armour-button">ARMOURED <span>2</span></button></div></div>
+          <div class="status-stack" id="status-stack">
+            <div class="meter-row"><span>HEALTH</span><div class="meter"><i id="health-bar" class="health"></i></div><b id="health-value">100</b></div>
+            <div class="meter-row"><span>STAMINA</span><div class="meter"><i id="stamina-bar" class="stamina"></i></div><b id="stamina-value">100</b></div>
+            <div class="meter-row"><span>THIRST</span><div class="meter"><i id="thirst-bar" class="thirst"></i></div><b id="thirst-value">100</b></div>
+            <div class="meter-row"><span>HUNGER</span><div class="meter"><i id="hunger-bar" class="hunger"></i></div><b id="hunger-value">100</b></div>
+          </div>
+        </div>
+        <div class="ability-panel">
+          <div class="ability primary"><span class="ability-key">LMB</span><span class="ability-icon">◈</span><div><small>LASER ULTIMATE / HOLD</small><strong id="ammo-value">∞</strong><div class="laser-meter"><i id="laser-bar"></i></div><em id="laser-status">READY</em></div></div>
+          <div class="ability"><span class="ability-key" id="dash-key">Q</span><span class="ability-icon">➤</span><div><small>VEHICLE DASH</small><strong>READY</strong></div></div>
+          <div class="ability god-locked" id="god-ability"><span class="ability-key" id="god-key">T</span><span class="ability-icon">✦</span><div><small>GOD MODE</small><strong id="god-status">STORY II</strong></div></div>
+          <div class="ability god-locked" id="light-ability"><span class="ability-key" id="light-key">G</span><span class="ability-icon">✧</span><div><small>LIGHT CROWN // 6X</small><strong id="light-status">GOD MODE</strong></div></div>
+          <div class="ability god-locked" id="dark-ability"><span class="ability-key" id="dark-key">H</span><span class="ability-icon">◐</span><div><small>DARKNESS // 7X</small><strong id="dark-status">GOD MODE</strong></div></div>
+        </div>
+      </div>
+    </section>
+
+    <div id="toast" class="toast"></div>
+    <div id="damage-flash"></div>
+
+    <section id="title-screen" class="screen visible">
+      <div class="title-content">
+        <div class="title-kicker"><span></span> A STORY OF WATER &amp; FIRE <span></span></div>
+        <h2>FLOOD<span>BOUND</span></h2>
+        <p class="title-subtitle">THE LAST ROAD TO HIGH GROUND</p>
+        <p class="title-copy">The land is dry for one last moment. When the flood comes, recover three relics, reach the summit, and offer them to the sea.</p>
+        <div class="mission-steps"><div class="mission-step"><b>01</b><span>RECOVER<br><em>3 relics</em></span></div><div class="mission-line"></div><div class="mission-step"><b>02</b><span>CLIMB<br><em>the summit</em></span></div><div class="mission-line"></div><div class="mission-step"><b>03</b><span>OFFER<br><em>the blood</em></span></div></div>
+        <button id="start-button" class="primary-button">BEGIN THE CROSSING <span>→</span></button>
+        <button id="continue-button" class="text-button">Continue saved crossing</button>
+        <div class="title-hint"><b>WASD</b> MOVE <span>•</span> <b>LMB</b> SHOOT <span>•</span> <b>Q</b> DASH <span>•</span> <b>C</b> UPGRADE</div>
+      </div>
+      <div class="title-art"><div class="moon"></div><div class="art-rig">▰</div><div class="art-horizon"></div></div>
+    </section>
+
+    <section id="menu-screen" class="screen">
+      <div class="panel menu-panel">
+        <div class="panel-kicker">PAUSED // SAFEHOUSE SIGNAL</div>
+        <h2>The crossing continues.</h2>
+        <p>The water keeps rising. Your family is waiting beyond the next ridge.</p>
+        <div class="menu-grid"><button id="resume-button" class="primary-button">RESUME <span>→</span></button><button id="restart-button" class="secondary-button">RESTART CROSSING</button></div>
+        <div class="controls-copy"><span><b>W A S D</b> MOVE</span><span><b>LMB</b> FIRE / HOLD CHARGE</span><span><b id="menu-dash-key">Q</b> DASH</span><span><b>SHIFT</b> SPRINT</span><span><b>RMB</b> ZOOM</span><span><b>1 / 2</b> BOAT / ARMOUR</span><span><b>C</b> UPGRADE RIG</span><span><b id="menu-god-key">T</b> GOD MODE // 3 MIN</span><span><b id="menu-light-key">G</b> LIGHT CROWN</span><span><b id="menu-dark-key">H</b> DARKNESS WAVE</span><span><b>◇ / ◆</b> WATER / FOOD AUTO-COLLECT</span><span><b id="menu-menu-key">ESC</b> MENU</span></div>
+        <div class="keybind-settings">
+          <span class="eyebrow">EDIT KEYBINDS</span>
+          <div class="keybind-grid">
+            <label>GOD MODE <select id="god-key-select"></select></label>
+            <label>LIGHT <select id="light-key-select"></select></label>
+            <label>DARKNESS <select id="dark-key-select"></select></label>
+            <label>DASH <select id="dash-key-select"></select></label>
+            <label>MENU <select id="menu-key-select"></select></label>
+          </div>
+          <button id="apply-keybinds" class="secondary-button">APPLY KEYBINDS</button>
+        </div>
+      </div>
+    </section>
+
+    <section id="story-screen" class="screen">
+      <div class="story-panel">
+        <div class="story-image"><div class="tablet-glyph">◒</div></div>
+        <div class="story-copy"><span class="panel-kicker" id="story-kicker">THE TABLET OF THE REBEL GOD</span><h2 id="story-title">The mountain remembers.</h2><p id="story-body">Three impossible relics hum in your hands. The flood is not a storm. It is a sentence, written by gods who fear what humanity might build next.</p><button id="story-button" class="primary-button">OFFER THE BLOOD <span>→</span></button></div>
+      </div>
+    </section>
+
+    <section id="ending-screen" class="screen">
+      <div class="ending-panel"><div class="ending-sigil">✦</div><span class="panel-kicker">THE BLOOD OF THE SEA</span><h2>The tide holds its breath.</h2><p>You offer the leviathan scale, the kraken scale, and Nessie's last bone fragment. Far below, three ancient hearts slow to a sleeping rhythm.</p><p class="ending-note" id="ending-water-status">THE LAND IS DRYING AGAIN...</p><button id="ending-button" class="primary-button">ENTER STORY II <span>→</span></button><span class="part-two">PART II // THE GODS ARE LISTENING</span></div>
+    </section>
+
+    <section id="defeat-screen" class="screen">
+      <div class="defeat-panel"><div class="defeat-sigil">✕</div><span class="panel-kicker" id="defeat-kicker">THE ROAD IS LOST</span><h2 id="defeat-title">The tide claimed you.</h2><p id="defeat-copy">The flood rose faster than your family could run. The relics are still out there, waiting in the dark.</p><p id="defeat-speech" class="defeat-speech">The mountain keeps your last signal.</p><div class="god-court" aria-label="The gods laughing"><span>◉</span><span>◈</span><span>◍</span><span>◈</span><span>◉</span><em>HA HA HA</em></div><div class="defeat-stats"><span><b id="defeat-score">0000</b><small>SCORE</small></span><span><b id="defeat-kills">0</b><small>DEEP CREATURES</small></span></div><button id="defeat-restart-button" class="primary-button">TRY THE CROSSING AGAIN <span>↻</span></button></div>
+    </section>
+  </main>
+  <script src="game.js?v=relic-guardians"></script>
+</body>
+</html>
