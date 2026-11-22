@@ -1,0 +1,557 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Flagbound is a simple arrow-key platformer. Collect fruit, stomp blue enemies, and reach the finish flag.">
+  <title>Flagbound | Browser Platformer</title>
+  <style>
+    :root {
+      --ink: #17212b;
+      --muted: #617080;
+      --paper: #f6f3ea;
+      --panel: #fffdf7;
+      --line: #d9d3c4;
+      --green: #2f7d58;
+      --green-dark: #215b40;
+      --blue: #3d83c6;
+      --red: #d64e4e;
+      --gold: #e9ad3f;
+    }
+
+    * { box-sizing: border-box; }
+
+    html, body { min-height: 100%; }
+
+    body {
+      margin: 0;
+      padding: 24px;
+      color: var(--ink);
+      background: #e9e4d8;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    button, kbd { font: inherit; }
+
+    .app {
+      width: min(1120px, 100%);
+      margin: 0 auto;
+    }
+
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: end;
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+
+    .eyebrow {
+      margin: 0 0 5px;
+      color: var(--green);
+      font-size: 0.75rem;
+      font-weight: 800;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+    }
+
+    h1, h2, p { margin: 0; }
+    h1 { font-size: clamp(2rem, 5vw, 3.4rem); line-height: 0.95; letter-spacing: -0.055em; }
+
+    .restart {
+      border: 1px solid var(--ink);
+      border-radius: 999px;
+      padding: 10px 16px;
+      color: var(--paper);
+      background: var(--ink);
+      cursor: pointer;
+      font-size: 0.9rem;
+      font-weight: 750;
+    }
+
+    .restart:hover, .restart:focus-visible { background: var(--green-dark); }
+
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 250px;
+      gap: 16px;
+      align-items: start;
+    }
+
+    .game-card, .info-card {
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: var(--panel);
+      box-shadow: 0 12px 34px rgba(45, 48, 38, 0.08);
+    }
+
+    .game-card { padding: 12px; }
+
+    .stage {
+      position: relative;
+      overflow: hidden;
+      border-radius: 12px;
+      background: #b9e0e8;
+      line-height: 0;
+    }
+
+    canvas {
+      display: block;
+      width: 100%;
+      height: auto;
+      aspect-ratio: 16 / 9;
+      image-rendering: auto;
+    }
+
+    .overlay {
+      position: absolute;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      padding: 20px;
+      text-align: center;
+      background: rgba(18, 34, 42, 0.72);
+      color: white;
+    }
+
+    .overlay.hidden { display: none; }
+
+    .overlay-box { max-width: 430px; }
+    .overlay h2 { margin-bottom: 10px; font-size: clamp(1.8rem, 4vw, 2.8rem); letter-spacing: -0.04em; }
+    .overlay p { color: #e8f4f3; line-height: 1.5; }
+
+    .play-button {
+      margin-top: 20px;
+      border: 0;
+      border-radius: 10px;
+      padding: 12px 22px;
+      color: #183229;
+      background: #f0c45d;
+      cursor: pointer;
+      font-weight: 850;
+    }
+
+    .play-button:hover, .play-button:focus-visible { background: #ffd978; }
+
+    .hud {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+      padding: 12px 2px 2px;
+    }
+
+    .stat { padding: 3px 8px; border-left: 3px solid var(--line); }
+    .stat:first-child { border-color: var(--green); }
+    .stat:nth-child(2) { border-color: var(--gold); }
+    .stat:nth-child(3) { border-color: var(--blue); }
+    .stat:nth-child(4) { border-color: var(--red); }
+    .stat-label { color: var(--muted); font-size: 0.7rem; font-weight: 800; letter-spacing: 0.11em; text-transform: uppercase; }
+    .stat-value { margin-top: 2px; font-size: 1.15rem; font-weight: 850; }
+
+    .info-card { padding: 18px; }
+    .info-card + .info-card { margin-top: 16px; }
+    .info-card h2 { margin-bottom: 12px; font-size: 1.05rem; }
+    .info-card p { color: var(--muted); line-height: 1.55; font-size: 0.92rem; }
+    .info-card ul { display: grid; gap: 11px; margin: 0; padding: 0; list-style: none; }
+    .info-card li { display: flex; gap: 10px; align-items: start; color: var(--muted); font-size: 0.9rem; line-height: 1.45; }
+    .dot { flex: 0 0 9px; width: 9px; height: 9px; margin-top: 6px; border-radius: 50%; background: var(--green); }
+    .dot.blue { background: var(--blue); }
+    .dot.red { background: var(--red); }
+    .dot.gold { background: var(--gold); }
+    kbd { display: inline-block; border: 1px solid #c7c0b0; border-bottom-width: 2px; border-radius: 5px; padding: 1px 5px; color: var(--ink); background: #f2eee4; font-size: 0.78rem; font-weight: 800; }
+
+    @media (max-width: 780px) {
+      body { padding: 14px; }
+      .layout { grid-template-columns: 1fr; }
+      .info-card { display: none; }
+    }
+
+    @media (max-width: 480px) {
+      .topbar { align-items: start; flex-direction: column; }
+      .restart { align-self: stretch; }
+      .hud { grid-template-columns: repeat(2, 1fr); }
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <header class="topbar">
+      <div>
+        <p class="eyebrow">A tiny platformer</p>
+        <h1>Flagbound</h1>
+      </div>
+      <button class="restart" id="restartButton" type="button">Restart run</button>
+    </header>
+
+    <section class="layout" aria-label="Flagbound game">
+      <div class="game-card">
+        <div class="stage">
+          <canvas id="game" width="960" height="540" aria-label="Flagbound game canvas"></canvas>
+          <div class="overlay" id="overlay">
+            <div class="overlay-box">
+              <h2 id="overlayTitle">Reach the flag</h2>
+              <p id="overlayText">Collect fruit for points, jump on blue guys to defeat them, and cross every gap without touching the spikes.</p>
+              <button class="play-button" id="playButton" type="button">Start game</button>
+            </div>
+          </div>
+        </div>
+        <div class="hud" aria-live="polite">
+          <div class="stat"><div class="stat-label">Score</div><div class="stat-value" id="scoreValue">0</div></div>
+          <div class="stat"><div class="stat-label">Fruit</div><div class="stat-value" id="fruitValue">0 / 8</div></div>
+          <div class="stat"><div class="stat-label">Area</div><div class="stat-value" id="areaValue">1</div></div>
+          <div class="stat"><div class="stat-label">Best</div><div class="stat-value" id="bestValue">0</div></div>
+        </div>
+      </div>
+
+      <aside>
+        <section class="info-card">
+          <h2>How to play</h2>
+          <ul>
+            <li><span class="dot"></span><span>Move with <kbd>Arrow Left</kbd> and <kbd>Arrow Right</kbd>. Press <kbd>Arrow Up</kbd> or <kbd>Arrow Down</kbd> to jump.</span></li>
+            <li><span class="dot gold"></span><span>Eat fruit for <strong>5 points</strong>. The fruit is optional, but collecting all 8 makes a stronger score.</span></li>
+            <li><span class="dot blue"></span><span>Jump on little blue guys to defeat them. Touching them from the side costs a life.</span></li>
+            <li><span class="dot red"></span><span>Leap over spikes and gaps. Reach the flag to win.</span></li>
+          </ul>
+        </section>
+        <section class="info-card">
+          <h2>Quick restart</h2>
+          <p>Press <kbd>R</kbd> at any time to reset the run. The game also pauses safely when its browser tab is hidden.</p>
+        </section>
+      </aside>
+    </section>
+  </main>
+
+  <script>
+    (() => {
+      'use strict';
+
+      const canvas = document.getElementById('game');
+      const ctx = canvas.getContext('2d');
+      const overlay = document.getElementById('overlay');
+      const overlayTitle = document.getElementById('overlayTitle');
+      const overlayText = document.getElementById('overlayText');
+      const playButton = document.getElementById('playButton');
+      const restartButton = document.getElementById('restartButton');
+      const scoreValue = document.getElementById('scoreValue');
+      const fruitValue = document.getElementById('fruitValue');
+      const areaValue = document.getElementById('areaValue');
+      const bestValue = document.getElementById('bestValue');
+
+      const W = canvas.width;
+      const H = canvas.height;
+      const TARGET_FRUIT = 8;
+      const GRAVITY = 1450;
+      const keys = new Set();
+      let animationId = 0;
+      let lastTime = 0;
+      let state = 'ready';
+      let score = 0;
+      let fruitCollected = 0;
+      let area = 1;
+      let best = Number(localStorage.getItem('flagboundBest') || 0);
+      let player;
+      let platforms;
+      let enemies;
+      let fruits;
+      let particles;
+      let flag;
+
+      const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
+      const overlap = (a, b) => a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y;
+      const centerX = item => item.x + item.w / 2;
+      const centerY = item => item.y + item.h / 2;
+
+      function resetGame() {
+        state = 'ready';
+        score = 0;
+        fruitCollected = 0;
+        area = 1;
+        particles = [];
+        player = { x: 64, y: 410, w: 28, h: 38, vx: 0, vy: 0, speed: 270, jump: 570, grounded: false, invulnerable: 0, lives: 3 };
+        platforms = [
+          { x: 0, y: 478, w: 190, h: 62 }, { x: 250, y: 430, w: 174, h: 110 },
+          { x: 484, y: 478, w: 155, h: 62 }, { x: 700, y: 397, w: 178, h: 143 },
+          { x: 900, y: 478, w: 230, h: 62 }, { x: 1180, y: 423, w: 200, h: 117 },
+          { x: 1430, y: 478, w: 200, h: 62 }, { x: 1690, y: 380, w: 205, h: 160 },
+          { x: 1950, y: 478, w: 280, h: 62 }
+        ];
+        fruits = [
+          { x: 126, y: 428, r: 12, collected: false }, { x: 315, y: 380, r: 12, collected: false },
+          { x: 545, y: 428, r: 12, collected: false }, { x: 763, y: 347, r: 12, collected: false },
+          { x: 980, y: 428, r: 12, collected: false }, { x: 1240, y: 373, r: 12, collected: false },
+          { x: 1518, y: 428, r: 12, collected: false }, { x: 1760, y: 330, r: 12, collected: false }
+        ];
+        enemies = [
+          { x: 320, y: 392, w: 28, h: 38, vx: 62, min: 255, max: 400, alive: true },
+          { x: 520, y: 440, w: 28, h: 38, vx: -55, min: 490, max: 610, alive: true },
+          { x: 972, y: 440, w: 28, h: 38, vx: 72, min: 914, max: 1090, alive: true },
+          { x: 1500, y: 440, w: 28, h: 38, vx: -66, min: 1440, max: 1590, alive: true },
+          { x: 1775, y: 342, w: 28, h: 38, vx: 64, min: 1700, max: 1850, alive: true }
+        ];
+        flag = { x: 2140, y: 414, w: 42, h: 64 };
+        updateHud();
+        setOverlay('Reach the flag', 'Collect fruit for points, jump on blue guys to defeat them, and cross every gap without touching the spikes.', 'Start game');
+        draw();
+      }
+
+      function setOverlay(title, text, buttonText) {
+        overlayTitle.textContent = title;
+        overlayText.textContent = text;
+        playButton.textContent = buttonText;
+        overlay.classList.remove('hidden');
+      }
+
+      function hideOverlay() { overlay.classList.add('hidden'); }
+
+      function updateHud() {
+        scoreValue.textContent = String(score);
+        fruitValue.textContent = `${fruitCollected} / ${TARGET_FRUIT}`;
+        areaValue.textContent = String(area);
+        bestValue.textContent = String(best);
+      }
+
+      function startGame() {
+        if (state === 'playing') return;
+        state = 'playing';
+        hideOverlay();
+        lastTime = performance.now();
+        cancelAnimationFrame(animationId);
+        animationId = requestAnimationFrame(loop);
+      }
+
+      function winGame() {
+        state = 'won';
+        best = Math.max(best, score);
+        localStorage.setItem('flagboundBest', String(best));
+        updateHud();
+        setOverlay('You reached the flag!', `You finished with ${score} points. Press Play again to run the course once more.`, 'Play again');
+      }
+
+      function loseGame(message) {
+        state = 'lost';
+        best = Math.max(best, score);
+        localStorage.setItem('flagboundBest', String(best));
+        updateHud();
+        setOverlay('Run over', `${message} You scored ${score} points.`, 'Try again');
+      }
+
+      function loop(now) {
+        const dt = Math.min((now - lastTime) / 1000, 0.034);
+        lastTime = now;
+        update(dt);
+        draw();
+        if (state === 'playing') animationId = requestAnimationFrame(loop);
+      }
+
+      function update(dt) {
+        const direction = (keys.has('ArrowRight') ? 1 : 0) - (keys.has('ArrowLeft') ? 1 : 0);
+        const wantsJump = keys.has('ArrowUp') || keys.has('ArrowDown');
+        player.vx = direction * player.speed;
+        if (wantsJump && player.grounded) {
+          player.vy = -player.jump;
+          player.grounded = false;
+        }
+        player.vy += GRAVITY * dt;
+        player.x += player.vx * dt;
+        player.y += player.vy * dt;
+        player.x = clamp(player.x, 0, flag.x + flag.w - player.w);
+        player.invulnerable = Math.max(0, player.invulnerable - dt);
+
+        resolvePlatformLanding();
+        updateEnemies(dt);
+        collectFruit();
+        checkEnemyHits();
+        checkWorldHazards();
+        updateParticles(dt);
+
+        if (player.x + player.w >= flag.x) winGame();
+        area = player.x < 760 ? 1 : player.x < 1450 ? 2 : 3;
+        updateHud();
+      }
+
+      function resolvePlatformLanding() {
+        player.grounded = false;
+        for (const platform of platforms) {
+          const wasAbove = player.y + player.h - player.vy * 0.016 <= platform.y + 8;
+          if (player.vy >= 0 && wasAbove && overlap(player, platform)) {
+            player.y = platform.y - player.h;
+            player.vy = 0;
+            player.grounded = true;
+          }
+        }
+      }
+
+      function updateEnemies(dt) {
+        for (const enemy of enemies) {
+          if (!enemy.alive) continue;
+          enemy.x += enemy.vx * dt;
+          if (enemy.x <= enemy.min || enemy.x + enemy.w >= enemy.max) enemy.vx *= -1;
+        }
+      }
+
+      function collectFruit() {
+        for (const fruit of fruits) {
+          if (fruit.collected) continue;
+          const dx = centerX(player) - fruit.x;
+          const dy = centerY(player) - fruit.y;
+          if (Math.hypot(dx, dy) < 28) {
+            fruit.collected = true;
+            fruitCollected += 1;
+            score += 5;
+            burst(fruit.x, fruit.y, '#f0bd3d', 10);
+          }
+        }
+      }
+
+      function checkEnemyHits() {
+        if (player.invulnerable > 0) return;
+        for (const enemy of enemies) {
+          if (!enemy.alive || !overlap(player, enemy)) continue;
+          const playerBottom = player.y + player.h;
+          if (player.vy > 0 && playerBottom - enemy.y < 22) {
+            enemy.alive = false;
+            player.vy = -player.jump * 0.6;
+            score += 10;
+            burst(centerX(enemy), enemy.y, '#3d83c6', 14);
+          } else {
+            player.lives -= 1;
+            player.invulnerable = 1.1;
+            player.vx = player.x < enemy.x ? -180 : 180;
+            player.vy = -260;
+            burst(centerX(player), centerY(player), '#d64e4e', 12);
+            if (player.lives <= 0) loseGame('The blue guys caught you.');
+          }
+        }
+      }
+
+      function checkWorldHazards() {
+        if (player.y > H + 30) loseGame('You fell into a gap.');
+        for (const platform of platforms) {
+          if (platform.y < 470 || !overlap(player, { x: platform.x, y: platform.y - 18, w: platform.w, h: 18 })) continue;
+          const spikeStart = platform.x === 0 ? 0.72 : 0.42;
+          const spikes = { x: platform.x + platform.w * spikeStart, y: platform.y - 14, w: platform.w * 0.2, h: 14 };
+          if (overlap(player, spikes)) loseGame('The spikes stopped your run.');
+        }
+      }
+
+      function burst(x, y, color, count) {
+        for (let i = 0; i < count; i += 1) particles.push({ x, y, vx: (Math.random() - 0.5) * 180, vy: (Math.random() - 0.6) * 180, life: 0.55, color });
+      }
+
+      function updateParticles(dt) {
+        particles = particles.filter(particle => particle.life > 0);
+        for (const particle of particles) {
+          particle.life -= dt;
+          particle.x += particle.vx * dt;
+          particle.y += particle.vy * dt;
+          particle.vy += 320 * dt;
+        }
+      }
+
+      function draw() {
+        ctx.clearRect(0, 0, W, H);
+        const cameraX = clamp(player.x - 220, 0, flag.x - W + 70);
+        ctx.save();
+        ctx.translate(-cameraX, 0);
+        drawBackground(cameraX);
+        drawWorld();
+        drawParticles();
+        drawPlayer();
+        ctx.restore();
+        drawHearts();
+      }
+
+      function drawBackground(cameraX) {
+        ctx.fillStyle = '#b9e0e8';
+        ctx.fillRect(cameraX, 0, W, H);
+        ctx.fillStyle = '#a5d4df';
+        for (let x = Math.floor(cameraX / 110) * 110; x < cameraX + W + 110; x += 110) {
+          ctx.beginPath(); ctx.arc(x + 28, 136, 32, Math.PI, 0); ctx.fill();
+          ctx.beginPath(); ctx.arc(x + 78, 136, 24, Math.PI, 0); ctx.fill();
+        }
+        ctx.fillStyle = '#8cc2cf';
+        ctx.beginPath(); ctx.moveTo(cameraX, 410); ctx.lineTo(cameraX + W, 410); ctx.lineTo(cameraX + W, H); ctx.lineTo(cameraX, H); ctx.fill();
+      }
+
+      function drawWorld() {
+        for (const platform of platforms) {
+          ctx.fillStyle = '#557b59'; ctx.fillRect(platform.x, platform.y, platform.w, platform.h);
+          ctx.fillStyle = '#315b45'; ctx.fillRect(platform.x, platform.y, platform.w, 10);
+          ctx.fillStyle = '#6e9b68';
+          for (let x = platform.x + 12; x < platform.x + platform.w; x += 28) ctx.fillRect(x, platform.y + 19, 9, 8);
+          if (platform.y >= 470) drawSpikes(platform.x + platform.w * (platform.x === 0 ? 0.72 : 0.42), platform.y, platform.w * 0.2);
+        }
+        for (const fruit of fruits) if (!fruit.collected) drawFruit(fruit);
+        for (const enemy of enemies) if (enemy.alive) drawEnemy(enemy);
+        drawFlag();
+      }
+
+      function drawSpikes(x, y, width) {
+        ctx.fillStyle = '#d64e4e';
+        const count = Math.max(2, Math.floor(width / 13));
+        const step = width / count;
+        for (let i = 0; i < count; i += 1) {
+          ctx.beginPath(); ctx.moveTo(x + i * step, y); ctx.lineTo(x + (i + 0.5) * step, y - 17); ctx.lineTo(x + (i + 1) * step, y); ctx.closePath(); ctx.fill();
+        }
+      }
+
+      function drawFruit(fruit) {
+        ctx.fillStyle = '#f0bd3d'; ctx.beginPath(); ctx.arc(fruit.x, fruit.y, fruit.r, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = '#e5804d'; ctx.beginPath(); ctx.arc(fruit.x + 4, fruit.y - 4, 3, 0, Math.PI * 2); ctx.fill();
+        ctx.strokeStyle = '#2f7d58'; ctx.lineWidth = 4; ctx.beginPath(); ctx.moveTo(fruit.x, fruit.y - 11); ctx.quadraticCurveTo(fruit.x + 4, fruit.y - 19, fruit.x + 11, fruit.y - 15); ctx.stroke();
+      }
+
+      function drawEnemy(enemy) {
+        ctx.fillStyle = '#3d83c6'; ctx.fillRect(enemy.x, enemy.y + 7, enemy.w, enemy.h - 7);
+        ctx.fillStyle = '#225a94'; ctx.fillRect(enemy.x + 4, enemy.y, enemy.w - 8, 13);
+        ctx.fillStyle = '#fff'; ctx.fillRect(enemy.x + 6, enemy.y + 9, 6, 7); ctx.fillRect(enemy.x + 17, enemy.y + 9, 6, 7);
+        ctx.fillStyle = '#17212b'; ctx.fillRect(enemy.x + 8, enemy.y + 11, 3, 4); ctx.fillRect(enemy.x + 19, enemy.y + 11, 3, 4);
+      }
+
+      function drawFlag() {
+        ctx.fillStyle = '#f7f0dc'; ctx.fillRect(flag.x + 8, flag.y, 5, 66);
+        ctx.fillStyle = '#e9ad3f';
+        ctx.beginPath(); ctx.moveTo(flag.x + 13, flag.y + 4); ctx.lineTo(flag.x + 47, flag.y + 16); ctx.lineTo(flag.x + 13, flag.y + 28); ctx.closePath(); ctx.fill();
+        ctx.fillStyle = '#315b45'; ctx.fillRect(flag.x, flag.y + 66, 34, 6);
+        ctx.fillStyle = '#17212b'; ctx.font = '800 14px system-ui'; ctx.fillText('FINISH', flag.x - 2, flag.y - 12);
+      }
+
+      function drawPlayer() {
+        if (player.invulnerable > 0 && Math.floor(player.invulnerable * 12) % 2 === 0) return;
+        ctx.fillStyle = '#ef8b5d'; ctx.fillRect(player.x, player.y + 8, player.w, player.h - 8);
+        ctx.fillStyle = '#f5b871'; ctx.fillRect(player.x + 3, player.y, player.w - 6, 15);
+        ctx.fillStyle = '#17212b'; ctx.fillRect(player.x + 8, player.y + 5, 4, 4); ctx.fillRect(player.x + 18, player.y + 5, 4, 4);
+        ctx.fillStyle = '#2f7d58'; ctx.fillRect(player.x - 2, player.y + player.h - 4, 12, 6); ctx.fillRect(player.x + player.w - 10, player.y + player.h - 4, 12, 6);
+      }
+
+      function drawParticles() {
+        for (const particle of particles) { ctx.globalAlpha = clamp(particle.life * 2, 0, 1); ctx.fillStyle = particle.color; ctx.fillRect(particle.x, particle.y, 5, 5); }
+        ctx.globalAlpha = 1;
+      }
+
+      function drawHearts() {
+        ctx.save(); ctx.font = '800 18px system-ui'; ctx.fillStyle = '#fffdf7'; ctx.fillText('Lives', 18, 31);
+        for (let i = 0; i < 3; i += 1) { ctx.fillStyle = i < player.lives ? '#d64e4e' : 'rgba(255,255,255,0.35)'; ctx.fillText('♥', 72 + i * 24, 31); }
+        ctx.restore();
+      }
+
+      function restartAndStart() { resetGame(); startGame(); }
+
+      playButton.addEventListener('click', restartAndStart);
+      restartButton.addEventListener('click', restartAndStart);
+      window.addEventListener('keydown', event => {
+        if (['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', ' '].includes(event.key)) event.preventDefault();
+        if (event.key.toLowerCase() === 'r') { restartAndStart(); return; }
+        if (event.key === 'Enter' || event.key === ' ') {
+          if (state !== 'playing') restartAndStart();
+        }
+        keys.add(event.key);
+      });
+      window.addEventListener('keyup', event => keys.delete(event.key));
+      document.addEventListener('visibilitychange', () => { if (document.hidden) keys.clear(); });
+
+      resetGame();
+    })();
+  </script>
+</body>
+</html>
