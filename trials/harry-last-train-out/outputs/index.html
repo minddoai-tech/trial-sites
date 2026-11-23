@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Last Train Out</title>
+  <style>
+    :root { color-scheme: dark; --ink:#fff8ed; --muted:#aeb9ca; --accent:#ffd45a; --teal:#55e0d0; --coral:#ff7567; --panel:rgba(15,21,38,.9); }
+    * { box-sizing:border-box; }
+    body { margin:0; min-height:100vh; display:grid; place-items:center; padding:18px; background:radial-gradient(circle at 50% 0%,#3a3d72 0,#171c36 42%,#090b12 100%); color:var(--ink); font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; }
+    .wrap { width:min(1080px,100%); }
+    header { display:flex; justify-content:space-between; align-items:end; gap:18px; margin-bottom:12px; }
+    h1 { font-size:clamp(1.35rem,3vw,2.2rem); margin:0; letter-spacing:.08em; color:#fff; text-shadow:0 0 24px rgba(85,224,208,.25); }
+    .sub { color:var(--muted); margin:.3rem 0 0; font-size:.9rem; }
+    .stats { display:flex; gap:9px; flex-wrap:wrap; justify-content:flex-end; }
+    .stat { min-width:86px; padding:8px 11px; border:1px solid #495675; border-radius:12px; background:linear-gradient(145deg,rgba(42,52,79,.86),rgba(16,21,38,.82)); text-align:center; box-shadow:inset 0 1px rgba(255,255,255,.08),0 7px 20px rgba(0,0,0,.18); }
+    .stat small { display:block; color:var(--muted); font-size:.65rem; text-transform:uppercase; letter-spacing:.12em; }
+    .stat strong { display:block; margin-top:2px; color:var(--accent); font-size:1.2rem; text-shadow:0 0 12px rgba(255,212,90,.22); }
+    .game { position:relative; overflow:hidden; border:1px solid #667397; border-radius:18px; background:#0b0d15; box-shadow:0 22px 70px rgba(0,0,0,.42),0 0 0 4px rgba(85,224,208,.05); }
+    canvas { display:block; width:100%; height:auto; aspect-ratio:16/9; }
+    .hud { position:absolute; inset:0; pointer-events:none; }
+    .restart { position:absolute; top:16px; left:16px; margin:0; padding:8px 12px; color:#eaf7f6; background:rgba(16,28,49,.86); border:1px solid rgba(85,224,208,.45); box-shadow:0 4px 14px rgba(0,0,0,.22); font-size:.8rem; pointer-events:auto; }
+    .restart:hover { background:rgba(34,56,78,.95); }
+    .help { position:absolute; left:16px; bottom:15px; padding:8px 10px; border:1px solid rgba(155,220,226,.25); border-radius:9px; background:rgba(8,14,27,.76); color:#dbe8ee; font-size:.78rem; box-shadow:0 4px 16px rgba(0,0,0,.2); }
+    .feedback { position:absolute; z-index:3; top:18px; left:50%; transform:translateX(-50%); min-width:180px; padding:10px 16px; border-radius:999px; background:rgba(9,12,20,.88); border:1px solid rgba(255,255,255,.2); color:#fff; font-weight:800; text-align:center; opacity:0; transition:opacity .15s, transform .15s; }
+    .feedback.show { opacity:1; transform:translateX(-50%) translateY(5px); }
+    .feedback.score { color:#ffe17c; border-color:#d5a932; }
+    .feedback.danger { color:#ff9b8d; border-color:#d85b52; }
+    .modal { position:absolute; inset:0; display:grid; place-items:center; padding:22px; background:rgba(5,7,12,.56); }
+    .card { width:min(430px,100%); padding:27px; border:1px solid #69779d; border-radius:18px; background:linear-gradient(145deg,rgba(27,37,65,.95),rgba(12,17,31,.95)); box-shadow:0 18px 60px rgba(0,0,0,.4),inset 0 1px rgba(255,255,255,.08); text-align:center; }
+    .modal.caught .card { border-color:#db6a61; box-shadow:0 18px 60px rgba(0,0,0,.4),0 0 32px rgba(219,106,97,.16),inset 0 1px rgba(255,255,255,.08); }
+    .card h2 { margin:.05rem 0 .65rem; font-size:clamp(1.5rem,4vw,2.25rem); }
+    .card p { margin:.5rem 0; color:#c2c7d2; line-height:1.5; }
+    button { cursor:pointer; border:1px solid #ffeaa1; border-radius:11px; margin-top:14px; padding:12px 20px; color:#211d16; background:linear-gradient(180deg,#ffe98a,#ffc94b); font:800 1rem inherit; box-shadow:0 5px 0 #b18424,0 9px 22px rgba(255,210,79,.2); transition:transform .1s,filter .1s,box-shadow .1s; }
+    button:hover { filter:brightness(1.08); box-shadow:0 5px 0 #b18424,0 12px 27px rgba(255,210,79,.3); } button:active { transform:translateY(3px); box-shadow:0 2px 0 #b18424; }
+    .hidden { display:none; }
+    @media (max-width:650px) { header { align-items:start; flex-direction:column; } .stats { justify-content:flex-start; } .help { font-size:.68rem; left:10px; bottom:9px; } }
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <header><div><h1>LAST TRAIN OUT</h1><p class="sub">Run the platform. Keep your head down. Keep moving.</p></div><div class="stats"><div class="stat"><small>Coins</small><strong id="coins">0</strong></div><div class="stat"><small>Time</small><strong id="timer">00:00</strong></div><div class="stat"><small>Distance</small><strong id="distance">0m</strong></div><div class="stat"><small>Officer</small><strong id="danger">0%</strong></div></div></header>
+    <section class="game"><canvas id="game" width="960" height="540" aria-label="Last Train Out game"></canvas><div class="hud"><button id="restart" class="restart" type="button">↻ Restart</button><div id="feedback" class="feedback" aria-live="polite"></div><div class="help">← → lanes · ↑ ↓ move · SPACE jump · P pause</div><div id="modal" class="modal"><div class="card"><h2 id="modalTitle">Escape the officer</h2><p id="modalText">Collect as many coins as you can before the officer catches you. Dodge trains and keep moving.</p><p><b>← →</b> switch lanes · <b>↑ ↓</b> move · <b>SPACE</b> jump over trains</p><button id="start" type="button">Start running</button></div></div></div></section>
+  </main>
+  <script>
+    const canvas=document.querySelector('#game'),ctx=canvas.getContext('2d'), W=960,H=540;
+    const coinsEl=document.querySelector('#coins'),timerEl=document.querySelector('#timer'),distanceEl=document.querySelector('#distance'),dangerEl=document.querySelector('#danger'),modal=document.querySelector('#modal'),titleEl=document.querySelector('#modalTitle'),textEl=document.querySelector('#modalText'),startBtn=document.querySelector('#start'),restartBtn=document.querySelector('#restart'),feedbackEl=document.querySelector('#feedback');
+    const lanes=[318,390,462]; let keys={}, state='ready', last=0, time=0, score=0, distance=0, danger=0, spawn=0, coinSpawn=0, shake=0, feedbackTimer=0, audioCtx;
+    let player={x:170,y:390,lane:1,vy:0,jump:0}, trains=[], coins=[];
+    addEventListener('keydown',e=>{ keys[e.key.toLowerCase()]=true; if([' ','arrowleft','arrowright','arrowup','arrowdown'].includes(e.key.toLowerCase()))e.preventDefault(); if((e.key==='Enter'||e.key===' ')&&state==='ready')reset(); if(e.key.toLowerCase()==='p'&&state==='playing') state='paused'; else if(e.key.toLowerCase()==='p'&&state==='paused') state='playing'; if(e.key===' '&&state==='playing'&&player.jump<=0){player.vy=-530;player.jump=1;} });
+    addEventListener('keyup',e=>keys[e.key.toLowerCase()]=false); startBtn.onclick=()=>reset(); restartBtn.onclick=()=>reset();
+    function reset(){state='playing';modal.classList.add('hidden');modal.classList.remove('caught');feedbackEl.className='feedback';score=0;distance=0;danger=0;time=0;spawn=2.2;coinSpawn=.4;trains=[];coins=[];player={x:170,y:390,lane:1,vy:0,jump:0};last=performance.now();updateHud();requestAnimationFrame(loop);}
+    function updateHud(){coinsEl.textContent=score;timerEl.textContent=`${String(Math.floor(time/60)).padStart(2,'0')}:${String(Math.floor(time%60)).padStart(2,'0')}`;distanceEl.textContent=Math.floor(distance)+'m';dangerEl.textContent=Math.floor(danger)+'%';}
+    function playCoinSound(){audioCtx??=new AudioContext();const now=audioCtx.currentTime;const osc=audioCtx.createOscillator(),gain=audioCtx.createGain();osc.type='sine';osc.frequency.setValueAtTime(660,now);osc.frequency.exponentialRampToValueAtTime(990,now+.09);gain.gain.setValueAtTime(.0001,now);gain.gain.exponentialRampToValueAtTime(.12,now+.012);gain.gain.exponentialRampToValueAtTime(.0001,now+.16);osc.connect(gain).connect(audioCtx.destination);osc.start(now);osc.stop(now+.17);}
+    function showFeedback(message,type){feedbackEl.textContent=message;feedbackEl.className=`feedback ${type} show`;feedbackTimer=1.05;}
+    function end(){state='over';modal.classList.add('caught');modal.classList.remove('hidden');titleEl.textContent='Caught by the officer';textEl.textContent=`Your run is over. Final score: ${score} coins · ${Math.floor(distance)}m escaped.`;startBtn.textContent='Restart game';showFeedback('CAUGHT!', 'danger');}
+    function spawnTrain(ramp){ const lane=Math.floor(Math.random()*3); const speed=185+ramp*75+Math.random()*(45+ramp*25); trains.push({x:1020,y:lanes[lane]-42,w:190+Math.random()*45,h:54,lane,speed}); }
+    function spawnCoin(){ const lane=Math.floor(Math.random()*3); coins.push({x:1020,y:lanes[lane]-58,r:11,lane,bob:Math.random()*6.28}); }
+    function loop(now){ if(state==='over'||state==='ready')return; const dt=Math.min((now-last)/1000,.035);last=now; if(state==='playing')update(dt); draw(); requestAnimationFrame(loop); }
+    function update(dt){ time+=dt; distance+=dt*38; spawn-=dt; coinSpawn-=dt; const ramp=Math.max(0,Math.min(1,(time-20)/40)); if(feedbackTimer>0){feedbackTimer-=dt;if(feedbackTimer<=0)feedbackEl.className='feedback';} if(spawn<=0){spawnTrain(ramp);const gap=2.25-ramp*.8;spawn=gap+Math.random()*(.9-ramp*.15);} if(coinSpawn<=0){spawnCoin();coinSpawn=.55+Math.random()*(.85+ramp*.25);}
+      if(keys.arrowleft){player.lane=Math.max(0,player.lane-1);keys.arrowleft=false;} if(keys.arrowright){player.lane=Math.min(2,player.lane+1);keys.arrowright=false;} if(keys.arrowup)player.y-=120*dt; if(keys.arrowdown)player.y+=120*dt; player.y+=(lanes[player.lane]-player.y)*Math.min(1,dt*10); player.y=Math.max(262,Math.min(475,player.y));
+      if(player.jump>0){player.y+=player.vy*dt;player.vy+=1450*dt;if(player.y>=lanes[player.lane]){player.y=lanes[player.lane];player.jump=0;player.vy=0;}}
+      trains.forEach(t=>t.x-=t.speed*dt); coins.forEach(c=>{c.x-=250*dt;c.bob+=dt*5;}); trains=trains.filter(t=>t.x>-260); coins=coins.filter(c=>c.x>-30);
+      const p={x:player.x-18,y:player.y-54,w:36,h:52}; trains.forEach(t=>{if(t.lane===player.lane&&player.jump<=0&&hit(p,{x:t.x,y:t.y,w:t.w,h:t.h})){danger=Math.min(100,danger+32);shake=10;t.x=-400;showFeedback('BUMPED! Officer +32%', 'danger');}}); coins=coins.filter(c=>{const got=c.lane===player.lane&&Math.abs(c.x-player.x)<38&&Math.abs(c.y-(player.y-28))<45&&player.jump<=0.4;if(got){score++;playCoinSound();showFeedback('+1 COIN', 'score');}return !got;}); danger=Math.max(0,danger-dt*1.8); if(danger>=100||getOfficerX()>=player.x-24)end(); updateHud(); }
+    function hit(a,b){return a.x<b.x+b.w&&a.x+a.w>b.x&&a.y<b.y+b.h&&a.y+a.h>b.y;}
+    function draw(){ctx.save();if(shake>0){ctx.translate((Math.random()-.5)*shake,(Math.random()-.5)*shake);shake--;} drawScene();ctx.restore();if(state==='paused'){ctx.fillStyle='rgba(5,7,12,.52)';ctx.fillRect(0,0,W,H);ctx.fillStyle='#fff';ctx.font='700 34px system-ui';ctx.textAlign='center';ctx.fillText('PAUSED',W/2,H/2);}}
+    function drawScene(){const grad=ctx.createLinearGradient(0,0,0,H);grad.addColorStop(0,'#1d2450');grad.addColorStop(.48,'#26365b');grad.addColorStop(1,'#101525');ctx.fillStyle=grad;ctx.fillRect(0,0,W,H); // walls
+      ctx.fillStyle='#35436d';for(let y=105;y<305;y+=50)ctx.fillRect(0,y,W,2);ctx.fillStyle='#53658e';for(let x=-time*90%120;x<W;x+=120)ctx.fillRect(x,95,3,195);ctx.fillStyle='#f7c957';for(let x=-time*90%240;x<W;x+=240){ctx.fillRect(x,126,62,4);ctx.fillStyle='#55e0d0';ctx.fillRect(x+70,126,38,4);ctx.fillStyle='#f7c957';}
+      ctx.fillStyle='#101827';ctx.fillRect(0,262,W,28);ctx.fillStyle='#55e0d0';ctx.globalAlpha=.65;ctx.fillRect(38,274,100,4);ctx.fillRect(W-150,274,100,4);ctx.globalAlpha=1;
+      ctx.fillStyle='#10141f';ctx.beginPath();ctx.moveTo(0,290);ctx.lineTo(W,290);ctx.lineTo(W,H);ctx.lineTo(0,H);ctx.fill();ctx.strokeStyle='#69728a';ctx.lineWidth=3;for(let i=0;i<3;i++){ctx.beginPath();ctx.moveTo(0,lanes[i]+22);ctx.lineTo(W,lanes[i]+22);ctx.stroke();}ctx.strokeStyle='#30394c';for(let x=-time*140%80;x<W;x+=80){ctx.beginPath();ctx.moveTo(x,290);ctx.lineTo(x+70,H);ctx.stroke();}
+      trains.forEach(drawTrain);coins.forEach(drawCoin);drawPlayer(); drawOfficer();
+    }
+    function drawTrain(t){ctx.shadowColor='#55e0d0';ctx.shadowBlur=8;ctx.fillStyle='#18243a';ctx.fillRect(t.x,t.y,t.w,t.h);ctx.shadowBlur=0;ctx.fillStyle='#55e0d0';ctx.fillRect(t.x,t.y,t.w,7);ctx.fillStyle='#c8f1ee';for(let i=0;i<3;i++){ctx.fillRect(t.x+18+i*51,t.y+16,35,17);}ctx.fillStyle='#ffd45a';ctx.fillRect(t.x+9,t.y+40,20,6);ctx.fillRect(t.x+t.w-29,t.y+40,20,6);}
+    function drawCoin(c){const yy=c.y+Math.sin(c.bob)*4;ctx.shadowColor='#ffd45a';ctx.shadowBlur=16;ctx.fillStyle='#ffd45a';ctx.beginPath();ctx.arc(c.x,yy,c.r,0,Math.PI*2);ctx.fill();ctx.shadowBlur=0;ctx.fillStyle='#9d7520';ctx.font='bold 13px system-ui';ctx.textAlign='center';ctx.fillText('$',c.x,yy+5);}
+    function drawPlayer(){const x=player.x,y=player.y-(player.jump?18:0);ctx.shadowColor='#55e0d0';ctx.shadowBlur=18;ctx.fillStyle='#55e0d0';ctx.beginPath();ctx.arc(x,y-34,31,0,Math.PI*2);ctx.fill();ctx.shadowBlur=0;ctx.fillStyle='#10131d';ctx.beginPath();ctx.arc(x,y-44,13,0,Math.PI*2);ctx.fill();ctx.fillStyle='#ff7567';ctx.fillRect(x-17,y-32,34,37);ctx.fillStyle='#f4c7a4';ctx.fillRect(x-15,y-63,30,20);ctx.fillStyle='#ffd45a';ctx.fillRect(x-17,y-67,34,8);ctx.fillStyle='#10131d';ctx.fillRect(x-13,y+5,9,19);ctx.fillRect(x+4,y+5,9,19);ctx.fillStyle='#55e0d0';ctx.fillRect(x-25,y-27,8,26);ctx.fillRect(x+17,y-27,8,26);}
+    function getOfficerX(){return Math.min(player.x-18,Math.max(34,player.x-92+danger*.74));}
+    function drawOfficer(){const x=getOfficerX(),y=player.y;ctx.globalAlpha=.9;ctx.fillStyle='#10131d';ctx.beginPath();ctx.arc(x,y-39,10,0,Math.PI*2);ctx.fill();ctx.fillStyle='#4c82db';ctx.fillRect(x-14,y-28,28,32);ctx.fillStyle='#f0c3a4';ctx.fillRect(x-11,y-54,22,19);ctx.fillStyle='#e8d9a0';ctx.fillRect(x-16,y-59,32,7);ctx.globalAlpha=1;}
+    draw();
+  </script>
+</body>
+</html>

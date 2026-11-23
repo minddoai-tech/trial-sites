@@ -1,5 +1,14 @@
 [
   {
+    "slug": "harry-last-train-out",
+    "trialId": "4a36796a-92b1-4017-be68-f673df6d2934",
+    "studentName": "Harry",
+    "title": "Last Train Out",
+    "description": "This game is a subway surfer clone.",
+    "submittedAt": "2026-11-23T01:05:54.108Z",
+    "thumbnail": "harry-last-train-out/thumb.png"
+  },
+  {
     "slug": "sharon-li-flagbound",
     "trialId": "cd02ef63-8941-4a9f-ad75-b8f1c04d3359",
     "studentName": "sharon li",
